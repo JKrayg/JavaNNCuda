@@ -1,7 +1,7 @@
 package com.nn.training.regularizers;
 
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
 
 public abstract class Regularizer {
-    public abstract SimpleMatrix regularize(SimpleMatrix weights);
+    public abstract INDArray regularize(INDArray weights);
 }

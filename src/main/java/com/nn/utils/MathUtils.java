@@ -1,48 +1,48 @@
 package com.nn.utils;
 
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
+
 import com.nn.components.Layer;
 
 public class MathUtils {
     // weighted sum ∑(wi⋅xi)+b
-    public SimpleMatrix weightedSum(Layer prevLayer, Layer currLayer) {
+    public INDArray weightedSum(Layer prevLayer, Layer currLayer) {
         return getWeightedSum(prevLayer.getActivations(), currLayer);
     }
 
-    public SimpleMatrix weightedSum(SimpleMatrix inputData, Layer currLayer) {
+    public INDArray weightedSum(INDArray inputData, Layer currLayer) {
         return getWeightedSum(inputData, currLayer);
     }
 
-    private static SimpleMatrix getWeightedSum(SimpleMatrix prev, Layer curr) {
-        // System.out.println("<<<<<<<<<<<<<<<<<");
-        // System.out.println(prev.getNumRows() + "x" + prev.getNumCols());
-        // System.out.println(curr.getWeights().getNumRows() + "x" + curr.getWeights().getNumCols());
-        // System.out.println("<<<<<<<<<<<<<<<<<<");
-        SimpleMatrix weights = curr.getWeights();
-        SimpleMatrix biasT = curr.getBias();
-        SimpleMatrix dot = prev.mult(weights);
-        int rows = dot.getNumRows();
-        int cols = dot.getNumCols();
-        double[][] bias = new double[rows][cols];
+    private static INDArray getWeightedSum(INDArray prev, Layer curr) {
+        INDArray weights = curr.getWeights();
+        INDArray biasT = curr.getBias();
+        // System.out.println("-----------" + prev.dataType());
+        // System.out.println("+++++++++++" + weights.dataType());
+        INDArray dot = prev.mmul(weights);
+        int rows = dot.rows();
+        int cols = dot.columns();
+        float[][] bias = new float[rows][cols];
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                bias[i][j] = biasT.get(j);
+                bias[i][j] = biasT.getFloat(j);
             }
         }
 
-        return dot.plus(new SimpleMatrix(bias));
+        return dot.add(Nd4j.create(bias));
     }
 
-    public double std(SimpleMatrix v) {
-        int numElements = v.getNumElements();
-        double mean = (v.elementSum() / numElements);
-        double s = 0;
+    public float std(INDArray v) {
+        int numElements = (int) v.length();
+        float mean = (v.sumNumber().floatValue() / numElements);
+        float s = 0;
 
         for (int i = 0; i < numElements; i++) {
-            s += (v.get(i) - mean) * (v.get(i) - mean);
+            s += (v.getFloat(i) - mean) * (v.getFloat(i) - mean);
         }
 
-        return Math.sqrt(s / numElements);
+        return (float) Math.sqrt(s / numElements);
     }
 }

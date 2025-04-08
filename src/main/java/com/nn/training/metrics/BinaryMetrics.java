@@ -1,24 +1,25 @@
 package com.nn.training.metrics;
 
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 
 public class BinaryMetrics extends Metrics {
-    private double threshold;
-    private double tp;
-    private double fp;
-    private double tn;
-    private double fn;
-    private SimpleMatrix confusionMatrix;
+    private float threshold;
+    private float tp;
+    private float fp;
+    private float tn;
+    private float fn;
+    private INDArray confusionMatrix;
 
     public BinaryMetrics() {
-        this.threshold = 0.5;
+        this.threshold = 0.5f;
     }
 
-    public BinaryMetrics(double threshold) {
+    public BinaryMetrics(float threshold) {
         this.threshold = threshold;
     }
 
-    public void getMetrics(SimpleMatrix pred, SimpleMatrix trueVals) {
+    public void getMetrics(INDArray pred, INDArray trueVals) {
         System.out.println("Confusion Matrix: ");
         System.out.println(confusion(pred, trueVals));
         String dis = "Accuracy: " + accuracy(pred, trueVals) + "\n";
@@ -28,15 +29,15 @@ public class BinaryMetrics extends Metrics {
         System.out.println(dis);
     }
 
-    public SimpleMatrix confusion(SimpleMatrix pred, SimpleMatrix trueVals) {
-        double[] preds = thresh(pred);
-        double tp = 0.0;
-        double fp = 0.0;
-        double tn = 0.0;
-        double fn = 0.0; 
+    public INDArray confusion(INDArray pred, INDArray trueVals) {
+        float[] preds = thresh(pred);
+        float tp = 0.0f;
+        float fp = 0.0f;
+        float tn = 0.0f;
+        float fn = 0.0f; 
 
         for (int i = 0; i < preds.length; i++) {
-            double label = trueVals.get(i);
+            float label = trueVals.getFloat(i);
             if (preds[i] == 1.0) {
                 if (label == 1.0) {
                     tp += 1.0;
@@ -57,55 +58,55 @@ public class BinaryMetrics extends Metrics {
         this.tn = tn;
         this.fn = fn;
 
-        SimpleMatrix confusionMatrix = new SimpleMatrix(new double[][]{{tp, fn}, {fp, tn}});
+        INDArray confusionMatrix = Nd4j.create(new float[][]{{tp, fn}, {fp, tn}});
         this.confusionMatrix = confusionMatrix;
         return confusionMatrix;
     }
 
 
-    public double accuracy(SimpleMatrix pred, SimpleMatrix trueVals) {
-        return (tp + tn) / pred.getNumRows();
+    public float accuracy(INDArray pred, INDArray trueVals) {
+        return (tp + tn) / pred.rows();
     }
 
 
-    public double precision(SimpleMatrix pred, SimpleMatrix trueVals) {
-        double prec = tp / (tp + fp);
-        if (Double.isNaN(prec)) {
-            return 0.0;
+    public float precision(INDArray pred, INDArray trueVals) {
+        float prec = tp / (tp + fp);
+        if (Float.isNaN(prec)) {
+            return 0.0f;
         } else {
             return prec;
         }
     }
 
 
-    public double recall(SimpleMatrix pred, SimpleMatrix trueVals) {
-        double rec = tp / (tp + fn);
-        if (Double.isNaN(rec)) {
-            return 0.0;
+    public float recall(INDArray pred, INDArray trueVals) {
+        float rec = tp / (tp + fn);
+        if (Float.isNaN(rec)) {
+            return 0.0f;
         } else {
             return rec;
         }
     }
 
 
-    public double f1(SimpleMatrix pred, SimpleMatrix trueVals) {
-        double r = recall(pred, trueVals);
-        double p = precision(pred, trueVals);
-        if (Double.isNaN(r) || Double.isNaN(p)) {
-            return 0.0;
+    public float f1(INDArray pred, INDArray trueVals) {
+        float r = recall(pred, trueVals);
+        float p = precision(pred, trueVals);
+        if (Float.isNaN(r) || Float.isNaN(p)) {
+            return 0.0f;
         } else {
-            return 2.0 / (1.0 / p + 1.0 / r);
+            return (float) (2.0 / (1.0 / p + 1.0 / r));
         }
     }
 
 
-    public double[] thresh(SimpleMatrix pred) {
-        double[] preds = new double[pred.getNumRows()];
+    public float[] thresh(INDArray pred) {
+        float[] preds = new float[pred.rows()];
         for (int i = 0; i < preds.length; i++) {
-            if (pred.get(i) > threshold) {
-                preds[i] = 1.0;
+            if (pred.getFloat(i) > threshold) {
+                preds[i] = 1.0f;
             } else {
-                preds[i] = 0.0;
+                preds[i] = 0.0f;
             }
         }
 

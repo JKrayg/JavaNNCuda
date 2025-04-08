@@ -1,26 +1,26 @@
 package com.nn.training.metrics;
 
 import java.util.Arrays;
-
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 
 public class MultiClassMetrics extends Metrics{
-    private double threshold;
-    private SimpleMatrix confusionMatrix;
+    private float threshold;
+    private INDArray confusionMatrix;
 
     public MultiClassMetrics() {
-        this.threshold = 0.5;
+        this.threshold = 0.5f;
     }
 
-    public MultiClassMetrics(double threshold) {
+    public MultiClassMetrics(float threshold) {
         this.threshold = threshold;
     }
 
-    public void getMetrics(SimpleMatrix pred, SimpleMatrix trueVals) {
+    public void getMetrics(INDArray pred, INDArray trueVals) {
         String dis = "Accuracy: " + accuracy(pred, trueVals) + "\n";
         dis += "Precision: ";
-        for (double d: precision(pred, trueVals)) {
-            dis += Double.toString(d) + ", ";
+        for (float d: precision(pred, trueVals)) {
+            dis += Float.toString(d) + ", ";
         }
         dis += "\n";
         // dis += "Precision: " + precision(pred, trueVals) + "\n";
@@ -28,23 +28,23 @@ public class MultiClassMetrics extends Metrics{
         System.out.println(dis);
     }
 
-    public SimpleMatrix confusion(SimpleMatrix pred, SimpleMatrix trueVals) {
-        double[][] preds = thresh(pred);
-        int rows = pred.getNumRows();
-        int cols = pred.getNumCols();
-        SimpleMatrix cm = new SimpleMatrix(cols, cols);
+    public INDArray confusion(INDArray pred, INDArray trueVals) {
+        float[][] preds = thresh(pred);
+        int rows = pred.rows();
+        int cols = pred.columns();
+        INDArray cm = Nd4j.create(cols, cols);
 
         for (int i = 0; i < cols; i++) {
-            SimpleMatrix currClass = new SimpleMatrix(1, cols);
-            SimpleMatrix currClassPred = new SimpleMatrix(new SimpleMatrix(preds).getColumn(i));
-            SimpleMatrix currClassTrue = trueVals.getColumn(i);
+            INDArray currClass = Nd4j.create(1, cols);
+            INDArray currClassPred = Nd4j.create(preds).getColumn(i);
+            INDArray currClassTrue = trueVals.getColumn(i);
             // System.out.println(currClassPred);
             for (int j = 0; j < rows; j++) {
-                double currPred = currClassPred.get(j);
+                float currPred = currClassPred.getFloat(j);
                 if (currPred == 1.0) {
                     for (int k = 0; k < cols; k++) {
-                        if (trueVals.get(j, k) == 1.0) {
-                            cm.set(i, k, cm.get(k) + 1.0);
+                        if (trueVals.getFloat(j, k) == 1.0) {
+                            cm.put(i, k, cm.getFloat(k) + 1.0);
                         }
                     }
                 }
@@ -58,7 +58,7 @@ public class MultiClassMetrics extends Metrics{
         }
 
         // for (int i = 0; i < preds.length; i++) {
-        //     double label = trueVals.get(i);
+        //     float label = trueVals.get(i);
         //     if (preds[i] == 1.0) {
         //         if (label == 1.0) {
         //             tp += 1.0;
@@ -74,54 +74,54 @@ public class MultiClassMetrics extends Metrics{
         //     }
         // }
 
-        // SimpleMatrix confusionMatrix = new SimpleMatrix(new double[][]{{tp, fn}, {fp, tn}});
+        // INDArray confusionMatrix = Nd4j.create(new float[][]{{tp, fn}, {fp, tn}});
         this.confusionMatrix = cm;
         return cm;
     }
 
-    public double accuracy(SimpleMatrix pred, SimpleMatrix trueVals) {
+    public float accuracy(INDArray pred, INDArray trueVals) {
         int correct = 0;
-        double[][] preds = thresh(pred);
+        float[][] preds = thresh(pred);
 
         for (int i = 0; i < preds.length; i++) {
             for (int j = 0; j < preds[0].length; j++) {
-                if (preds[i][j] == 1.0 && trueVals.get(i, j) == 1.0) {
+                if (preds[i][j] == 1.0 && trueVals.getFloat(i, j) == 1.0) {
                     correct += 1;
                 }
             }
             
         }
-        return ((double) correct) / ((double) preds.length);
+        return ((float) correct) / ((float) preds.length);
     }
 
 
-    public double[] precision(SimpleMatrix pred, SimpleMatrix trueVals) {
+    public float[] precision(INDArray pred, INDArray trueVals) {
         // int correct = 0;
         // int wrong = 0;
-        double[][] preds = thresh(pred);
-        double[] classPrecisions = new double[preds[0].length];
+        float[][] preds = thresh(pred);
+        float[] classPrecisions = new float[preds[0].length];
 
         for (int i = 0; i < preds[0].length; i++) {
-            SimpleMatrix currClassPred = new SimpleMatrix(new SimpleMatrix(preds).getColumn(i));
-            SimpleMatrix currClassTrue = trueVals.getColumn(i);
+            INDArray currClassPred = Nd4j.create(preds).getColumn(i);
+            INDArray currClassTrue = trueVals.getColumn(i);
             int tp = 0;
             int fp = 0;
             for (int j = 0; j < preds.length; j++) {
-                if (currClassPred.get(j) == 1.0 && currClassTrue.get(j) == 1.0) {
+                if (currClassPred.getFloat(j) == 1.0 && currClassTrue.getFloat(j) == 1.0) {
                     tp += 1;
-                } else if (currClassPred.get(j) == 1.0) {
+                } else if (currClassPred.getFloat(j) == 1.0) {
                     fp += 1;
                 }
             }
 
-            double prec = ((double) tp) / (((double) tp) + ((double) fp));
-            if (Double.isNaN(prec)) {
-                classPrecisions[i] = 0.0;
+            float prec = ((float) tp) / (((float) tp) + ((float) fp));
+            if (Float.isNaN(prec)) {
+                classPrecisions[i] = 0.0f;
             } else {
                 classPrecisions[i] = prec;
             }
             for (int j = 0; j < preds[0].length; j++) {
-                if (trueVals.get(i, j) == 1.0 && preds[i][j] == 1.0) {
+                if (trueVals.getFloat(i, j) == 1.0 && preds[i][j] == 1.0) {
                     tp += 1;
                 } else if (preds[i][j] == 1.0) {
                     fp += 1;
@@ -132,23 +132,25 @@ public class MultiClassMetrics extends Metrics{
         return classPrecisions;
     }
 
-    public double recall(SimpleMatrix pred, SimpleMatrix trueVals) {
-        return 0.0;
+    public float recall(INDArray pred, INDArray trueVals) {
+        return 0.0f;
     }
 
-    public double f1(SimpleMatrix pred, SimpleMatrix trueVals) {
-        return 0.0;
+    public float f1(INDArray pred, INDArray trueVals) {
+        return 0.0f;
     }
 
-    public double[][] thresh(SimpleMatrix pred) {
-        double[][] preds = new double[pred.getNumRows()][pred.getNumCols()];
-        for (int i = 0; i < pred.getNumRows(); i++) {
-            for (int j = 0; j < pred.getNumCols(); j++) {
-                double highestProb = pred.getRow(i).elementMax();
-                if (pred.get(i, j) == highestProb) {
-                    preds[i][j] = 1.0;
+    public float[][] thresh(INDArray pred) {
+        int rows = pred.rows();
+        int cols = pred.columns();
+        float[][] preds = new float[rows][cols];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                float highestProb = pred.getRow(i).maxNumber().floatValue();
+                if (pred.getFloat(i, j) == highestProb) {
+                    preds[i][j] = 1.0f;
                 } else {
-                    preds[i][j] = 0.0;
+                    preds[i][j] = 0.0f;
                 }
 
             }

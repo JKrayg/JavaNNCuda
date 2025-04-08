@@ -1,35 +1,34 @@
 package com.nn.training.optimizers;
 
-import org.ejml.simple.SimpleMatrix;
-
+import org.nd4j.linalg.api.ndarray.INDArray;
 import com.nn.components.Layer;
 import com.nn.training.normalization.BatchNormalization;
 import com.nn.training.normalization.Normalization;
 
 public class SGD extends Optimizer {
-    private double learningRate;
+    private float learningRate;
 
-    public SGD(double learningRate) {
+    public SGD(float learningRate) {
         this.learningRate = learningRate;
     }
 
-    public SimpleMatrix executeWeightsUpdate(Layer l) {
-        return l.getWeights().minus(l.getGradientWeights().scale(learningRate));
+    public INDArray executeWeightsUpdate(Layer l) {
+        return l.getWeights().sub(l.getGradientWeights().mul(learningRate));
     }
 
-    public SimpleMatrix executeBiasUpdate(Layer l) {
-        return l.getBias().minus(l.getGradientBias().scale(learningRate));
+    public INDArray executeBiasUpdate(Layer l) {
+        return l.getBias().sub(l.getGradientBias().mul(learningRate));
     }
 
-    public SimpleMatrix executeShiftUpdate(Normalization n) {
-        return n.getShift().minus(n.getGradientShift().scale(learningRate));
+    public INDArray executeShiftUpdate(Normalization n) {
+        return n.getShift().sub(n.getGradientShift().mul(learningRate));
     }
 
-    public SimpleMatrix executeScaleUpdate(Normalization n) {
-        return n.getScale().minus(n.getGradientScale().scale(learningRate));
+    public INDArray executeScaleUpdate(Normalization n) {
+        return n.getScale().sub(n.getGradientScale().mul(learningRate));
     }
 
-    public double getLearningRate() {
+    public float getLearningRate() {
         return learningRate;
     }
 }

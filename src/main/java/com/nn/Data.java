@@ -1,31 +1,32 @@
 package com.nn;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
+
 import com.nn.utils.MathUtils;
 
 public class Data {
-    private SimpleMatrix data;
-    private SimpleMatrix labels;
-    private SimpleMatrix train;
-    private SimpleMatrix test;
-    private SimpleMatrix validation;
+    private INDArray data;
+    private INDArray labels;
+    private INDArray train;
+    private INDArray test;
+    private INDArray validation;
     private HashMap<String, Integer> classes;
 
     public Data() {}
 
-    public Data(double[][] data) {
-        this.data = new SimpleMatrix(data);
+    public Data(float[][] data) {
+        this.data = Nd4j.create(data);
     }
 
-    public Data(double[][] data, String[] labels) {
-        this.data = new SimpleMatrix(data);
+    public Data(float[][] data, String[] labels) {
+        this.data = Nd4j.create(data);
 
         // create a hashtable of distinct labels mapped to an integer
         HashMap<String, Integer> h = new HashMap<>();
@@ -39,22 +40,23 @@ public class Data {
         this.classes = h;
 
         // create list of a label values
-        double[] ls = new double[labels.length];
+        float[] ls = new float[labels.length];
         for (int i = 0; i < labels.length; i++) {
             ls[i] = classes.get(labels[i]);
         }
 
         if (classes.size() > 2) {
-            this.labels = oneHot(new SimpleMatrix(ls));
+            this.labels = oneHot(Nd4j.create(ls));
         } else {
-            this.labels = new SimpleMatrix(ls);
+            this.labels = Nd4j.create(ls);
         }
 
         
     }
 
-    public Data(double[][] data, Integer[] labels) {
-        this.data = new SimpleMatrix(data);
+    public Data(float[][] data, Integer[] labels) {
+        // System.out.println(labels.length);
+        this.data = Nd4j.create(data);
 
         // create a hashtable of distinct labels mapped to an integer
         HashMap<String, Integer> h = new HashMap<>();
@@ -65,48 +67,50 @@ public class Data {
         this.classes = h;
 
         // create list of a label values
-        double[] ls = new double[labels.length];
+        float[] ls = new float[labels.length];
         for (int i = 0; i < labels.length; i++) {
             ls[i] = classes.get(Integer.toString(labels[i]));
         }
 
+        // System.out.println(ls.length);
+
         if (classes.size() > 2) {
-            this.labels = oneHot(new SimpleMatrix(ls));
+            this.labels = oneHot(Nd4j.create(ls));
         } else {
-            this.labels = new SimpleMatrix(ls);
+            this.labels = Nd4j.create(ls);
         }
 
         
     }
 
-    public SimpleMatrix oneHot(SimpleMatrix labels) {
-        SimpleMatrix encoded = new SimpleMatrix(labels.getNumRows(), classes.size());
-        for (int i = 0; i < labels.getNumRows(); i++) {
-            SimpleMatrix curr = new SimpleMatrix(1, classes.size());
-            curr.set((int)labels.get(i), 1.0);
-            encoded.setRow(i, curr);
+    public INDArray oneHot(INDArray labels) {
+        INDArray encoded = Nd4j.create(labels.columns(), classes.size());
+        for (int i = 0; i < labels.columns(); i++) {
+            INDArray curr = Nd4j.create(1, classes.size());
+            curr.putScalar((int)labels.getFloat(i), 1.0);
+            encoded.putRow(i, curr);
         }
 
         return encoded;
     }
 
-    public SimpleMatrix getData() {
+    public INDArray getData() {
         return data;
     }
 
-    public SimpleMatrix getLabels() {
+    public INDArray getLabels() {
         return labels;
     }
 
-    public SimpleMatrix getTestData() {
+    public INDArray getTestData() {
         return test;
     }
 
-    public SimpleMatrix getTrainData() {
+    public INDArray getTrainData() {
         return train;
     }
 
-    public SimpleMatrix getValData() {
+    public INDArray getValData() {
         return validation;
     }
 
@@ -116,15 +120,15 @@ public class Data {
 
     public void zScoreNormalization() {
         MathUtils maths = new MathUtils();
-        int cols = data.getNumCols();
-        int rows = data.getNumRows();
+        int cols = data.columns();
+        int rows = data.rows();
         if (data != null) {
             for (int i = 0; i < cols; i++) {
-                SimpleMatrix col = new SimpleMatrix(data.getColumn(i));
-                double mean = (col.elementSum() / rows);
-                double std = maths.std(col);
+                INDArray col = data.getColumn(i);
+                float mean = (col.sumNumber().floatValue() / rows);
+                float std = maths.std(col);
                 for (int j = 0; j < rows; j++) {
-                    data.set(j, i, (data.get(j, i) - mean) / std);
+                    data.putScalar(j, i, (data.getFloat(j, i) - mean) / std);
                 }
             }
 
@@ -133,25 +137,25 @@ public class Data {
 
     public void minMaxNormalization() {
         if (data != null) {
-            double max = data.elementMax();
-            data = data.divide(max);
+            float max = data.maxNumber().floatValue();
+            data = data.div(max);
         }
     }
 
     public void split(double testSize, double valSize) {
         // gotta be a better way
-        int rows = data.getNumRows();
-        int cols = data.getNumCols();
+        int rows = data.rows();
+        int cols = data.columns();
         int numOfTest = (int) Math.floor(rows * testSize);
         int numOfVal = (int) Math.floor(rows * valSize);
 
-        double[][] testD = new double[numOfTest][cols];
-        double[][] valD = new double[numOfVal][cols];
-        double[][] trainD = new double[rows - (numOfTest + numOfVal)][cols];
+        float[][] testD = new float[numOfTest][cols];
+        float[][] valD = new float[numOfVal][cols];
+        float[][] trainD = new float[rows - (numOfTest + numOfVal)][cols];
         
-        double[][] testL = new double[numOfTest][classes.size() > 2 ? classes.size() : 0];
-        double[][] valL = new double[numOfVal][classes.size() > 2 ? classes.size() : 0];
-        double[][] trainL = new double[rows - (numOfTest + numOfVal)][classes.size() > 2 ? classes.size() : 0];
+        float[][] testL = new float[numOfTest][classes.size() > 2 ? classes.size() : 0];
+        float[][] valL = new float[numOfVal][classes.size() > 2 ? classes.size() : 0];
+        float[][] trainL = new float[rows - (numOfTest + numOfVal)][classes.size() > 2 ? classes.size() : 0];
 
         Random rand = new Random();
         Set<Integer> used = new HashSet<>();
@@ -163,8 +167,12 @@ public class Data {
                 newRand = rand.nextInt(0, rows);
             }
             used.add(newRand);
-            testD[i] = data.extractVector(true, newRand).toArray2()[0];
-            testL[i] = labels.getRow(newRand).toArray2()[0];
+
+            // potential problem ---------------------------------------------------------------
+            testD[i] = data.getRow(newRand).toFloatVector();
+            // System.out.println(labels.rows());
+            // System.out.println(Nd4j.create(labels.getRow(newRand).tofloatVector()));
+            testL[i] = labels.getRow(newRand).toFloatVector();
         }
 
         // validation set
@@ -174,18 +182,22 @@ public class Data {
                 newRand = rand.nextInt(0, rows);
             }
             used.add(newRand);
-            valD[j] = data.extractVector(true, newRand).toArray2()[0];
-            valL[j] = labels.getRow(newRand).toArray2()[0];
+
+            // potential problem ---------------------------------------------------------------
+            valD[j] = data.getRow(newRand).toFloatVector();
+            valL[j] = labels.getRow(newRand).toFloatVector();
         }
 
         // train set
-        ArrayList<double[]> trainDList = new ArrayList<>();
-        ArrayList<double[]> trainLList = new ArrayList<>();
+        ArrayList<float[]> trainDList = new ArrayList<>();
+        ArrayList<float[]> trainLList = new ArrayList<>();
 
         for (int p = 0; p < rows; p++) {
             if (!used.contains(p)) {
-                trainDList.add(data.getRow(p).toArray2()[0]);
-                trainLList.add(labels.getRow(p).toArray2()[0]);
+
+                // potential problem ---------------------------------------------------------------
+                trainDList.add(data.getRow(p).toFloatVector());
+                trainLList.add(labels.getRow(p).toFloatVector());
             }
         }
 
@@ -194,14 +206,15 @@ public class Data {
             trainL[k] = trainLList.get(k);
         }
 
-        SimpleMatrix train = new SimpleMatrix(trainD);
-        train = train.concatColumns(new SimpleMatrix(trainL));
+        // potential problem ---------------------------------------------------------------
+        INDArray train = Nd4j.create(trainD);
+        train = Nd4j.hstack(train, Nd4j.create(trainL));
 
-        SimpleMatrix test = new SimpleMatrix(testD);
-        test = test.concatColumns(new SimpleMatrix(testL));
+        INDArray test = Nd4j.create(testD);
+        test = Nd4j.hstack(test, Nd4j.create(testL));
 
-        SimpleMatrix val = new SimpleMatrix(valD);
-        val = val.concatColumns(new SimpleMatrix(valL));
+        INDArray val = Nd4j.create(valD);
+        val = Nd4j.hstack(val, Nd4j.create(valL));
 
         this.train = train;
         this.test = test;

@@ -1,14 +1,13 @@
 package com.nn.training.loss;
 
-import org.ejml.simple.SimpleMatrix;
-
+import org.nd4j.linalg.api.ndarray.INDArray;
 import com.nn.components.Layer;
 
 public abstract class Loss {
-    public abstract double execute(SimpleMatrix activations, SimpleMatrix labels);
+    public abstract float execute(INDArray activations, INDArray labels);
 
-    // public abstract SimpleMatrix outputGradientWeights(Layer out, Layer prev, double[] labels);
+    // public abstract INDArray outputGradientWeights(Layer out, Layer prev, float[] labels);
 
-    public abstract SimpleMatrix gradient(Layer out, SimpleMatrix labels);
+    public abstract INDArray gradient(Layer out, INDArray labels);
     
 }

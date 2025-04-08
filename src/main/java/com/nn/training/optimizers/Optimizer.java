@@ -1,18 +1,17 @@
 package com.nn.training.optimizers;
 
-
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
 import com.nn.components.Layer;
 import com.nn.training.normalization.BatchNormalization;
 import com.nn.training.normalization.Normalization;
 
 public abstract class Optimizer {
-    public abstract SimpleMatrix executeWeightsUpdate(Layer l);
-    public abstract SimpleMatrix executeBiasUpdate(Layer l);
-    public abstract SimpleMatrix executeShiftUpdate(Normalization b);
-    public abstract SimpleMatrix executeScaleUpdate(Normalization b);
-    public abstract double getLearningRate();
-    // public abstract double getMomentumDecay();
-    // public abstract double getVarianceDecay();
-    // public abstract double getEpsilon();
+    public abstract INDArray executeWeightsUpdate(Layer l);
+    public abstract INDArray executeBiasUpdate(Layer l);
+    public abstract INDArray executeShiftUpdate(Normalization b);
+    public abstract INDArray executeScaleUpdate(Normalization b);
+    public abstract float getLearningRate();
+    // public abstract float getMomentumDecay();
+    // public abstract float getVarianceDecay();
+    // public abstract float getEpsilon();
 }

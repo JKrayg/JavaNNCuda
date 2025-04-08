@@ -1,10 +1,10 @@
 package com.nn.training.metrics;
 
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
 
 public abstract class Metrics {
-    public abstract void getMetrics(SimpleMatrix pred, SimpleMatrix trueVals);
-    public abstract double accuracy(SimpleMatrix pred, SimpleMatrix trueVals);
-    public abstract double recall(SimpleMatrix pred, SimpleMatrix trueVals);
-    public abstract double f1(SimpleMatrix pred, SimpleMatrix trueVals);
+    public abstract void getMetrics(INDArray pred, INDArray trueVals);
+    public abstract float accuracy(INDArray pred, INDArray trueVals);
+    public abstract float recall(INDArray pred, INDArray trueVals);
+    public abstract float f1(INDArray pred, INDArray trueVals);
 }

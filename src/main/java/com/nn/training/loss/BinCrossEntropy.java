@@ -1,18 +1,17 @@
 package com.nn.training.loss;
 
-import org.ejml.simple.SimpleMatrix;
-
+import org.nd4j.linalg.api.ndarray.INDArray;
 import com.nn.components.Layer;
 
 public class BinCrossEntropy extends Loss {
-    public double execute(SimpleMatrix activations, SimpleMatrix labels) {
-        double sumLoss = 0.0;
-        double n = activations.getNumElements();
+    public float execute(INDArray activations, INDArray labels) {
+        float sumLoss = 0.0f;
+        float n = activations.length();
 
         for (int i = 0; i < n; i++) {
-            double pred = activations.get(i);
-            double y = labels.get(i);
-            double epsilon = 1e-8;
+            float pred = activations.getFloat(i);
+            float y = labels.getFloat(i);
+            float epsilon = (float) 1e-8;
             // need to prevent log(0)
             pred = Math.max(epsilon, Math.min(1 - epsilon, pred));
             sumLoss += -(y * Math.log(pred) + (1 - y) * Math.log(1 - pred));
@@ -20,7 +19,7 @@ public class BinCrossEntropy extends Loss {
         return sumLoss / n;
     }
 
-    public SimpleMatrix gradient(Layer out, SimpleMatrix labels) {
-        return out.getActivations().minus(labels);
+    public INDArray gradient(Layer out, INDArray labels) {
+        return out.getActivations().sub(labels);
     }
 }

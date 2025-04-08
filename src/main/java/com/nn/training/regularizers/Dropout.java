@@ -1,24 +1,25 @@
 package com.nn.training.regularizers;
 
-import org.ejml.simple.SimpleMatrix;
 import java.util.Random;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 
 public class Dropout extends Regularizer{
-    double p;
+    float p;
 
-    public Dropout(double p) {
+    public Dropout(float p) {
         this.p = p;
     }
 
-    public SimpleMatrix regularize(SimpleMatrix activations) {
-        int cols = activations.getNumCols();
-        int rows = activations.getNumRows();
-        SimpleMatrix drop = activations.copy();
+    public INDArray regularize(INDArray activations) {
+        int cols = activations.columns();
+        int rows = activations.rows();
+        INDArray drop = activations.dup();
         Random rand = new Random();
 
         for (int i = 0; i < cols; i++) {
-            if (rand.nextDouble() < p) {
-                drop.setColumn(i, new SimpleMatrix(rows, 1));
+            if (rand.nextFloat() < p) {
+                drop.putColumn(i, Nd4j.create(rows, 1));
             }
         }
         return drop;

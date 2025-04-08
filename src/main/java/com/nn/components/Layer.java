@@ -2,8 +2,8 @@ package com.nn.components;
 
 import java.util.ArrayList;
 import java.util.function.BinaryOperator;
-
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 import com.nn.activation.ActivationFunction;
 import com.nn.activation.Sigmoid;
 import com.nn.layers.Output;
@@ -16,16 +16,16 @@ import com.nn.training.regularizers.Regularizer;
 
 public class Layer {
     private int numNeurons;
-    private SimpleMatrix preActivation;
-    private SimpleMatrix activations;
-    private SimpleMatrix weights;
-    private SimpleMatrix weightsMomentum;
-    private SimpleMatrix weightsVariance;
-    private SimpleMatrix bias;
-    private SimpleMatrix biasMomentum;
-    private SimpleMatrix biasVariance;
-    private SimpleMatrix gradientWrtWeights;
-    private SimpleMatrix gradientWrtBiases;
+    private INDArray preActivation;
+    private INDArray activations;
+    private INDArray weights;
+    private INDArray weightsMomentum;
+    private INDArray weightsVariance;
+    private INDArray bias;
+    private INDArray biasMomentum;
+    private INDArray biasVariance;
+    private INDArray gradientWrtWeights;
+    private INDArray gradientWrtBiases;
     private ActivationFunction func;
     private Loss loss;
     private ArrayList<Regularizer> regularizers;
@@ -57,51 +57,51 @@ public class Layer {
         this.normalization = n;
     }
 
-    public void setWeights(SimpleMatrix weights) {
+    public void setWeights(INDArray weights) {
         this.weights = weights;
     }
 
-    public void setBiases(SimpleMatrix biases) {
+    public void setBiases(INDArray biases) {
         this.bias = biases;
     }
 
-    public void setWeightsMomentum(SimpleMatrix m) {
+    public void setWeightsMomentum(INDArray m) {
         this.weightsMomentum = m;
     }
 
-    public void setBiasesMomentum(SimpleMatrix m) {
+    public void setBiasesMomentum(INDArray m) {
         this.biasMomentum = m;
     }
 
-    public void setWeightsVariance(SimpleMatrix v) {
+    public void setWeightsVariance(INDArray v) {
         this.weightsVariance = v;
     }
 
-    public void setBiasesVariance(SimpleMatrix v) {
+    public void setBiasesVariance(INDArray v) {
         this.biasVariance = v;
     }
 
-    public void setPreActivations(SimpleMatrix preAct) {
+    public void setPreActivations(INDArray preAct) {
         this.preActivation = preAct;
     }
 
-    public void setActivations(SimpleMatrix activations) {
+    public void setActivations(INDArray activations) {
         this.activations = activations;
     }
 
-    public void setGradientWeights(SimpleMatrix gWrtW) {
+    public void setGradientWeights(INDArray gWrtW) {
         this.gradientWrtWeights = gWrtW;
     }
 
-    public void setGradientBiases(SimpleMatrix gWrtB) {
+    public void setGradientBiases(INDArray gWrtB) {
         this.gradientWrtBiases = gWrtB;
     }
 
-    // public void setGradientShift(SimpleMatrix gWrtSh) {
+    // public void setGradientShift(INDArray gWrtSh) {
     //     ((BatchNormalization) this.normalization).setScale(gWrtSh);
     // }
 
-    // public void setGradientScale(SimpleMatrix gWrtSc) {
+    // public void setGradientScale(INDArray gWrtSc) {
     //     ((BatchNormalization) this.normalization).setScale(gWrtSc);
     // }
 
@@ -113,35 +113,35 @@ public class Layer {
         return numNeurons;
     }
 
-    public SimpleMatrix getActivations() {
+    public INDArray getActivations() {
         return activations;
     }
 
-    public SimpleMatrix getPreActivation() {
+    public INDArray getPreActivation() {
         return preActivation;
     }
 
-    public SimpleMatrix getWeights() {
+    public INDArray getWeights() {
         return weights;
     }
 
-    public SimpleMatrix getBias() {
+    public INDArray getBias() {
         return bias;
     }
 
-    public SimpleMatrix getWeightsMomentum() {
+    public INDArray getWeightsMomentum() {
         return weightsMomentum;
     }
 
-    public SimpleMatrix getWeightsVariance() {
+    public INDArray getWeightsVariance() {
         return weightsVariance;
     }
 
-    public SimpleMatrix getBiasMomentum() {
+    public INDArray getBiasMomentum() {
         return biasMomentum;
     }
 
-    public SimpleMatrix getBiasVariance() {
+    public INDArray getBiasVariance() {
         return biasVariance;
     }
 
@@ -165,16 +165,16 @@ public class Layer {
         return loss;
     }
 
-    public SimpleMatrix getGradientWeights() {
+    public INDArray getGradientWeights() {
         return gradientWrtWeights;
     }
 
-    public SimpleMatrix getGradientBias() {
+    public INDArray getGradientBias() {
         return gradientWrtBiases;
     }
 
-    public SimpleMatrix getGradient() {
-        SimpleMatrix gradient = null;
+    public INDArray getGradient() {
+        INDArray gradient = null;
         if (this instanceof Output) {
             gradient = this.getLoss().gradient(this, ((Output) this).getLabels());
         } else {
@@ -184,18 +184,18 @@ public class Layer {
         return gradient;
     }
 
-    public SimpleMatrix gradientWeights(Layer prevLayer, SimpleMatrix gradient) {
-        SimpleMatrix gWrtW = prevLayer.getActivations().transpose().mult(gradient).divide(prevLayer.getActivations().getNumRows());
+    public INDArray gradientWeights(Layer prevLayer, INDArray gradient) {
+        INDArray gWrtW = prevLayer.getActivations().transpose().mmul(gradient).div(prevLayer.getActivations().rows());
         return gWrtW;
     }
 
-    public SimpleMatrix gradientBias(SimpleMatrix gradient) {
-        double[] biasG = new double[gradient.getNumCols()];
-        for (int i = 0; i < gradient.getNumCols(); i++) {
-            SimpleMatrix col = gradient.extractVector(false, i);
-            biasG[i] = col.elementSum() / gradient.getNumRows();
+    public INDArray gradientBias(INDArray gradient) {
+        float[][] biasG = new float[gradient.columns()][1];
+        for (int i = 0; i < gradient.columns(); i++) {
+            INDArray col = gradient.getColumn(i);
+            biasG[i][0] = col.sumNumber().floatValue() / gradient.rows();
         }
-        return new SimpleMatrix(biasG);
+        return Nd4j.create(biasG);
     }
 
     public void updateWeights(Optimizer o) {

@@ -1,86 +1,88 @@
 package com.nn.training.normalization;
 
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.ops.transforms.Transforms;
 
 import com.nn.training.optimizers.Optimizer;
 
 public class BatchNormalization extends Normalization {
-    private SimpleMatrix scale;
-    private SimpleMatrix shift;
-    private SimpleMatrix means;
-    private SimpleMatrix variances;
-    private SimpleMatrix runningMeans;
-    private SimpleMatrix runningVariances;
-    private SimpleMatrix shiftMomentum;
-    private SimpleMatrix shiftVariance;
-    private SimpleMatrix scaleMomentum;
-    private SimpleMatrix scaleVariance;
-    private double momentum = 0.99;
-    private double epsilon = 1e-3;
+    private INDArray scale;
+    private INDArray shift;
+    private INDArray means;
+    private INDArray variances;
+    private INDArray runningMeans;
+    private INDArray runningVariances;
+    private INDArray shiftMomentum;
+    private INDArray shiftVariance;
+    private INDArray scaleMomentum;
+    private INDArray scaleVariance;
+    private float momentum = 0.99f;
+    private float epsilon = 1e-3f;
     private boolean beforeActivation = true;
-    private SimpleMatrix gradientWrtShift;
-    private SimpleMatrix gradientWrtScale;
-    private SimpleMatrix preNormZ;
-    private SimpleMatrix preScaleShiftZ;
-    private SimpleMatrix normalizedZ;
+    private INDArray gradientWrtShift;
+    private INDArray gradientWrtScale;
+    private INDArray preNormZ;
+    private INDArray preScaleShiftZ;
+    private INDArray normalizedZ;
 
     public BatchNormalization() {
     }
 
-    public void setScale(SimpleMatrix scale) {
+    public void setScale(INDArray scale) {
         this.scale = scale;
     }
 
-    public void setShift(SimpleMatrix shift) {
+    public void setShift(INDArray shift) {
         this.shift = shift;
     }
 
-    public void setMeans(SimpleMatrix means) {
+    public void setMeans(INDArray means) {
         this.means = means;
     }
 
-    public void setRunningMeans(SimpleMatrix means) {
+    public void setRunningMeans(INDArray means) {
         this.runningMeans = means;
     }
 
-    public void setVariances(SimpleMatrix variances) {
+    public void setVariances(INDArray variances) {
         this.variances = variances;
     }
     
 
-    public void setRunningVariances(SimpleMatrix variances) {
+    public void setRunningVariances(INDArray variances) {
         this.runningVariances = variances;
     }
 
-    public void setMomentum(double momentum) {
+    public void setMomentum(float momentum) {
         this.momentum = momentum;
     }
 
-    public void setEpsilon(double epsilon) {
+    public void setEpsilon(float epsilon) {
         this.epsilon = epsilon;
     }
 
-    public void setShiftMomentum(SimpleMatrix shM) {
+    public void setShiftMomentum(INDArray shM) {
         this.shiftMomentum = shM;
     }
 
-    public void setShiftVariance(SimpleMatrix shV) {
+    public void setShiftVariance(INDArray shV) {
         this.shiftVariance = shV;
     }
 
-    public void setScaleMomentum(SimpleMatrix scM) {
+    public void setScaleMomentum(INDArray scM) {
         this.scaleMomentum = scM;
     }
 
-    public void setScaleVariance(SimpleMatrix scV) {
+    public void setScaleVariance(INDArray scV) {
         this.scaleVariance = scV;
     }
 
-    public void setGradientShift(SimpleMatrix gWrtSh) {
+    public void setGradientShift(INDArray gWrtSh) {
         this.gradientWrtShift = gWrtSh;
     }
 
-    public void setGradientScale(SimpleMatrix gWrtSc) {
+    public void setGradientScale(INDArray gWrtSc) {
         this.gradientWrtScale = gWrtSc;
     }
 
@@ -92,95 +94,95 @@ public class BatchNormalization extends Normalization {
         return beforeActivation;
     }
 
-    public double getEpsilon() {
+    public float getEpsilon() {
         return epsilon;
     }
 
-    public SimpleMatrix getScale() {
+    public INDArray getScale() {
         return scale;
     }
 
-    public SimpleMatrix getShift() {
+    public INDArray getShift() {
         return shift;
     }
 
-    public SimpleMatrix getRunningMeans() {
+    public INDArray getRunningMeans() {
         return runningMeans;
     }
 
-    public SimpleMatrix getRunningVariances() {
+    public INDArray getRunningVariances() {
         return runningVariances;
     }
 
-    public SimpleMatrix getMeans() {
+    public INDArray getMeans() {
         return means;
     }
 
-    public SimpleMatrix getVariances() {
+    public INDArray getVariances() {
         return variances;
     }
 
-    public double getMomentum() {
+    public float getMomentum() {
         return momentum;
     }
 
-    public SimpleMatrix getShiftMomentum() {
+    public INDArray getShiftMomentum() {
         return shiftMomentum;
     }
 
-    public SimpleMatrix getShiftVariance() {
+    public INDArray getShiftVariance() {
         return shiftVariance;
     }
 
-    public SimpleMatrix getScaleMomentum() {
+    public INDArray getScaleMomentum() {
         return scaleMomentum;
     }
 
-    public SimpleMatrix getScaleVariance() {
+    public INDArray getScaleVariance() {
         return scaleVariance;
     }
 
-    public SimpleMatrix getGradientShift() {
+    public INDArray getGradientShift() {
         return gradientWrtShift;
     }
 
-    public SimpleMatrix getGradientScale() {
+    public INDArray getGradientScale() {
         return gradientWrtScale;
     }
 
-    public SimpleMatrix getNormZ() {
+    public INDArray getNormZ() {
         return normalizedZ;
     }
 
-    public SimpleMatrix getPreScaleShiftZ() {
+    public INDArray getPreScaleShiftZ() {
         return preScaleShiftZ;
     }
 
-    public SimpleMatrix getPreNormZ() {
+    public INDArray getPreNormZ() {
         return preNormZ;
     }
 
-    public SimpleMatrix gradientShift(SimpleMatrix gradient) {
+    public INDArray gradientShift(INDArray gradient) {
         // System.out.println("dL/dzHat sum: " + gradient.elementSum());
-        int cols = gradient.getNumCols();
-        int rows = gradient.getNumRows();
-        SimpleMatrix gWrtSh = new SimpleMatrix(cols, 1);
+        int cols = gradient.columns();
+        int rows = gradient.rows();
+        INDArray gWrtSh = Nd4j.create(cols, 1);
 
         for (int i = 0; i < cols; i++) {
-            gWrtSh.set(i, 0, gradient.getColumn(i).elementSum());
+            gWrtSh.put(i, 0, gradient.getColumn(i).sumNumber().floatValue());
         }
 
         return gWrtSh;
     }
 
-    public SimpleMatrix gradientScale(SimpleMatrix gradient) {
+    public INDArray gradientScale(INDArray gradient) {
         // System.out.println("sumsc: " + gradient.elementSum());
-        SimpleMatrix gWrtSc = new SimpleMatrix(gradient.getNumCols(), 1);
-        int cols = gradient.getNumCols();
-        int rows = gradient.getNumRows();
+        int cols = gradient.columns();
+        int rows = gradient.rows();
+        INDArray gWrtSc = Nd4j.create(cols, 1);
 
         for (int i = 0; i < cols; i++) {
-            gWrtSc.set(i, 0, gradient.getColumn(i).elementMult(preScaleShiftZ.getColumn(i)).elementSum());
+            gWrtSc.put(i, 0, gradient.getColumn(i).mul(preScaleShiftZ.getColumn(i)).sumNumber().floatValue());
         }
         return gWrtSc;
     }
@@ -193,74 +195,75 @@ public class BatchNormalization extends Normalization {
         this.setShift(o.executeShiftUpdate(this));
     }
 
-    public SimpleMatrix means(SimpleMatrix z) {
-        int rows = z.getNumRows();
-        int cols = z.getNumCols();
-        SimpleMatrix means = new SimpleMatrix(cols, 1);
+    public INDArray means(INDArray z) {
+        int rows = z.rows();
+        int cols = z.columns();
+        INDArray means = Nd4j.create(cols, 1);
 
         for (int i = 0; i < cols; i++) {
-            means.set(i, z.getColumn(i).elementSum() / rows);
+            means.putScalar(i, z.getColumn(i).sumNumber().floatValue() / rows);
         }
 
         return means;
     }
 
-    public SimpleMatrix variances(SimpleMatrix z) {
-        int rows = z.getNumRows();
-        int cols = z.getNumCols();
-        SimpleMatrix variances = new SimpleMatrix(cols, 1);
-        SimpleMatrix means = means(z);
+    public INDArray variances(INDArray z) {
+        int rows = z.rows();
+        int cols = z.columns();
+        INDArray variances = Nd4j.create(cols, 1);
+        INDArray means = means(z);
 
         for (int i = 0; i < cols; i++) {
-            variances.set(i, z.getColumn(i).minus(means.get(i)).elementPower(2).elementSum() / rows);
+            INDArray a = z.getColumn(i).sub(means.getFloat(i));
+            variances.putScalar(i, a.mul(a).sumNumber().floatValue() / rows);
         }
 
         return variances;
     }
 
-    public SimpleMatrix normalize(SimpleMatrix z) {
-        int rows = z.getNumRows();
-        int cols = z.getNumCols();
-        SimpleMatrix means = means(z);
-        SimpleMatrix variances = variances(z);
-        SimpleMatrix preSclShft = new SimpleMatrix(rows, cols);
-        SimpleMatrix norm = new SimpleMatrix(rows, cols);
+    public INDArray normalize(INDArray z) {
+        int rows = z.rows();
+        int cols = z.columns();
+        INDArray means = means(z);
+        INDArray variances = variances(z);
+        INDArray preSclShft = Nd4j.create(rows, cols);
+        INDArray norm = Nd4j.create(rows, cols);
 
         for (int i = 0; i < cols; i++) {
-            SimpleMatrix currCol = z.getColumn(i);
-            SimpleMatrix normalizedCol = currCol.minus(means.get(i)).divide(Math.sqrt(variances.get(i) + epsilon));
-            preSclShft.setColumn(i, normalizedCol);
-            norm.setColumn(i, normalizedCol.scale(scale.get(i)).plus(shift.get(i)));
+            INDArray currCol = z.getColumn(i);
+            INDArray normalizedCol = currCol.sub(means.getFloat(i)).div(Math.sqrt(variances.getFloat(i) + epsilon));
+            preSclShft.putColumn(i, normalizedCol);
+            norm.putColumn(i, normalizedCol.mul(scale.getFloat(i)).add(shift.getFloat(i)));
         }
 
         this.means = means;
         this.variances = variances;
-        this.runningMeans = runningMeans.scale(momentum).plus(means.scale((1 - momentum)));
-        this.runningVariances = runningVariances.scale(momentum).plus(variances.scale((1 - momentum)));
-        this.preNormZ = z.copy();
+        this.runningMeans = runningMeans.mul(momentum).add(means.mul((1 - momentum)));
+        this.runningVariances = runningVariances.mul(momentum).add(variances.mul((1 - momentum)));
+        this.preNormZ = z.dup();
         this.preScaleShiftZ = preSclShft;
 
         return norm;
     }
 
-    public void setPreNormZ(SimpleMatrix z) {
+    public void setPreNormZ(INDArray z) {
         this.preNormZ = z;
     }
 
 
-    public SimpleMatrix gradientPreBN(SimpleMatrix dLdzHat) {
-        int rows = dLdzHat.getNumRows();
-        int cols = dLdzHat.getNumCols();
-        SimpleMatrix dLdz = new SimpleMatrix(rows, cols);
-        SimpleMatrix std = variances.plus(epsilon).elementPower(0.5);
-        SimpleMatrix scalingFactor = scale.elementDiv(std);
+    public INDArray gradientPreBN(INDArray dLdzHat) {
+        int rows = dLdzHat.rows();
+        int cols = dLdzHat.columns();
+        INDArray dLdz = Nd4j.create(rows, cols);
+        INDArray std = Transforms.pow(variances.add(epsilon), 0.5);
+        INDArray scalingFactor = scale.div(std);
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                double gradientElement = dLdzHat.get(i, j);
-                double normElement = preScaleShiftZ.get(i, j);
-                dLdz.set(i, j,
-                    scalingFactor.get(i) * (gradientElement - 
+                float gradientElement = dLdzHat.getFloat(i, j);
+                float normElement = preScaleShiftZ.getFloat(i, j);
+                dLdz.put(i, j,
+                    scalingFactor.getFloat(i) * (gradientElement - 
                     ((gradientElement - normElement) / rows) * 
                     ((gradientElement * normElement) / rows)));
             }
@@ -270,15 +273,15 @@ public class BatchNormalization extends Normalization {
         return dLdz;
     }
 
-    public SimpleMatrix gradientPreBNSimple(SimpleMatrix dLdzHat) {
-        int rows = dLdzHat.getNumRows();
-        int cols = dLdzHat.getNumCols();
-        SimpleMatrix dLdz = new SimpleMatrix(rows, cols);
-        SimpleMatrix std = variances.plus(epsilon).elementPower(0.5);
-        SimpleMatrix scalingFactor = scale.elementDiv(std);
+    public INDArray gradientPreBNSimple(INDArray dLdzHat) {
+        int rows = dLdzHat.rows();
+        int cols = dLdzHat.columns();
+        INDArray dLdz = Nd4j.create(rows, cols);
+        INDArray std = Transforms.pow(variances.add(epsilon), 0.5);
+        INDArray scalingFactor = scale.div(std);
 
         for (int i = 0; i < rows; i++) {
-            dLdz.setRow(i, dLdzHat.getRow(i).transpose().elementMult(scalingFactor));
+            dLdz.putRow(i, dLdzHat.getRow(i).transpose().mul(scalingFactor));
         }
 
         return dLdz;

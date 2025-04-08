@@ -2,7 +2,7 @@ package com.nn.training.callbacks;
 
 public class EarlyStopping extends Callback{
     private String monitor;
-    private double minChange = 0;
+    private float minChange = 0;
     private int patience = 0;
     private int epochStart = 0;
 
@@ -24,7 +24,7 @@ public class EarlyStopping extends Callback{
         return monitor;
     }
 
-    public double getMinChange() {
+    public float getMinChange() {
         return minChange;
     }
 
@@ -36,7 +36,7 @@ public class EarlyStopping extends Callback{
         return epochStart;
     }
 
-    // public boolean checkStop(double[] lossHistory) {
+    // public boolean checkStop(float[] lossHistory) {
 
     // }
 }

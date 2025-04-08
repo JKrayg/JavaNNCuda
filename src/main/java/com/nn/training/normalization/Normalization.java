@@ -1,32 +1,31 @@
 package com.nn.training.normalization;
 
-import org.ejml.simple.SimpleMatrix;
-
+import org.nd4j.linalg.api.ndarray.INDArray;
 import com.nn.training.optimizers.Optimizer;
 
 public abstract class Normalization {
     public abstract boolean isBeforeActivation();
-    public abstract void setScale(SimpleMatrix scale);
-    public abstract void setShift(SimpleMatrix shift);
-    public abstract void setMeans(SimpleMatrix means);
-    public abstract void setVariances(SimpleMatrix variances);
-    public abstract void setShiftMomentum(SimpleMatrix shM);
-    public abstract void setShiftVariance(SimpleMatrix shV);
-    public abstract void setScaleMomentum(SimpleMatrix scM);
-    public abstract void setScaleVariance(SimpleMatrix scV);
+    public abstract void setScale(INDArray scale);
+    public abstract void setShift(INDArray shift);
+    public abstract void setMeans(INDArray means);
+    public abstract void setVariances(INDArray variances);
+    public abstract void setShiftMomentum(INDArray shM);
+    public abstract void setShiftVariance(INDArray shV);
+    public abstract void setScaleMomentum(INDArray scM);
+    public abstract void setScaleVariance(INDArray scV);
     public abstract void updateScale(Optimizer o);
     public abstract void updateShift(Optimizer o);
-    public abstract SimpleMatrix getShiftMomentum();
-    public abstract SimpleMatrix getShiftVariance();
-    public abstract SimpleMatrix getScaleMomentum();
-    public abstract SimpleMatrix getScaleVariance();
-    public abstract SimpleMatrix getScale();
-    public abstract SimpleMatrix getShift();
-    public abstract SimpleMatrix getGradientShift();
-    public abstract SimpleMatrix getGradientScale();
-    public abstract SimpleMatrix gradientShift(SimpleMatrix gradient);
-    public abstract SimpleMatrix gradientScale(SimpleMatrix gradient);
-    public abstract SimpleMatrix getNormZ();
-    public abstract SimpleMatrix normalize(SimpleMatrix z);
+    public abstract INDArray getShiftMomentum();
+    public abstract INDArray getShiftVariance();
+    public abstract INDArray getScaleMomentum();
+    public abstract INDArray getScaleVariance();
+    public abstract INDArray getScale();
+    public abstract INDArray getShift();
+    public abstract INDArray getGradientShift();
+    public abstract INDArray getGradientScale();
+    public abstract INDArray gradientShift(INDArray gradient);
+    public abstract INDArray gradientScale(INDArray gradient);
+    public abstract INDArray getNormZ();
+    public abstract INDArray normalize(INDArray z);
     
 }

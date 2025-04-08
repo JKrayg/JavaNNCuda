@@ -1,3 +1,4 @@
+
 // import org.nd4j.linalg.api.ndarray.INDArray;
 // import org.nd4j.linalg.factory.Nd4j;
 // import org.nd4j.linalg.factory.Nd4jBackend;
@@ -30,10 +31,13 @@
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
-
-import org.ejml.simple.SimpleMatrix;
 import java.io.File;
 import java.io.FileNotFoundException;
+
+import org.nd4j.linalg.api.buffer.DataType;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.cpu.nativecpu.NDArray;
+import org.nd4j.linalg.factory.Nd4j;
 
 import com.nn.Data;
 import com.nn.activation.*;
@@ -50,7 +54,7 @@ public class Main {
         // String filePath = "src\\resources\\datasets\\wdbc.data";
         // String filePath = "src\\resources\\datasets\\iris.data";
         String filePath = "src\\resources\\datasets\\mnist.csv";
-        ArrayList<double[]> dataArrayList = new ArrayList<>();
+        ArrayList<float[]> dataArrayList = new ArrayList<>();
         // ArrayList<String> labelsArrayList = new ArrayList<>();
         ArrayList<Integer> labelsArrayList = new ArrayList<>();
         
@@ -62,12 +66,12 @@ public class Main {
                 // ** iris data **
                 // String line = scan.nextLine();
                 // String values = line.substring(0, line.lastIndexOf(","));
-                // double[] toDub;
+                // float[] toDub;
                 // String[] splitValues = values.split(",");
-                // toDub = new double[splitValues.length];
+                // toDub = new float[splitValues.length];
 
                 // for (int i = 0; i < splitValues.length; i++) {
-                //     toDub[i] = Double.parseDouble(splitValues[i]);
+                //     toDub[i] = float.parsefloat(splitValues[i]);
                 // }
 
                 // dataArrayList.add(toDub);
@@ -80,13 +84,13 @@ public class Main {
                 // String[] splitLine = line.split(",", 3);
                 // String label = splitLine[1];
                 // labelsArrayList.add(label);
-                // double[] toDub;
+                // float[] toDub;
                 // String values = splitLine[2];
                 // String[] splitValues = values.split(",");
-                // toDub = new double[splitValues.length];
+                // toDub = new float[splitValues.length];
 
                 // for (int i = 0; i < splitValues.length; i++) {
-                //     toDub[i] = Double.parseDouble(splitValues[i]);
+                //     toDub[i] = float.parsefloat(splitValues[i]);
                 // }
 
                 // dataArrayList.add(toDub);
@@ -96,13 +100,13 @@ public class Main {
                 String[] splitLine = line.split(",", 2);
                 int label = Integer.parseInt(splitLine[0]);
                 labelsArrayList.add(label);
-                double[] toDub;
+                float[] toDub;
                 String values = splitLine[1];
                 String[] splitValues = values.split(",");
-                toDub = new double[splitValues.length];
+                toDub = new float[splitValues.length];
 
                 for (int i = 0; i < splitValues.length; i++) {
-                    toDub[i] = Double.parseDouble(splitValues[i]);
+                    toDub[i] = Float.parseFloat(splitValues[i]);
                 }
 
                 dataArrayList.add(toDub);
@@ -114,14 +118,37 @@ public class Main {
         }
 
 
-        double[][] data_ = dataArrayList.toArray(new double[0][]);
+        float[][] data_ = dataArrayList.toArray(new float[0][]);
         // String[] labels = labelsArrayList.toArray(new String[0]);
         Integer[] labels = labelsArrayList.toArray(new Integer[0]);
 
-        // System.out.println(new SimpleMatrix(data_).getRow(0));
+        // int batchSize = 32; // Guess - adjust to yours
+        // int features = 784; // E.g., MNIST
+        // int hidden = 256;
+        // INDArray inputs = Nd4j.rand(new int[]{1300 * batchSize, features});
+        // INDArray weights1 = Nd4j.rand(new int[]{features, hidden});
+        // INDArray weights2 = Nd4j.rand(new int[]{hidden, 10});
+
+        // System.out.println("Batch Size: " + batchSize);
+        // System.out.println("Input Shape: " + java.util.Arrays.toString(inputs.shape()));
+        // System.out.println("Weights1 Shape: " + java.util.Arrays.toString(weights1.shape()));
+        // System.out.println("Data Type: " + inputs.dataType());
+
+        // long start = System.nanoTime();
+        // for (int i = 0; i < 600; i++) {
+        //     int startIdx = i * batchSize;
+        //     INDArray batch = inputs.getRows(startIdx, startIdx + batchSize - 1);
+        //     INDArray hiddenL = batch.mmul(weights1); // Forward
+        //     INDArray output = hiddenL.mmul(weights2);
+        //     INDArray grad = output.sub(1.0f); // Dummy backprop
+        // }
+        // long time = System.nanoTime() - start;
+        // System.out.println("Time for 600 batches: " + time / 1e6 + " ms");
+
+        // System.out.println(new INDArray(data_).getRow(0));
         // System.out.println(labelsI[0]);
 
-        // double[][] testerData = new double[75][];
+        // float[][] testerData = new float[75][];
         // String[] testerLabels = new String[75];
         // Random rand = new Random();
 
@@ -144,14 +171,14 @@ public class Main {
             256,
             new ReLU(),
             784);
-        d1.addRegularizer(new Dropout(0.2));
+        // d1.addRegularizer(new Dropout(0.2));
         // d1.addRegularizer(new L2(0.01));
         // d1.addNormalization(new BatchNormalization());
 
         Dense d2 = new Dense(
             128,
             new ReLU());
-        d2.addRegularizer(new Dropout(0.2));
+        // d2.addRegularizer(new Dropout(0.2));
         // d2.addRegularizer(new L2(0.01));
         // d2.addNormalization(new BatchNormalization());
 
@@ -165,39 +192,7 @@ public class Main {
         nn.addLayer(d2);
         nn.addLayer(d3);
         nn.compile(new Adam(0.001), new MultiClassMetrics());
-        nn.miniBatchFit(data.getTrainData(), data.getTestData(), data.getValData(), 32, 10);
-        // SimpleMatrix dataa = data.getTrainData().extractMatrix(
-        //         0, data.getTrainData().getNumRows(), 0, data.getTrainData().getNumCols() - (data.getClasses().size() > 2 ? data.getClasses().size() : 1));
-        // SimpleMatrix labelss = data.getTrainData().extractMatrix(
-        //         0, data.getTrainData().getNumRows(), data.getTrainData().getNumCols() - (data.getClasses().size() > 2 ? data.getClasses().size() : 1), data.getTrainData().getNumCols());
-        // nn.forwardPass(dataa, labelss);
-        
-        // System.out.println("Initial output: " + d5.getActivations().extractVector(true, 0));
-        // for (Layer l : nn.getLayers()) {
-        //     System.out.println(l.getActivations());
-            
-        // }
-
-        // BatchNormalization b = new BatchNormalization();
-        // b.setScale(new SimpleMatrix(new double[]{1, 1, 1}));
-        // b.setShift(new SimpleMatrix(new double[]{12, 12, 12}));
-        // b.setMeans(new SimpleMatrix(new double[]{2, 2, 2}));
-        // b.setVariances(new SimpleMatrix(new double[]{3, 3, 3}));
-        // b.setPreNormZ(new SimpleMatrix(new double[][]{{13, 14, 15}, {16, 17, 18}, {19, 20, 21}, {22, 23, 24}}));
-        // SimpleMatrix dLdzHat = new SimpleMatrix(new double[][]{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}});
-        // Dropout d = new Dropout(0.2);
-        // System.out.println(dLdzHat);
-        // System.out.println(d.regularize(dLdzHat));
-        // // System.out.println(b.means(dLdzHat));
-        // // b.setMeans(b.means(dLdzHat));
-        // // System.out.println(b.variances(dLdzHat));
-        // // System.out.println(b.getScale());
-        // // System.out.println(b.getMeans());
-        // // System.out.println(b.getVariances());
-        // // System.out.println(b.getPreNormZ());
-        // // System.out.println(dLdzHat);
-
-        // System.out.println(b.gradientPreBN(dLdzHat));
+        nn.miniBatchFit(data.getTrainData(), data.getTestData(), data.getValData(), 32, 1);
 
     }
 }

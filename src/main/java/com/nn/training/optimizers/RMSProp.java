@@ -1,36 +1,37 @@
 package com.nn.training.optimizers;
 
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 
 import com.nn.components.Layer;
 import com.nn.training.normalization.Normalization;
 
 public class RMSProp extends Optimizer {
-    private double learningRate;
+    private float learningRate;
 
-    public RMSProp(double learningRate) {
+    public RMSProp(float learningRate) {
         this.learningRate = learningRate;
     }
 
-    public SimpleMatrix executeWeightsUpdate(Layer l) {
+    public INDArray executeWeightsUpdate(Layer l) {
         // **
         return l.getWeights();
     }
 
-    public SimpleMatrix executeBiasUpdate(Layer l) {
+    public INDArray executeBiasUpdate(Layer l) {
         // **
         return l.getBias();
     }
 
-    public SimpleMatrix executeShiftUpdate(Normalization n) {
-        return new SimpleMatrix(0, 0);
+    public INDArray executeShiftUpdate(Normalization n) {
+        return Nd4j.create(0, 0);
     }
 
-    public SimpleMatrix executeScaleUpdate(Normalization n) {
-        return new SimpleMatrix(0, 0);
+    public INDArray executeScaleUpdate(Normalization n) {
+        return Nd4j.create(0, 0);
     }
 
-    public double getLearningRate() {
+    public float getLearningRate() {
         return learningRate;
     }
 }

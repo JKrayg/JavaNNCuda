@@ -1,56 +1,56 @@
 package com.nn.training.optimizers;
 
 import java.sql.BatchUpdateException;
-
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.ops.transforms.Transforms;
 
 import com.nn.components.Layer;
 import com.nn.training.normalization.BatchNormalization;
 import com.nn.training.normalization.Normalization;
 
 public class Adam extends Optimizer {
-    private double learningRate;
-    private double momentumDecay = 0.9;
-    private double varianceDecay = 0.999;
-    private double epsilon = 1e-8;
+    private float learningRate;
+    private float momentumDecay = 0.9f;
+    private float varianceDecay = 0.999f;
+    private float epsilon = 1e-8f;
     private int updateCount = 1;
 
     public Adam(double learningRate) {
-        this.learningRate = learningRate;
+        this.learningRate = (float) learningRate;
     }
     
     public void setMomentumDecay(double md) {
-        this.momentumDecay = md;
+        this.momentumDecay = (float) md;
     }
 
     public void setVarianceDecay(double vd) {
-        this.varianceDecay = vd;
+        this.varianceDecay = (float) vd;
     }
 
-    public void setEpsilon(double epsilon) {
+    public void setEpsilon(float epsilon) {
         this.epsilon = epsilon;
     }
     
-    public SimpleMatrix executeWeightsUpdate(Layer l) {
-        SimpleMatrix gWrtW = l.getGradientWeights();
+    public INDArray executeWeightsUpdate(Layer l) {
+        INDArray gWrtW = l.getGradientWeights();
         // System.out.println("weights gradient:");
         // System.out.println(gWrtW);
-        SimpleMatrix momentumOfWeights = l.getWeightsMomentum()
-                                         .scale(momentumDecay)
-                                         .plus(gWrtW.scale(1 - momentumDecay));
+        INDArray momentumOfWeights = l.getWeightsMomentum()
+                                         .mul(momentumDecay)
+                                         .add(gWrtW.mul(1 - momentumDecay));
 
-        SimpleMatrix varianceOfWeights = l.getWeightsVariance()
-                                         .scale(varianceDecay)
-                                         .plus(gWrtW.elementPower(2).scale(1 - varianceDecay));
+        INDArray varianceOfWeights = l.getWeightsVariance()
+                                         .mul(varianceDecay)
+                                         .add(Transforms.pow(gWrtW, 2).mul(1 - varianceDecay));
 
-        SimpleMatrix currWeights = l.getWeights();
-        SimpleMatrix biasCorrectedMomentum = momentumOfWeights.divide(1 - Math.pow(momentumDecay, updateCount));
-        SimpleMatrix biasCorrectedVariance = varianceOfWeights.divide(1 - Math.pow(varianceDecay, updateCount));
-        SimpleMatrix biasCorrection = biasCorrectedMomentum
-                                      .elementDiv(biasCorrectedVariance.elementPower(0.5).plus(epsilon))
-                                      .scale(learningRate);
+        INDArray currWeights = l.getWeights();
+        INDArray biasCorrectedMomentum = momentumOfWeights.div(1 - Math.pow(momentumDecay, updateCount));
+        INDArray biasCorrectedVariance = varianceOfWeights.div(1 - Math.pow(varianceDecay, updateCount));
+        INDArray biasCorrection = biasCorrectedMomentum
+                                      .div(Transforms.pow(biasCorrectedVariance, 0.5).add(epsilon))
+                                      .mul(learningRate);
 
-        SimpleMatrix updatedWeights = currWeights.minus(biasCorrection);
+        INDArray updatedWeights = currWeights.sub(biasCorrection);
 
         l.setWeightsMomentum(momentumOfWeights);
         l.setWeightsVariance(varianceOfWeights);
@@ -58,26 +58,33 @@ public class Adam extends Optimizer {
         return updatedWeights;
     }
 
-    public SimpleMatrix executeBiasUpdate(Layer l) {
-        SimpleMatrix gWrtB = l.getGradientBias();
+    public INDArray executeBiasUpdate(Layer l) {
+        INDArray gWrtB = l.getGradientBias();
+        // System.out.println(gWrtB.rows() + "x" + gWrtB.columns());
+        int rows = gWrtB.rows();
+        int cols = gWrtB.columns();
         // System.out.println("bias gradient:");
         // System.out.println(gWrtB);
-        SimpleMatrix momentumOfBiases = l.getBiasMomentum()
-                                        .scale(momentumDecay)
-                                        .plus(gWrtB.scale(1 - momentumDecay));
+        // System.out.println(l.getBiasMomentum().mul(momentumDecay).rows() + 
+        //     " x " + l.getBiasMomentum().mul(momentumDecay).columns());
+        // System.out.println(gWrtB.mul(1 - momentumDecay).rows() + 
+        //     " x " + gWrtB.mul(1 - momentumDecay).columns());
+        INDArray momentumOfBiases = l.getBiasMomentum()
+                                        .mul(momentumDecay)
+                                        .add(gWrtB.mul(1 - momentumDecay));
 
-        SimpleMatrix varianceOfBias = l.getBiasVariance()
-                                      .scale(varianceDecay)
-                                      .plus(gWrtB.elementPower(2).scale(1 - varianceDecay));
+        INDArray varianceOfBias = l.getBiasVariance()
+                                      .mul(varianceDecay)
+                                      .add(Transforms.pow(gWrtB, 2).mul(1 - varianceDecay));
 
-        SimpleMatrix currBiases = l.getBias();
-        SimpleMatrix biasCorrectedMomentum = momentumOfBiases.divide(1 - Math.pow(momentumDecay, updateCount));
-        SimpleMatrix biasCorrectedVariance = varianceOfBias.divide(1 - Math.pow(varianceDecay, updateCount));
-        SimpleMatrix biasCorrection = biasCorrectedMomentum
-                                      .elementDiv(biasCorrectedVariance.elementPower(0.5).plus(epsilon))
-                                      .scale(learningRate);
+        INDArray currBiases = l.getBias();
+        INDArray biasCorrectedMomentum = momentumOfBiases.div(1 - Math.pow(momentumDecay, updateCount));
+        INDArray biasCorrectedVariance = varianceOfBias.div(1 - Math.pow(varianceDecay, updateCount));
+        INDArray biasCorrection = biasCorrectedMomentum
+                                      .div(Transforms.pow(biasCorrectedVariance,0.5).add(epsilon))
+                                      .mul(learningRate);
 
-        SimpleMatrix updatedBiases = currBiases.minus(biasCorrection);
+        INDArray updatedBiases = currBiases.sub(biasCorrection);
 
         l.setBiasesMomentum(momentumOfBiases);
         l.setBiasesVariance(varianceOfBias);
@@ -85,26 +92,26 @@ public class Adam extends Optimizer {
         return updatedBiases;
     }
 
-    public SimpleMatrix executeShiftUpdate(Normalization n) {
-        SimpleMatrix gWrtSh = n.getGradientShift();
+    public INDArray executeShiftUpdate(Normalization n) {
+        INDArray gWrtSh = n.getGradientShift();
         // System.out.println("shift gradient:");
         // System.out.println(gWrtSh);
-        SimpleMatrix momentumOfShifts = n.getShiftMomentum()
-                                         .scale(momentumDecay)
-                                         .plus(gWrtSh.scale(1 - momentumDecay));
+        INDArray momentumOfShifts = n.getShiftMomentum()
+                                         .mul(momentumDecay)
+                                         .add(gWrtSh.mul(1 - momentumDecay));
 
-        SimpleMatrix varianceOfShifts = n.getShiftVariance()
-                                         .scale(varianceDecay)
-                                         .plus(gWrtSh.elementPower(2).scale(1 - varianceDecay));
+        INDArray varianceOfShifts = n.getShiftVariance()
+                                         .mul(varianceDecay)
+                                         .add(Transforms.pow(gWrtSh,2).mul(1 - varianceDecay));
 
-        SimpleMatrix currShifts = n.getShift();
-        SimpleMatrix biasCorrectedMomentum = momentumOfShifts.divide(1 - Math.pow(momentumDecay, updateCount));
-        SimpleMatrix biasCorrectedVariance = varianceOfShifts.divide(1 - Math.pow(varianceDecay, updateCount));
-        SimpleMatrix biasCorrection = biasCorrectedMomentum
-                                      .elementDiv(biasCorrectedVariance.elementPower(0.5).plus(epsilon))
-                                      .scale(learningRate);
+        INDArray currShifts = n.getShift();
+        INDArray biasCorrectedMomentum = momentumOfShifts.div(1 - Math.pow(momentumDecay, updateCount));
+        INDArray biasCorrectedVariance = varianceOfShifts.div(1 - Math.pow(varianceDecay, updateCount));
+        INDArray biasCorrection = biasCorrectedMomentum
+                                      .div(Transforms.pow(biasCorrectedVariance,0.5).add(epsilon))
+                                      .mul(learningRate);
 
-        SimpleMatrix updatedShifts = currShifts.minus(biasCorrection);
+        INDArray updatedShifts = currShifts.sub(biasCorrection);
 
         n.setShiftMomentum(momentumOfShifts);
         n.setShiftVariance(varianceOfShifts);
@@ -112,26 +119,26 @@ public class Adam extends Optimizer {
         return updatedShifts;
     }
 
-    public SimpleMatrix executeScaleUpdate(Normalization n) {
-        SimpleMatrix gWrtSc = n.getGradientScale();
+    public INDArray executeScaleUpdate(Normalization n) {
+        INDArray gWrtSc = n.getGradientScale();
         // System.out.println("scale gradient:");
         // System.out.println(gWrtSc);
-        SimpleMatrix momentumOfScale = n.getScaleMomentum()
-                                         .scale(momentumDecay)
-                                         .plus(gWrtSc.scale(1 - momentumDecay));
+        INDArray momentumOfScale = n.getScaleMomentum()
+                                         .mul(momentumDecay)
+                                         .add(gWrtSc.mul(1 - momentumDecay));
 
-        SimpleMatrix varianceOfScale = n.getScaleVariance()
-                                         .scale(varianceDecay)
-                                         .plus(gWrtSc.elementPower(2).scale(1 - varianceDecay));
+        INDArray varianceOfScale = n.getScaleVariance()
+                                         .mul(varianceDecay)
+                                         .add(Transforms.pow(gWrtSc,2).mul(1 - varianceDecay));
 
-        SimpleMatrix currScale = n.getScale();
-        SimpleMatrix biasCorrectedMomentum = momentumOfScale.divide(1 - Math.pow(momentumDecay, updateCount));
-        SimpleMatrix biasCorrectedVariance = varianceOfScale.divide(1 - Math.pow(varianceDecay, updateCount));
-        SimpleMatrix biasCorrection = biasCorrectedMomentum
-                                      .elementDiv(biasCorrectedVariance.elementPower(0.5).plus(epsilon))
-                                      .scale(learningRate);
+        INDArray currScale = n.getScale();
+        INDArray biasCorrectedMomentum = momentumOfScale.div(1 - Math.pow(momentumDecay, updateCount));
+        INDArray biasCorrectedVariance = varianceOfScale.div(1 - Math.pow(varianceDecay, updateCount));
+        INDArray biasCorrection = biasCorrectedMomentum
+                                      .div(Transforms.pow(biasCorrectedVariance,0.5).add(epsilon))
+                                      .mul(learningRate);
 
-        SimpleMatrix updatedScale = currScale.minus(biasCorrection);
+        INDArray updatedScale = currScale.sub(biasCorrection);
 
         n.setScaleMomentum(momentumOfScale);
         n.setScaleVariance(varianceOfScale);
@@ -139,19 +146,19 @@ public class Adam extends Optimizer {
         return updatedScale;
     }
 
-    public double getLearningRate() {
+    public float getLearningRate() {
         return learningRate;
     }
 
-    public double getMomentumDecay() {
+    public float getMomentumDecay() {
         return momentumDecay;
     }
 
-    public double getVarianceDecay() {
+    public float getVarianceDecay() {
         return varianceDecay;
     }
 
-    public double getEpsilon() {
+    public float getEpsilon() {
         return epsilon;
     }
 

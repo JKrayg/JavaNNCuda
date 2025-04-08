@@ -5,7 +5,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.buffer.DataType;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.NDArrayIndex;
+
 import com.nn.activation.*;
 import com.nn.initialize.*;
 import com.nn.layers.*;
@@ -21,11 +25,11 @@ public class NeuralNet {
     private ArrayList<Layer> layers;
     private Optimizer optimizer;
     private Metrics metrics;
-    private double loss;
-    private double valLoss;
+    private float loss;
+    private float valLoss;
     private int numClasses;
     private MathUtils maths = new MathUtils();
-    private LinkedList<Double> lossHistory;
+    private LinkedList<Float> lossHistory;
     private ArrayList<Callback> callbacks;
 
     public ArrayList<Layer> getLayers() {
@@ -34,12 +38,12 @@ public class NeuralNet {
 
     public void addLayer(Layer l) {
         ActivationFunction actFunc = l.getActFunc();
-        SimpleMatrix biases = new SimpleMatrix(l.getNumNeurons(), 1);
+        INDArray biases = Nd4j.create(l.getNumNeurons(), 1);
         if (this.layers != null) {
             Layer prevLayer = this.layers.get(this.layers.size() - 1);
             if (actFunc instanceof ReLU) {
                 l.setWeights(new HeInit().initWeight(prevLayer, l));
-                biases.fill(0.1);
+                biases.addi(0.1);
                 l.setBiases(biases);
             } else {
                 l.setWeights(new GlorotInit().initWeight(prevLayer, l));
@@ -48,22 +52,23 @@ public class NeuralNet {
         } else {
             layers = new ArrayList<>();
             if (actFunc instanceof ReLU) {
-                l.setWeights(new SimpleMatrix(new HeInit().initWeight(l.getInputSize(), l)));
-                biases.fill(0.1);
+                l.setWeights(new HeInit().initWeight(l.getInputSize(), l));
+                biases.addi(0.1);
                 l.setBiases(biases);
             } else {
-                l.setWeights(new SimpleMatrix(new GlorotInit().initWeight(l.getInputSize(), l)));
+                l.setWeights(new GlorotInit().initWeight(l.getInputSize(), l));
                 l.setBiases(biases);
             }
         }
+
 
         // init for batch normalization
         int numNeur = l.getNumNeurons();
         if (l.getNormalization() instanceof BatchNormalization) {
             BatchNormalization norm = (BatchNormalization) l.getNormalization();
-            SimpleMatrix scVar = new SimpleMatrix(numNeur, 1);
-            scVar.fill(1.0);
-            SimpleMatrix shMeans = new SimpleMatrix(numNeur, 1);
+            INDArray scVar = Nd4j.create(numNeur, 1);
+            scVar.addi(1.0);
+            INDArray shMeans = Nd4j.create(numNeur, 1);
             norm.setScale(scVar);
             norm.setShift(shMeans);
             norm.setMeans(shMeans);
@@ -86,16 +91,16 @@ public class NeuralNet {
             }
 
             if (optimizer instanceof Adam) {
-                SimpleMatrix weightsO = new SimpleMatrix(lyr.getWeights().getNumRows(), lyr.getWeights().getNumCols());
-                SimpleMatrix biasO = new SimpleMatrix(lyr.getBias().getNumRows(), lyr.getBias().getNumCols());
+                INDArray weightsO = Nd4j.create(lyr.getWeights().rows(), lyr.getWeights().columns());
+                INDArray biasO = Nd4j.create(lyr.getBias().rows(), lyr.getBias().columns());
                 lyr.setWeightsMomentum(weightsO);
                 lyr.setWeightsVariance(weightsO);
                 lyr.setBiasesMomentum(biasO);
                 lyr.setBiasesVariance(biasO);
                 Normalization norm = lyr.getNormalization();
                 if (norm != null) {
-                    SimpleMatrix shiftO = new SimpleMatrix(norm.getShift().getNumRows(), norm.getShift().getNumCols());
-                    SimpleMatrix scaleO = new SimpleMatrix(norm.getScale().getNumRows(), norm.getScale().getNumCols());
+                    INDArray shiftO = Nd4j.create(norm.getShift().rows(), norm.getShift().columns());
+                    INDArray scaleO = Nd4j.create(norm.getScale().rows(), norm.getScale().columns());
                     norm.setShiftMomentum(shiftO);
                     norm.setShiftVariance(shiftO);
                     norm.setScaleMomentum(scaleO);
@@ -109,81 +114,94 @@ public class NeuralNet {
             for (Callback c : callbacks) {
                 if (c instanceof EarlyStopping) {
                     EarlyStopping es = (EarlyStopping) c;
-                    lossHistory = new LinkedList<Double>();
+                    lossHistory = new LinkedList<Float>();
                 }
                 break;
             }
         }
     }
 
-    public void miniBatchFit(SimpleMatrix train, SimpleMatrix test, SimpleMatrix validation, int batchSize, int epochs) {
+    public void miniBatchFit(INDArray train, INDArray test, INDArray validation, int batchSize, int epochs) {
         // shuffle data and get new batches of size batchSize for each epoch
+        System.out.println("minibatch");
         for (int i = 0; i < epochs; i++) {
-            ArrayList<SimpleMatrix> shuffled = new ArrayList<>();
-            ArrayList<SimpleMatrix> batchesData = new ArrayList<>();
-            ArrayList<SimpleMatrix> batchesLabels = new ArrayList<>();
-            for (int j = 0; j < train.getNumRows(); j++) {
+            System.out.println("epoch: " + i);
+            ArrayList<INDArray> shuffled = new ArrayList<>();
+            ArrayList<INDArray> batchesData = new ArrayList<>();
+            ArrayList<INDArray> batchesLabels = new ArrayList<>();
+            System.out.println("here1");
+            for (int j = 0; j < train.rows(); j++) {
                 shuffled.add(train.getRow(j));
             }
+            System.out.println("here2");
             Collections.shuffle(shuffled);
 
+            System.out.println("here3");
             for (int k = 0; k < shuffled.size() / batchSize; k++) {
-                SimpleMatrix currBatch = new SimpleMatrix(batchSize, train.getNumCols());
+                INDArray currBatch = Nd4j.create(batchSize, train.columns());
+                // System.out.println(currBatch.dataType()); //--------------------------------------
                 int count = 0;
                 for (int p = k * batchSize; p < k * batchSize + batchSize; p++) {
-                    currBatch.setRow(count, shuffled.get(p));
+                    currBatch.putRow(count, shuffled.get(p));
                     count += 1;
                 }
-                batchesData.add(currBatch.extractMatrix(
-                        0, currBatch.getNumRows(), 0, currBatch.getNumCols() - (numClasses > 2 ? numClasses : 1)));
-                batchesLabels.add(currBatch.extractMatrix(
-                        0, currBatch.getNumRows(), currBatch.getNumCols() - (numClasses > 2 ? numClasses : 1),
-                        currBatch.getNumCols()));
+                batchesData.add(currBatch.get(
+                        NDArrayIndex.interval(0, currBatch.rows()), NDArrayIndex.interval(0, currBatch.columns() - (numClasses > 2 ? numClasses : 1))));
+                batchesLabels.add(currBatch.get(
+                    NDArrayIndex.interval(0, currBatch.rows()), NDArrayIndex.interval(currBatch.columns() - (numClasses > 2 ? numClasses : 1),
+                        currBatch.columns())));
             }
+            System.out.println("here4");
 
             // last batch - find a better way
             if (shuffled.size() % batchSize > 0) {
-                SimpleMatrix lastBatch = new SimpleMatrix(shuffled.size() % batchSize, train.getNumCols());
+                INDArray lastBatch = Nd4j.create(shuffled.size() % batchSize, train.columns());
                 int count = 0;
+                System.out.println("here5");
                 for (int m = batchSize * (shuffled.size() / batchSize); m < shuffled.size(); m++) {
-                    lastBatch.setRow(count, shuffled.get(m));
+                    lastBatch.putRow(count, shuffled.get(m));
                     count += 1;
                 }
-                batchesData.add(lastBatch.extractMatrix(
-                        0, lastBatch.getNumRows(), 0, lastBatch.getNumCols() - (numClasses > 2 ? numClasses : 1)));
-                batchesLabels.add(lastBatch.extractMatrix(
-                        0, lastBatch.getNumRows(), lastBatch.getNumCols() - (numClasses > 2 ? numClasses : 1),
-                        lastBatch.getNumCols()));
+                System.out.println("here6");
+                batchesData.add(lastBatch.get(
+                    NDArrayIndex.interval(0, lastBatch.rows()), NDArrayIndex.interval(0, lastBatch.columns() - (numClasses > 2 ? numClasses : 1))));
+                batchesLabels.add(lastBatch.get(
+                    NDArrayIndex.interval(0, lastBatch.rows()), NDArrayIndex.interval(lastBatch.columns() - (numClasses > 2 ? numClasses : 1),
+                        lastBatch.columns())));
             }
 
             // do below for each batch
+            System.out.println("here7");
             for (int v = 0; v < batchesData.size(); v++) {
                 forwardPass(batchesData.get(v), batchesLabels.get(v));
                 backprop(batchesData.get(v), batchesLabels.get(v));
+                System.out.println("here" + (8+v));
 
                 if (optimizer instanceof Adam) {
                     ((Adam) optimizer).updateCount();
                 }
             }
 
+            System.out.println("herelast");
+
             this.loss = loss(train);
             this.valLoss = loss(validation);
             System.out.println("loss: " + loss + " - val loss: " + valLoss);
         }
-        // SimpleMatrix testData = test.extractMatrix(0, test.getNumRows(), 0,
-        //         test.getNumCols() - (numClasses > 2 ? numClasses : 1));
-        // SimpleMatrix testLabels = test.extractMatrix(0, test.getNumRows(),
-        //         test.getNumCols() - (numClasses > 2 ? numClasses : 1), test.getNumCols());
+        // INDArray testData = test.get(0, test.rows(), 0,
+        //         test.columns() - (numClasses > 2 ? numClasses : 1));
+        // INDArray testLabels = test.get(0, test.rows(),
+        //         test.columns() - (numClasses > 2 ? numClasses : 1), test.columns());
 
         // forwardPass(testData, testLabels);
         // Output outLayer = (Output) layers.get(layers.size() - 1);
         // // System.out.println("Prediction : one hot label");
-        // // for (int h = 0; h < testData.getNumRows(); h++) {
+        // // for (int h = 0; h < testData.rows(); h++) {
         // //     System.out.print(outLayer.getActivations().getRow(h).concatColumns(testLabels.getRow(h)));
         // // }
 
         // System.out.println("Prediction : True Value");
-        //  for (int h = 0; h < testData.getNumRows(); h++) {
+        //  for (int h = 0; h < testData.rows(); h++) {
         //      System.out.print(outLayer.getActivations().get(h));
         //      System.out.print(" : " + testLabels.get(h));
         //      System.out.println();
@@ -200,13 +218,13 @@ public class NeuralNet {
 
     }
 
-    public void batchFit(SimpleMatrix train, SimpleMatrix test, SimpleMatrix validation, int epochs) {
+    public void batchFit(INDArray train, INDArray test, INDArray validation, int epochs) {
         for (int i = 0; i < epochs; i++) {
-            SimpleMatrix data = train.extractMatrix(
-                    0, train.getNumRows(), 0,
-                    train.getNumCols() - (numClasses > 2 ? numClasses : 1));
-            SimpleMatrix labels = train.extractMatrix(
-                    0, train.getNumRows(), train.getNumCols() - (numClasses > 2 ? numClasses : 1), train.getNumCols());
+            INDArray data = train.get(
+                NDArrayIndex.interval(0, train.rows()), NDArrayIndex.interval(0,
+                    train.columns() - (numClasses > 2 ? numClasses : 1)));
+            INDArray labels = train.get(
+                NDArrayIndex.interval(0, train.rows()), NDArrayIndex.interval(train.columns() - (numClasses > 2 ? numClasses : 1), train.columns()));
 
             forwardPass(data, labels);
             backprop(data, labels);
@@ -226,9 +244,9 @@ public class NeuralNet {
         metrics(test);
     }
 
-    public void forwardPass(SimpleMatrix data, SimpleMatrix labels) {
+    public void forwardPass(INDArray data, INDArray labels) {
         Layer L1 = layers.get(0);
-        SimpleMatrix zL1 = maths.weightedSum(data, L1);
+        INDArray zL1 = maths.weightedSum(data, L1);
         ActivationFunction actF = L1.getActFunc();
         L1.setPreActivations(zL1);
 
@@ -238,7 +256,7 @@ public class NeuralNet {
             zL1 = nL1.normalize(zL1);
         }
         
-        SimpleMatrix aL1 = actF.execute(zL1);
+        INDArray aL1 = actF.execute(zL1);
 
         // dropout [find a better way to do this]
         if (L1.getRegularizers() != null) {
@@ -256,7 +274,7 @@ public class NeuralNet {
         for (int q = 1; q < layers.size(); q++) {
             Layer curr = layers.get(q);
             Layer prev = layers.get(q - 1);
-            SimpleMatrix z = maths.weightedSum(prev, curr);
+            INDArray z = maths.weightedSum(prev, curr);
             Normalization norm = curr.getNormalization();
             ActivationFunction actFunc = curr.getActFunc();
             curr.setPreActivations(z);
@@ -266,7 +284,7 @@ public class NeuralNet {
                 z = norm.normalize(z);
             }
 
-            SimpleMatrix activated = actFunc.execute(z); 
+            INDArray activated = actFunc.execute(z); 
 
             // dropout [find a better way to do this]
             if (curr.getRegularizers() != null) {
@@ -287,9 +305,9 @@ public class NeuralNet {
     }
 
 
-    public void backprop(SimpleMatrix data, SimpleMatrix labels) {
+    public void backprop(INDArray data, INDArray labels) {
         Output outLayer = (Output) layers.get(layers.size() - 1);
-        SimpleMatrix gradientWrtOutput = outLayer.getLoss().gradient(outLayer, outLayer.getLabels());
+        INDArray gradientWrtOutput = outLayer.getLoss().gradient(outLayer, outLayer.getLabels());
 
         // recursively get gradients
         getGradients(outLayer, gradientWrtOutput, data);
@@ -309,21 +327,21 @@ public class NeuralNet {
     }
 
 
-    public void getGradients(Layer currLayer, SimpleMatrix gradient, SimpleMatrix data) {
+    public void getGradients(Layer currLayer, INDArray gradient, INDArray data) {
         Layer curr = currLayer;
-        SimpleMatrix gradientWrtWeights;
-        SimpleMatrix gradientWrtBias;
+        INDArray gradientWrtWeights;
+        INDArray gradientWrtBias;
 
         // batch normalization gradients
         Normalization norm = curr.getNormalization();
-        SimpleMatrix grad;
+        INDArray grad;
         if (norm instanceof BatchNormalization) {
             BatchNormalization batchNorm = (BatchNormalization) norm;
             grad = batchNorm.gradientPreBN(gradient);
             batchNorm.setGradientShift(batchNorm.gradientShift(gradient));
             batchNorm.setGradientScale(batchNorm.gradientScale(gradient));
         } else {
-            grad = gradient.copy();
+            grad = gradient.dup();
         }
 
         // weights/bias gradients
@@ -350,7 +368,7 @@ public class NeuralNet {
         if (curr.getRegularizers() != null) {
             for (Regularizer r : curr.getRegularizers()) {
                 if (r instanceof L1 || r instanceof L2) {
-                    gradientWrtWeights = gradientWrtWeights.plus(r.regularize(currLayer.getWeights()));
+                    gradientWrtWeights = gradientWrtWeights.add(r.regularize(currLayer.getWeights()));
                 }
                 break;
             }
@@ -362,27 +380,27 @@ public class NeuralNet {
 
         if (layers.indexOf(curr) > 0) {
             Layer prev = layers.get(layers.indexOf(curr) - 1);
-            SimpleMatrix next = prev.getActFunc().gradient(prev, grad.mult(currLayer.getWeights().transpose()));
+            INDArray next = prev.getActFunc().gradient(prev, grad.mmul(currLayer.getWeights().transpose()));
             getGradients(prev, next, data);
         }
     }
 
-    public void metrics(SimpleMatrix test) {
-        SimpleMatrix testData = test.extractMatrix(
-                0, test.getNumRows(), 0, test.getNumCols() - (numClasses > 2 ? numClasses : 1));
-        SimpleMatrix testLabels = test.extractMatrix(
-                0, test.getNumRows(), test.getNumCols() - (numClasses > 2 ? numClasses : 1), test.getNumCols());
+    public void metrics(INDArray test) {
+        INDArray testData = test.get(
+            NDArrayIndex.interval(0, test.rows()), NDArrayIndex.interval(0, test.columns() - (numClasses > 2 ? numClasses : 1)));
+        INDArray testLabels = test.get(
+            NDArrayIndex.interval(0, test.rows()), NDArrayIndex.interval(test.columns() - (numClasses > 2 ? numClasses : 1), test.columns()));
 
         forwardPass(testData, testLabels);
         Output outLayer = (Output) layers.get(layers.size() - 1);
         metrics.getMetrics(outLayer.getActivations(), testLabels);
     }
 
-    public double loss(SimpleMatrix d) {
-        SimpleMatrix data = d.extractMatrix(
-                0, d.getNumRows(), 0, d.getNumCols() - (numClasses > 2 ? numClasses : 1));
-        SimpleMatrix labels = d.extractMatrix(
-                0, d.getNumRows(), d.getNumCols() - (numClasses > 2 ? numClasses : 1), d.getNumCols());
+    public float loss(INDArray d) {
+        INDArray data = d.get(
+            NDArrayIndex.interval(0, d.rows()), NDArrayIndex.interval(0, d.columns() - (numClasses > 2 ? numClasses : 1)));
+        INDArray labels = d.get(
+            NDArrayIndex.interval(0, d.rows()), NDArrayIndex.interval(d.columns() - (numClasses > 2 ? numClasses : 1), d.columns()));
 
         forwardPass(data, labels);
         Output outLayer = (Output) layers.get(layers.size() - 1);

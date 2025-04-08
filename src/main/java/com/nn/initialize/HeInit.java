@@ -1,26 +1,28 @@
 package com.nn.initialize;
 
 import java.util.Random;
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
+
 import com.nn.components.Layer;
 
 public class HeInit extends InitWeights {
-    public SimpleMatrix initWeight(Layer prev, Layer curr) {
-        return new SimpleMatrix(setWeights(prev.getNumNeurons(), curr.getNumNeurons()));
+    public INDArray initWeight(Layer prev, Layer curr) {
+        return Nd4j.create(setWeights(prev.getNumNeurons(), curr.getNumNeurons()));
     }
 
-    public SimpleMatrix initWeight(int inputSize, Layer curr) {
-        return new SimpleMatrix(setWeights(inputSize, curr.getNumNeurons()));
+    public INDArray initWeight(int inputSize, Layer curr) {
+        return Nd4j.create(setWeights(inputSize, curr.getNumNeurons()));
     }
 
-    private static double[][] setWeights(int rows, int cols) {
-        double std = Math.sqrt(2.0 / rows);
-        double[][] weights = new double[rows][cols];
+    private static float[][] setWeights(int rows, int cols) {
+        float std = (float) Math.sqrt(2.0 / rows);
+        float[][] weights = new float[rows][cols];
         Random rand = new Random();
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                weights[i][j] = rand.nextGaussian() * std;
+                weights[i][j] = (float) (rand.nextGaussian() * std);
             }
         }
 

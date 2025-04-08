@@ -1,13 +1,14 @@
 package com.nn.layers;
 
-import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 import com.nn.activation.ActivationFunction;
 import com.nn.components.Layer;
 import com.nn.training.loss.Loss;
 import com.nn.training.regularizers.Regularizer;
 
 public class Output extends Layer {
-    private SimpleMatrix labels;
+    private INDArray labels;
     private Loss loss;
 
     public Output(int numNeurons, ActivationFunction actFunc, Loss loss) {
@@ -19,26 +20,26 @@ public class Output extends Layer {
         return loss;
     }
 
-    public void setLabels(SimpleMatrix labels) {
+    public void setLabels(INDArray labels) {
         this.labels = labels;
     }
 
-    public SimpleMatrix getLabels() {
+    public INDArray getLabels() {
         return labels;
     }
 
     // check
-    public SimpleMatrix gradientWeights(Layer prevLayer, SimpleMatrix gradientWrtOutput) {
-        return prevLayer.getActivations().transpose().mult(gradientWrtOutput).divide(labels.getNumElements());
+    public INDArray gradientWeights(Layer prevLayer, INDArray gradientWrtOutput) {
+        return prevLayer.getActivations().transpose().mmul(gradientWrtOutput).div(labels.length());
     }
 
     // check
-    public SimpleMatrix gradientBias(SimpleMatrix gradientWrtOutput) {
-        double[] biasG = new double[this.getNumNeurons()];
-        for (int i = 0; i < gradientWrtOutput.getNumCols(); i++) {
-            SimpleMatrix col = gradientWrtOutput.extractVector(false, i);
-            biasG[i] = col.elementSum() / labels.getNumElements();
+    public INDArray gradientBias(INDArray gradientWrtOutput) {
+        float[][] biasG = new float[this.getNumNeurons()][1];
+        for (int i = 0; i < gradientWrtOutput.columns(); i++) {
+            INDArray col = gradientWrtOutput.getColumn(i);
+            biasG[i][0] = col.sumNumber().floatValue() / labels.length();
         }
-        return new SimpleMatrix(biasG);
+        return Nd4j.create(biasG);
     }
 }
