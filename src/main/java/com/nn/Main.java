@@ -29,6 +29,7 @@
 
 // // Jake Krayger
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
 import java.io.File;
@@ -38,6 +39,7 @@ import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.cpu.nativecpu.NDArray;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 
 import com.nn.Data;
 import com.nn.activation.*;
@@ -148,11 +150,11 @@ public class Main {
         // System.out.println(new INDArray(data_).getRow(0));
         // System.out.println(labelsI[0]);
 
-        // float[][] testerData = new float[75][];
-        // String[] testerLabels = new String[75];
+        // float[][] testerData = new float[45][];
+        // Integer[] testerLabels = new Integer[45];
         // Random rand = new Random();
 
-        // for (int i = 0; i < 75; i++) {
+        // for (int i = 0; i < 45; i++) {
         //     int r = rand.nextInt(0, labels.length);
         //     testerData[i] = data_[r].clone();
         //     testerLabels[i] = labels[r];
@@ -164,7 +166,32 @@ public class Main {
         data.minMaxNormalization();
         // data.zScoreNormalization();
 
-        data.split(0.20, 0.20);
+        // float[][] allData = data.getData().toFloatMatrix(); // [600x784]
+        // INDArray inputs = Nd4j.create(allData); // [600x784]
+        // INDArray targets = data.getLabels();
+        // // Weights
+        // INDArray weights1 = Nd4j.rand(DataType.FLOAT, new int[]{784, 256});
+        // INDArray weights2 = Nd4j.rand(DataType.FLOAT, new int[]{256, 10});
+
+        // // Test epoch
+        // long start = System.nanoTime();
+        // INDArray hidden = inputs.mmul(weights1); // [600, 256]
+        // INDArray output = hidden.mmul(weights2); // [600, 10]
+        // INDArray gradOutput = output.sub(targets); // [600, 10]
+        // INDArray gradHidden = gradOutput.mmul(weights2.transpose()); // [600, 256]
+        // weights1.subi(inputs.transpose().mmul(gradHidden)); // [784, 256]
+        // weights2.subi(hidden.transpose().mmul(gradOutput)); // [256, 10]
+        // double timeMs = (System.nanoTime() - start) / 1e6;
+
+        // // Output
+        // System.out.println("Input Shape: " + Arrays.toString(inputs.shape()));
+        // System.out.println("Target Shape: " + Arrays.toString(targets.shape()));
+        // System.out.println("Data Type: " + inputs.dataType());
+        // System.out.println("Epoch Time: " + timeMs + " ms");
+
+        
+
+        data.split(0.0009, 0.0009);
 
         NeuralNet nn = new NeuralNet();
         Dense d1 = new Dense(
@@ -192,7 +219,19 @@ public class Main {
         nn.addLayer(d2);
         nn.addLayer(d3);
         nn.compile(new Adam(0.001), new MultiClassMetrics());
+        INDArray testData = data.getTrainData().get(NDArrayIndex.interval(0, data.getTrainData().rows()),
+            NDArrayIndex.interval(0, data.getTrainData().columns() - (data.getClasses().size() > 2 ? data.getClasses().size() : 1)));
+        INDArray testLabels = data.getTrainData().get(NDArrayIndex.interval(0, data.getTrainData().rows()),
+            NDArrayIndex.interval(data.getTrainData().columns() - (data.getClasses().size() > 2 ? data.getClasses().size() : 1), data.getTrainData().columns()));
+
+        // nn.forwardPass(testData, testLabels);
+        // nn.backprop(testData, testLabels);
         nn.miniBatchFit(data.getTrainData(), data.getTestData(), data.getValData(), 32, 1);
+
+
+        // long totalStart = System.nanoTime();
+        // double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
+        // System.out.println("Total forward Time: " + totalTimeMs + " ms");
 
     }
 }

@@ -10,18 +10,11 @@ import com.nn.components.Layer;
 public class Softmax extends ActivationFunction {
     // weighted sum for single node ∑(wi⋅xi)+b
     public INDArray execute(INDArray z) {
-        int cols = z.columns();
-        int rows = z.rows();
-        INDArray res = Nd4j.create(rows, cols);
-
-        for (int j = 0; j < rows; j++) {
-            INDArray currRow = z.getRow(j);
-            float max = currRow.maxNumber().floatValue();
-            // potential problem -----------------------------------------------------
-            INDArray expRow = Transforms.exp(currRow.sub(max));
-            float sum = expRow.sumNumber().floatValue();
-            res.putRow(j, expRow.div(sum));
-        }
+        INDArray max = z.max(1);
+        INDArray zs = z.subColumnVector(max);
+        INDArray expZ = Transforms.exp(zs);
+        INDArray sumExpZ = expZ.sum(1);
+        INDArray res = expZ.divColumnVector(sumExpZ);
 
         return res;
     }

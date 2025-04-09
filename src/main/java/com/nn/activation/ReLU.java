@@ -1,35 +1,25 @@
 package com.nn.activation;
 
+
+import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.cpu.nativecpu.NDArray;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.BooleanIndexing;
+import org.nd4j.linalg.indexing.conditions.Conditions;
+
 import com.nn.components.Layer;
 
 public class ReLU extends ActivationFunction {
     public INDArray execute(INDArray z) {
-        int rows = z.rows();
-        int cols = z.columns();
-        INDArray ez = Nd4j.create(rows, cols);
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                float curr = z.getFloat(i, j);
-                ez.putScalar(i, j, curr > 0 ? curr : 0);
-            }
-            
-        }
-        return ez;
+        INDArray d = z.dup();
+        INDArray az = d.gt(0).castTo(DataType.FLOAT).mul(z);
+        return az;
     }
 
     public INDArray derivative(INDArray z) {
-        int rows = z.rows();
-        int cols = z.columns();
-        INDArray dz = Nd4j.create(rows, cols);
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                dz.putScalar(i, j, z.getFloat(i, j) > 0 ? 1.0 : 0.0);
-            }
-            
-        }
+        INDArray d = z.dup();
+        INDArray dz = d.gt(0).castTo(DataType.FLOAT);
         return dz;
     }
 
