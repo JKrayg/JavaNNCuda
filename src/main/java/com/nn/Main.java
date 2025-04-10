@@ -38,6 +38,7 @@ import java.io.FileNotFoundException;
 import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.cpu.nativecpu.NDArray;
+import org.nd4j.linalg.exception.ND4JUnknownDataTypeException;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 
@@ -191,7 +192,7 @@ public class Main {
 
         
 
-        data.split(0.0009, 0.0009);
+        data.split(0.2, 0.2);
 
         NeuralNet nn = new NeuralNet();
         Dense d1 = new Dense(
@@ -223,15 +224,24 @@ public class Main {
             NDArrayIndex.interval(0, data.getTrainData().columns() - (data.getClasses().size() > 2 ? data.getClasses().size() : 1)));
         INDArray testLabels = data.getTrainData().get(NDArrayIndex.interval(0, data.getTrainData().rows()),
             NDArrayIndex.interval(data.getTrainData().columns() - (data.getClasses().size() > 2 ? data.getClasses().size() : 1), data.getTrainData().columns()));
-
+        
+        long totalStart = System.nanoTime();
         // nn.forwardPass(testData, testLabels);
         // nn.backprop(testData, testLabels);
+        
         nn.miniBatchFit(data.getTrainData(), data.getTestData(), data.getValData(), 32, 1);
+        // nn.batchFit(data.getTrainData(), data.getTestData(), data.getValData(), 30);
+        // System.out.println(11 % 2);
+
+        // INDArray s = Nd4j.create(new double[][]{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11 , 12}, {13, 14, 15}});
+        // System.out.println(s);
+        // Nd4j.shuffle(s, new Random(), 1);
+        // System.out.println(s);
 
 
         // long totalStart = System.nanoTime();
-        // double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
-        // System.out.println("Total forward Time: " + totalTimeMs + " ms");
+        double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
+        System.out.println("Total main Time: " + totalTimeMs + " ms");
 
     }
 }

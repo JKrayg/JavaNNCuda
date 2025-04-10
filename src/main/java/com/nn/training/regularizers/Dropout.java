@@ -7,8 +7,8 @@ import org.nd4j.linalg.factory.Nd4j;
 public class Dropout extends Regularizer{
     float p;
 
-    public Dropout(float p) {
-        this.p = p;
+    public Dropout(double p) {
+        this.p = (float) p;
     }
 
     public INDArray regularize(INDArray activations) {

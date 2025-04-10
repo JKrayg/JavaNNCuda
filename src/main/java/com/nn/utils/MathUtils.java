@@ -17,21 +17,23 @@ public class MathUtils {
 
     private static INDArray getWeightedSum(INDArray prev, Layer curr) {
         INDArray weights = curr.getWeights();
-        INDArray biasT = curr.getBias();
-        // System.out.println("-----------" + prev.dataType());
-        // System.out.println("+++++++++++" + weights.dataType());
-        INDArray dot = prev.mmul(weights);
-        int rows = dot.rows();
-        int cols = dot.columns();
-        float[][] bias = new float[rows][cols];
+        INDArray biasT = curr.getBias().transpose();
+        INDArray weighted  = prev.mmul(weights).add(biasT);
+        
+        // int rows = weighted.rows();
+        // int cols = weighted.columns();
+        // float[][] bias = new float[rows][cols];
 
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                bias[i][j] = biasT.getFloat(j);
-            }
-        }
+        // for (int i = 0; i < rows; i++) {
+        //     for (int j = 0; j < cols; j++) {
+        //         bias[i][j] = biasT.getFloat(j);
+        //     }
+        // }
 
-        return dot.add(Nd4j.create(bias));
+        // System.out.println(bias.length + "x" + bias[0].length);
+
+        return weighted;
+        // return dot.add(Nd4j.create(bias));
     }
 
     public float std(INDArray v) {
