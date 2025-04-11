@@ -1,8 +1,6 @@
 package com.nn.utils;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
-
 import com.nn.components.Layer;
 
 public class MathUtils {

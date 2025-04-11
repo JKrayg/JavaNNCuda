@@ -10,12 +10,8 @@ import com.nn.components.Layer;
 public class CatCrossEntropy extends Loss {
     public float execute(INDArray activations, INDArray labels) {
         int rows = activations.rows();
-        int cols = activations.columns();
-        INDArray error = Nd4j.create(rows, cols);
-        // need to prevent log(0)
-        for (int i = 0; i < rows; i++) {
-            error.putRow(i, labels.getRow(i).mul(Transforms.log(activations.getRow(i))));
-        }
+        INDArray error = labels.mul(Transforms.log(activations));
+        
         return -(error.sumNumber().floatValue() / rows);
     }
     

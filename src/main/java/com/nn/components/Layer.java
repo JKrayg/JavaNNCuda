@@ -190,12 +190,14 @@ public class Layer {
     }
 
     public INDArray gradientBias(INDArray gradient) {
-        float[][] biasG = new float[gradient.columns()][1];
-        for (int i = 0; i < gradient.columns(); i++) {
-            INDArray col = gradient.getColumn(i);
-            biasG[i][0] = col.sumNumber().floatValue() / gradient.rows();
-        }
-        return Nd4j.create(biasG);
+        INDArray sums = gradient.sum(0).reshape(gradient.columns(), 1);
+        return sums.div(gradient.rows());
+        // float[][] biasG = new float[gradient.columns()][1];
+        // for (int i = 0; i < gradient.columns(); i++) {
+        //     INDArray col = gradient.getColumn(i);
+        //     biasG[i][0] = col.sumNumber().floatValue() / gradient.rows();
+        // }
+        // return Nd4j.create(biasG);
     }
 
     public void updateWeights(Optimizer o) {

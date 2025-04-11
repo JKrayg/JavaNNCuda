@@ -8,6 +8,7 @@ import java.util.Random;
 import java.util.Set;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 
 import com.nn.utils.MathUtils;
 
@@ -143,82 +144,22 @@ public class Data {
     }
 
     public void split(double testSize, double valSize) {
-        // gotta be a better way
-        int rows = data.rows();
-        int cols = data.columns();
-        int numOfTest = (int) Math.floor(rows * testSize);
-        int numOfVal = (int) Math.floor(rows * valSize);
+        INDArray all = Nd4j.concat(1, data, labels);
+        Nd4j.shuffle(all, new Random(), 1);
+        int rows = all.rows();
 
-        float[][] testD = new float[numOfTest][cols];
-        float[][] valD = new float[numOfVal][cols];
-        float[][] trainD = new float[rows - (numOfTest + numOfVal)][cols];
+        int testSetSize = (int) (rows * testSize);
+        int valSetSize = (int) (rows * valSize);
+        int trainSetSize = rows - (testSetSize + valSetSize);
+
+        this.train = all.get(NDArrayIndex.interval(0,trainSetSize),
+                             NDArrayIndex.all());
+        this.test = all.get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize),
+                            NDArrayIndex.all());
+        this.validation = all.get(NDArrayIndex.interval(trainSetSize + testSetSize, rows),
+                                  NDArrayIndex.all());
         
-        float[][] testL = new float[numOfTest][classes.size() > 2 ? classes.size() : 0];
-        float[][] valL = new float[numOfVal][classes.size() > 2 ? classes.size() : 0];
-        float[][] trainL = new float[rows - (numOfTest + numOfVal)][classes.size() > 2 ? classes.size() : 0];
-
-        Random rand = new Random();
-        Set<Integer> used = new HashSet<>();
-
-        // test set
-        for (int i = 0; i < numOfTest; i++) {
-            int newRand = rand.nextInt(0, rows);
-            while (used.contains(newRand)) {
-                newRand = rand.nextInt(0, rows);
-            }
-            used.add(newRand);
-
-            // potential problem ---------------------------------------------------------------
-            testD[i] = data.getRow(newRand).toFloatVector();
-            // System.out.println(labels.rows());
-            // System.out.println(Nd4j.create(labels.getRow(newRand).tofloatVector()));
-            testL[i] = labels.getRow(newRand).toFloatVector();
-        }
-
-        // validation set
-        for (int j = 0; j < numOfVal; j++) {
-            int newRand = rand.nextInt(0, rows);
-            while (used.contains(newRand)) {
-                newRand = rand.nextInt(0, rows);
-            }
-            used.add(newRand);
-
-            // potential problem ---------------------------------------------------------------
-            valD[j] = data.getRow(newRand).toFloatVector();
-            valL[j] = labels.getRow(newRand).toFloatVector();
-        }
-
-        // train set
-        ArrayList<float[]> trainDList = new ArrayList<>();
-        ArrayList<float[]> trainLList = new ArrayList<>();
-
-        for (int p = 0; p < rows; p++) {
-            if (!used.contains(p)) {
-
-                // potential problem ---------------------------------------------------------------
-                trainDList.add(data.getRow(p).toFloatVector());
-                trainLList.add(labels.getRow(p).toFloatVector());
-            }
-        }
-
-        for (int k = 0; k < trainDList.size(); k++) {
-            trainD[k] = trainDList.get(k);
-            trainL[k] = trainLList.get(k);
-        }
-
-        // potential problem ---------------------------------------------------------------
-        INDArray train = Nd4j.create(trainD);
-        train = Nd4j.hstack(train, Nd4j.create(trainL));
-
-        INDArray test = Nd4j.create(testD);
-        test = Nd4j.hstack(test, Nd4j.create(testL));
-
-        INDArray val = Nd4j.create(valD);
-        val = Nd4j.hstack(val, Nd4j.create(valL));
-
-        this.train = train;
-        this.test = test;
-        this.validation = val;
+        all = null;
 
 
     }

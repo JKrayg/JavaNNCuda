@@ -93,7 +93,7 @@ public class Main {
                 // toDub = new float[splitValues.length];
 
                 // for (int i = 0; i < splitValues.length; i++) {
-                //     toDub[i] = float.parsefloat(splitValues[i]);
+                //     toDub[i] = Float.parseFloat(splitValues[i]);
                 // }
 
                 // dataArrayList.add(toDub);
@@ -192,7 +192,7 @@ public class Main {
 
         
 
-        data.split(0.2, 0.2);
+        data.split(0.15, 0.15);
 
         NeuralNet nn = new NeuralNet();
         Dense d1 = new Dense(
@@ -226,15 +226,22 @@ public class Main {
             NDArrayIndex.interval(data.getTrainData().columns() - (data.getClasses().size() > 2 ? data.getClasses().size() : 1), data.getTrainData().columns()));
         
         long totalStart = System.nanoTime();
+        // long totalStartFor = System.nanoTime();
         // nn.forwardPass(testData, testLabels);
+        // double totalTimeMsFor = (System.nanoTime() - totalStartFor) / 1e6;
+        // System.out.println("Total forward Time: " + totalTimeMsFor + " ms");
+        // long totalStartBack = System.nanoTime();
         // nn.backprop(testData, testLabels);
+        // double totalTimeMsBack = (System.nanoTime() - totalStartBack) / 1e6;
+        // System.out.println("Total back Time: " + totalTimeMsBack + " ms");
         
-        nn.miniBatchFit(data.getTrainData(), data.getTestData(), data.getValData(), 32, 1);
+        nn.miniBatchFit(data.getTrainData(), data.getTestData(), data.getValData(), 32, 10);
         // nn.batchFit(data.getTrainData(), data.getTestData(), data.getValData(), 30);
-        // System.out.println(11 % 2);
 
         // INDArray s = Nd4j.create(new double[][]{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11 , 12}, {13, 14, 15}});
+        // INDArray s = Nd4j.create(new double[]{1, 2, 3, 4, 5, 6, 7, 8});
         // System.out.println(s);
+        // System.out.println(s.reshape(s.columns(), 1));
         // Nd4j.shuffle(s, new Random(), 1);
         // System.out.println(s);
 
