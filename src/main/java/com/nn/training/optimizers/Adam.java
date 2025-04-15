@@ -2,6 +2,7 @@ package com.nn.training.optimizers;
 
 import java.sql.BatchUpdateException;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.ops.transforms.Transforms;
 
 import com.nn.components.Layer;
@@ -31,66 +32,41 @@ public class Adam extends Optimizer {
         this.epsilon = epsilon;
     }
     
+    
     public INDArray executeWeightsUpdate(Layer l) {
-        INDArray gWrtW = l.getGradientWeights();
-        // System.out.println("weights gradient:");
-        // System.out.println(gWrtW);
-        INDArray momentumOfWeights = l.getWeightsMomentum()
-                                         .mul(momentumDecay)
-                                         .add(gWrtW.mul(1 - momentumDecay));
+        float momBiasCor = 1 - (float) Math.pow(momentumDecay, updateCount);
+        float varBiasCor = 1 - (float) Math.pow(varianceDecay, updateCount);
 
-        INDArray varianceOfWeights = l.getWeightsVariance()
-                                         .mul(varianceDecay)
-                                         .add(Transforms.pow(gWrtW, 2).mul(1 - varianceDecay));
+        l.setWeightsMomentum(l.getWeightsMomentum().mul(momentumDecay)
+                            .addi(l.getGradientWeights().mul(1 - momentumDecay)));
+        l.setWeightsVariance(l.getWeightsVariance().mul(varianceDecay)
+                            .addi(l.getGradientWeights().mul(l.getGradientWeights()).muli(1 - varianceDecay)));
 
-        INDArray currWeights = l.getWeights();
-        INDArray biasCorrectedMomentum = momentumOfWeights.div(1 - Math.pow(momentumDecay, updateCount));
-        INDArray biasCorrectedVariance = varianceOfWeights.div(1 - Math.pow(varianceDecay, updateCount));
-        INDArray biasCorrection = biasCorrectedMomentum
-                                      .div(Transforms.pow(biasCorrectedVariance, 0.5).add(epsilon))
-                                      .mul(learningRate);
-
-        INDArray updatedWeights = currWeights.sub(biasCorrection);
-
-        l.setWeightsMomentum(momentumOfWeights);
-        l.setWeightsVariance(varianceOfWeights);
-
-        return updatedWeights;
+        return l.getWeights().subi(l.getWeightsMomentum().div(momBiasCor)
+                             .divi(Transforms.pow(l.getWeightsVariance().div(varBiasCor), 0.5).addi(epsilon))
+                             .muli(learningRate));
     }
+
 
     public INDArray executeBiasUpdate(Layer l) {
-        INDArray gWrtB = l.getGradientBias();
-        // System.out.println(gWrtB.rows() + "x" + gWrtB.columns());
-        int rows = gWrtB.rows();
-        int cols = gWrtB.columns();
-        // System.out.println("bias gradient:");
-        // System.out.println(gWrtB);
-        // System.out.println(l.getBiasMomentum().mul(momentumDecay).rows() + 
-        //     " x " + l.getBiasMomentum().mul(momentumDecay).columns());
-        // System.out.println(gWrtB.mul(1 - momentumDecay).rows() + 
-        //     " x " + gWrtB.mul(1 - momentumDecay).columns());
-        INDArray momentumOfBiases = l.getBiasMomentum()
-                                        .mul(momentumDecay)
-                                        .add(gWrtB.mul(1 - momentumDecay));
+        float momBiasCor = 1 - (float) Math.pow(momentumDecay, updateCount);
+        float varBiasCor = 1 - (float) Math.pow(varianceDecay, updateCount);
+        
+        l.setBiasesMomentum(l.getBiasMomentum().mul(momentumDecay)
+                            .addi(l.getGradientBias().mul(1 - momentumDecay)));
+        l.setBiasesVariance(l.getBiasVariance().mul(varianceDecay)
+                            .addi(l.getGradientBias().mul(l.getGradientBias()).muli(1 - varianceDecay)));
 
-        INDArray varianceOfBias = l.getBiasVariance()
-                                      .mul(varianceDecay)
-                                      .add(Transforms.pow(gWrtB, 2).mul(1 - varianceDecay));
 
-        INDArray currBiases = l.getBias();
-        INDArray biasCorrectedMomentum = momentumOfBiases.div(1 - Math.pow(momentumDecay, updateCount));
-        INDArray biasCorrectedVariance = varianceOfBias.div(1 - Math.pow(varianceDecay, updateCount));
-        INDArray biasCorrection = biasCorrectedMomentum
-                                      .div(Transforms.pow(biasCorrectedVariance,0.5).add(epsilon))
-                                      .mul(learningRate);
-
-        INDArray updatedBiases = currBiases.sub(biasCorrection);
-
-        l.setBiasesMomentum(momentumOfBiases);
-        l.setBiasesVariance(varianceOfBias);
-
-        return updatedBiases;
+        return l.getBias().subi(l.getBiasMomentum().div(momBiasCor)
+                          .divi(Transforms.pow(l.getBiasVariance().div(varBiasCor),0.5).addi(epsilon))
+                          .muli(learningRate));
     }
+
+
+
+
+
 
     public INDArray executeShiftUpdate(Normalization n) {
         INDArray gWrtSh = n.getGradientShift();
@@ -105,11 +81,11 @@ public class Adam extends Optimizer {
                                          .add(Transforms.pow(gWrtSh,2).mul(1 - varianceDecay));
 
         INDArray currShifts = n.getShift();
-        INDArray biasCorrectedMomentum = momentumOfShifts.div(1 - Math.pow(momentumDecay, updateCount));
-        INDArray biasCorrectedVariance = varianceOfShifts.div(1 - Math.pow(varianceDecay, updateCount));
-        INDArray biasCorrection = biasCorrectedMomentum
-                                      .div(Transforms.pow(biasCorrectedVariance,0.5).add(epsilon))
-                                      .mul(learningRate);
+        // INDArray biasCorrectedMomentum = momentumOfShifts.div(1 - Math.pow(momentumDecay, updateCount));
+        // INDArray biasCorrectedVariance = varianceOfShifts.div(1 - Math.pow(varianceDecay, updateCount));
+        INDArray biasCorrection = momentumOfShifts.div(1 - Math.pow(momentumDecay, updateCount))
+                .div(Transforms.pow(varianceOfShifts.div(1 - Math.pow(varianceDecay, updateCount)),0.5).add(epsilon))
+                .mul(learningRate);
 
         INDArray updatedShifts = currShifts.sub(biasCorrection);
 

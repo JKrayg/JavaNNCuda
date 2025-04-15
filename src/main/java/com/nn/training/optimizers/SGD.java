@@ -8,8 +8,8 @@ import com.nn.training.normalization.Normalization;
 public class SGD extends Optimizer {
     private float learningRate;
 
-    public SGD(float learningRate) {
-        this.learningRate = learningRate;
+    public SGD(double learningRate) {
+        this.learningRate = (float) learningRate;
     }
 
     public INDArray executeWeightsUpdate(Layer l) {

@@ -17,21 +17,8 @@ public class MathUtils {
         INDArray weights = curr.getWeights();
         INDArray biasT = curr.getBias().transpose();
         INDArray weighted  = prev.mmul(weights).add(biasT);
-        
-        // int rows = weighted.rows();
-        // int cols = weighted.columns();
-        // float[][] bias = new float[rows][cols];
-
-        // for (int i = 0; i < rows; i++) {
-        //     for (int j = 0; j < cols; j++) {
-        //         bias[i][j] = biasT.getFloat(j);
-        //     }
-        // }
-
-        // System.out.println(bias.length + "x" + bias[0].length);
 
         return weighted;
-        // return dot.add(Nd4j.create(bias));
     }
 
     public float std(INDArray v) {

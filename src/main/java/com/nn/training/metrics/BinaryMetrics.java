@@ -1,5 +1,6 @@
 package com.nn.training.metrics;
 
+import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
@@ -30,15 +31,16 @@ public class BinaryMetrics extends Metrics {
     }
 
     public INDArray confusion(INDArray pred, INDArray trueVals) {
-        float[] preds = thresh(pred);
+        INDArray preds = thresh(pred);
+        INDArray confMatrix = Nd4j.create(2, 2);
         float tp = 0.0f;
         float fp = 0.0f;
         float tn = 0.0f;
         float fn = 0.0f; 
 
-        for (int i = 0; i < preds.length; i++) {
+        for (int i = 0; i < preds.rows(); i++) {
             float label = trueVals.getFloat(i);
-            if (preds[i] == 1.0) {
+            if (preds.getDouble(i) == 1.0) {
                 if (label == 1.0) {
                     tp += 1.0;
                 } else {
@@ -100,16 +102,17 @@ public class BinaryMetrics extends Metrics {
     }
 
 
-    public float[] thresh(INDArray pred) {
-        float[] preds = new float[pred.rows()];
-        for (int i = 0; i < preds.length; i++) {
-            if (pred.getFloat(i) > threshold) {
-                preds[i] = 1.0f;
-            } else {
-                preds[i] = 0.0f;
-            }
-        }
+    public INDArray thresh(INDArray pred) {
+        INDArray t = pred.gt(threshold).castTo(DataType.FLOAT);
+        // float[] preds = new float[pred.rows()];
+        // for (int i = 0; i < preds.length; i++) {
+        //     if (pred.getFloat(i) > threshold) {
+        //         preds[i] = 1.0f;
+        //     } else {
+        //         preds[i] = 0.0f;
+        //     }
+        // }
 
-        return preds;
+        return t;
     }
 }

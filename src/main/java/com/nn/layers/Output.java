@@ -35,19 +35,7 @@ public class Output extends Layer {
 
     // check
     public INDArray gradientBias(INDArray gradientWrtOutput) {
-        // System.out.println(gradientWrtOutput.rows() + "x" + gradientWrtOutput.columns());
         INDArray sums = gradientWrtOutput.sum(0).reshape(gradientWrtOutput.columns(), 1);
-        // System.out.println(sums.rows() + "x" + sums.columns());
-        // INDArray d = sums.div(labels.length());
-        // System.out.println(d.rows() + "x" + d.columns());
         return sums.div(labels.length());
-        // float[][] biasG = new float[this.getNumNeurons()][1];
-        // for (int i = 0; i < gradientWrtOutput.columns(); i++) {
-        //     INDArray col = gradientWrtOutput.getColumn(i);
-        //     biasG[i][0] = col.sumNumber().floatValue() / labels.length();
-        // }
-
-        // System.out.println(biasG.length + "x" + biasG[0].length);
-        // return Nd4j.ones(0);
     }
 }

@@ -27,7 +27,7 @@ public class Layer {
     private INDArray gradientWrtWeights;
     private INDArray gradientWrtBiases;
     private ActivationFunction func;
-    private Loss loss;
+    // private Loss loss;
     private ArrayList<Regularizer> regularizers;
     private Normalization normalization;
     private int inputSize;
@@ -59,6 +59,10 @@ public class Layer {
 
     public void setWeights(INDArray weights) {
         this.weights = weights;
+    }
+
+    public void setActivationFunction(ActivationFunction a) {
+        this.func = a;
     }
 
     public void setBiases(INDArray biases) {
@@ -97,17 +101,9 @@ public class Layer {
         this.gradientWrtBiases = gWrtB;
     }
 
-    // public void setGradientShift(INDArray gWrtSh) {
-    //     ((BatchNormalization) this.normalization).setScale(gWrtSh);
+    // public void setLoss(Loss loss) {
+    //     this.loss = loss;
     // }
-
-    // public void setGradientScale(INDArray gWrtSc) {
-    //     ((BatchNormalization) this.normalization).setScale(gWrtSc);
-    // }
-
-    public void setLoss(Loss loss) {
-        this.loss = loss;
-    }
 
     public int getNumNeurons() {
         return numNeurons;
@@ -161,9 +157,9 @@ public class Layer {
         return inputSize;
     }
 
-    public Loss getLoss() {
-        return loss;
-    }
+    // public Loss getLoss() {
+    //     return loss;
+    // }
 
     public INDArray getGradientWeights() {
         return gradientWrtWeights;
@@ -176,7 +172,7 @@ public class Layer {
     public INDArray getGradient() {
         INDArray gradient = null;
         if (this instanceof Output) {
-            gradient = this.getLoss().gradient(this, ((Output) this).getLabels());
+            gradient = ((Output)this).getLoss().gradient(this, ((Output) this).getLabels());
         } else {
             gradient = func.gradient(this, preActivation);
         }
@@ -192,12 +188,6 @@ public class Layer {
     public INDArray gradientBias(INDArray gradient) {
         INDArray sums = gradient.sum(0).reshape(gradient.columns(), 1);
         return sums.div(gradient.rows());
-        // float[][] biasG = new float[gradient.columns()][1];
-        // for (int i = 0; i < gradient.columns(); i++) {
-        //     INDArray col = gradient.getColumn(i);
-        //     biasG[i][0] = col.sumNumber().floatValue() / gradient.rows();
-        // }
-        // return Nd4j.create(biasG);
     }
 
     public void updateWeights(Optimizer o) {

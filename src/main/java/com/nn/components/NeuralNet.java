@@ -10,6 +10,7 @@ import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.random.custom.RandomShuffle;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 
 import com.nn.activation.*;
@@ -31,7 +32,7 @@ public class NeuralNet {
     private float valLoss;
     private int numClasses;
     private MathUtils maths = new MathUtils();
-    private LinkedList<Float> lossHistory;
+    private INDArray lossHistory;
     private ArrayList<Callback> callbacks;
 
     public ArrayList<Layer> getLayers() {
@@ -112,35 +113,42 @@ public class NeuralNet {
         }
 
         // callbacks [find a better way to do this]
-        if (callbacks != null) {
-            for (Callback c : callbacks) {
-                if (c instanceof EarlyStopping) {
-                    EarlyStopping es = (EarlyStopping) c;
-                    lossHistory = new LinkedList<Float>();
-                }
-                break;
-            }
-        }
+        // if (callbacks != null) {
+        //     for (Callback c : callbacks) {
+        //         if (c instanceof EarlyStopping) {
+        //             EarlyStopping es = (EarlyStopping) c;
+        //             lossHistory = new LinkedList<Float>();
+        //         }
+        //         break;
+        //     }
+        // }
     }
 
+
     public void miniBatchFit(INDArray train, INDArray test, INDArray validation, int batchSize, int epochs) {
-
-        long totalStart = System.nanoTime();
-
         for (int i = 0; i < epochs; i++) {
+            // run(train, batchSize);
+            this.lossHistory = null;
+            long totalStart1 = System.nanoTime();
+            Output outLayer = (Output) layers.get(layers.size() - 1);
 
             // shuffle data
             Nd4j.shuffle(train, new Random(), 1);
+            
 
             // do below for each batch
             int rows = train.rows();
             int cols = train.columns();
+            INDArray currBatch;
+            INDArray data;
+            INDArray labels;
+
             for (int k = 0; k < rows - (rows % batchSize); k += batchSize) {
-                INDArray currBatch = train.get(NDArrayIndex.interval(k, (k + batchSize)));
-                INDArray data = currBatch.get(NDArrayIndex.all(), NDArrayIndex.interval(0, cols - numClasses));
-                INDArray labels = currBatch.get(NDArrayIndex.all(), NDArrayIndex.interval(cols - numClasses, cols));
+                currBatch = train.get(NDArrayIndex.interval(k, (k + batchSize)));
+                data = currBatch.get(NDArrayIndex.all(), NDArrayIndex.interval(0, cols - numClasses));
+                labels = currBatch.get(NDArrayIndex.all(), NDArrayIndex.interval(cols - numClasses, cols));
                 forwardPass(data, labels);
-                backprop(data, labels);
+                // backprop(data, labels);
 
                 if (optimizer instanceof Adam) {
                     ((Adam) optimizer).updateCount();
@@ -149,25 +157,33 @@ public class NeuralNet {
 
             // last batch
             if (rows % batchSize != 0) {
-                INDArray currBatch = train.get(NDArrayIndex.interval(batchSize - (rows % batchSize), batchSize));
-                INDArray data = currBatch.get(NDArrayIndex.all(), NDArrayIndex.interval(0, cols - numClasses));
-                INDArray labels = currBatch.get(NDArrayIndex.all(), NDArrayIndex.interval(cols - numClasses, cols));
+                currBatch = train.get(NDArrayIndex.interval(batchSize - (rows % batchSize), batchSize));
+                data = currBatch.get(NDArrayIndex.all(), NDArrayIndex.interval(0, cols - numClasses));
+                labels = currBatch.get(NDArrayIndex.all(), NDArrayIndex.interval(cols - numClasses, cols));
                 forwardPass(data, labels);
+                long totalStart2 = System.nanoTime();
                 backprop(data, labels);
+                double totalTimeMs2 = (System.nanoTime() - totalStart2) / 1e6;
+                System.out.println("backprop Time: " + totalTimeMs2 + " ms");
 
                 if (optimizer instanceof Adam) {
                     ((Adam) optimizer).updateCount();
                 }
             }
 
-            // print loss
-            this.loss = loss(train);
-            this.valLoss = loss(validation);
-            System.out.println("loss: " + loss + " - val loss: " + valLoss);
-        }
 
-        double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
-        System.out.println("Total epoch Time: " + totalTimeMs + " ms");
+            // print loss
+            int numL = lossHistory.columns();
+            this.loss = lossHistory.sumNumber().floatValue() / numL;
+            this.valLoss = loss(validation);
+
+            System.out.println("loss: " + this.loss + " - val loss: " + this.valLoss);
+
+            double totalTimeMs1 = (System.nanoTime() - totalStart1) / 1e6;
+            System.out.println("epoch Time: " + totalTimeMs1 + " ms");
+
+
+        }
 
         // metrics
         // System.out.println("train metrics: ");
@@ -181,20 +197,13 @@ public class NeuralNet {
 
     public void batchFit(INDArray train, INDArray test, INDArray validation, int epochs) {
         int cols = train.columns();
+        int rows = train.rows();
 
         for (int i = 0; i < epochs; i++) {
             INDArray dater = train.get(NDArrayIndex.all(), NDArrayIndex.interval(0, cols - numClasses));
             INDArray labels = train.get(NDArrayIndex.all(), NDArrayIndex.interval(cols - numClasses, cols));
             forwardPass(dater, labels);
             backprop(dater, labels);
-            // INDArray data = train.get(
-            //     NDArrayIndex.interval(0, train.rows()), NDArrayIndex.interval(0,
-            //         train.columns() - (numClasses > 2 ? numClasses : 1)));
-            // INDArray labels = train.get(
-            //     NDArrayIndex.interval(0, train.rows()), NDArrayIndex.interval(train.columns() - (numClasses > 2 ? numClasses : 1), train.columns()));
-
-            // forwardPass(data, labels);
-            // backprop(data, labels);
 
             if (optimizer instanceof Adam) {
                 ((Adam) optimizer).updateCount();
@@ -277,27 +286,47 @@ public class NeuralNet {
 
 
     public void backprop(INDArray data, INDArray labels) {
-        // long totalStart = System.nanoTime();
+        long t1 = System.nanoTime();
         Output outLayer = (Output) layers.get(layers.size() - 1);
-        INDArray gradientWrtOutput = outLayer.getLoss().gradient(outLayer, outLayer.getLabels());
+        Loss lossFunc = outLayer.getLoss();
+        INDArray loss = Nd4j.create(new float[]{lossFunc.execute(outLayer.getActivations(), outLayer.getLabels())});
+        if (this.lossHistory == null) {
+            this.lossHistory = loss;
+        } else {
+            this.lossHistory = Nd4j.hstack(this.lossHistory, loss);
+        }
+
+        INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getLabels());
 
         // recursively get gradients
+        // long totalStart = System.nanoTime();
+        long t2 = System.nanoTime();
         getGradients(outLayer, gradientWrtOutput, data);
+        long t3 = System.nanoTime();
+        // double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
+        // System.out.println("Total getGradients Time: " + totalTimeMs + " ms");
 
+        // totalStart = System.nanoTime();
         // update weights/biases
         for (Layer l : layers) {
             l.updateWeights(optimizer);
             l.updateBiases(optimizer);
 
             // update beta/gamma if batch normalzation
-            Normalization norm = l.getNormalization();
-            if (norm instanceof BatchNormalization) {
+            if (l.getNormalization() instanceof BatchNormalization) {
+                Normalization norm = l.getNormalization();
                 ((BatchNormalization) norm).updateShift(optimizer);
                 ((BatchNormalization) norm).updateScale(optimizer);
             }
         }
-        // double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
-        // System.out.println("Total backprop Time: " + totalTimeMs + " ms");
+        long t4 = System.nanoTime();
+
+        // System.out.println("first part: " + (t2 - t1)/1e6 + " ms");
+        // System.out.println("get gradients: " + (t3 - t2)/1e6 + " ms");
+        // System.out.println("weights/bias update: " + (t4 - t3)/1e6 + " ms");
+
+        // totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
+        // System.out.println("Total update Time: " + totalTimeMs + " ms");
     }
 
 
@@ -307,7 +336,7 @@ public class NeuralNet {
         INDArray gradientWrtBias;
 
         // batch normalization gradients
-        Normalization norm = curr.getNormalization();
+        Normalization norm = currLayer.getNormalization();
         INDArray grad;
         if (norm instanceof BatchNormalization) {
             BatchNormalization batchNorm = (BatchNormalization) norm;
@@ -315,15 +344,14 @@ public class NeuralNet {
             batchNorm.setGradientShift(batchNorm.gradientShift(gradient));
             batchNorm.setGradientScale(batchNorm.gradientScale(gradient));
         } else {
-            grad = gradient.dup();
+            grad = gradient;
         }
 
         // weights/bias gradients
         if (currLayer instanceof Output) {
-            Output out = (Output) curr;
-            Layer prev = layers.get(layers.indexOf(curr) - 1);
-            gradientWrtWeights = out.gradientWeights(prev, gradient);
-            gradientWrtBias = out.gradientBias(gradient);
+            Layer prev = layers.get(layers.indexOf(currLayer) - 1);
+            gradientWrtWeights = ((Output) currLayer).gradientWeights(prev, gradient);
+            gradientWrtBias = ((Output) currLayer).gradientBias(gradient);
         } else {
             Layer prev;
             if (layers.indexOf(curr) > 0) {
@@ -381,6 +409,7 @@ public class NeuralNet {
         
         return outLayer.getLoss().execute(outLayer.getActivations(), labels);
     }
+
 
     
 

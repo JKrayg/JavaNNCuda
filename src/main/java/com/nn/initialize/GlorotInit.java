@@ -15,6 +15,16 @@ public class GlorotInit extends InitWeights {
         return Nd4j.create(setWeights(inputSize, curr.getNumNeurons()));
     }
 
+    public INDArray initFilters(int[] inputSize, int numFilters) {
+        INDArray filters = Nd4j.create(inputSize[0], inputSize[1], inputSize[2], numFilters);
+        Random rand = new Random();
+        int fan_in = inputSize[0] * inputSize[1] * inputSize[2];
+        float varW = (float) (2.0 / (fan_in + numFilters));
+        filters.addi((float) (rand.nextGaussian() * Math.sqrt(varW)));
+
+        return filters;
+    }
+
     private static float[][] setWeights(int rows, int cols) {
         float varW = (float) (1.0 / (rows + cols));
         float[][] weights = new float[rows][cols];
