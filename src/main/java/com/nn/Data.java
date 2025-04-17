@@ -123,8 +123,8 @@ public class Data {
     }
 
     public INDArray oneHot(INDArray labels) {
-        INDArray encoded = Nd4j.create(labels.rows(), classes.size());
-        for (int i = 0; i < labels.rows(); i++) {
+        INDArray encoded = Nd4j.create(labels.length(), classes.size());
+        for (int i = 0; i < labels.length(); i++) {
             INDArray curr = Nd4j.create(1, classes.size());
             curr.putScalar((int) labels.getFloat(i), 1.0);
             encoded.putRow(i, curr);

@@ -61,17 +61,17 @@ public class Main {
         return images;
     }
 
-    public static int[][] loadMnistLabels(String path, int maxLabels) throws IOException {
+    public static float[] loadMnistLabels(String path, int maxLabels) throws IOException {
         DataInputStream dis = new DataInputStream(new FileInputStream(path));
         int magic = dis.readInt();
         if (magic != 0x00000801) throw new IOException("Invalid MNIST label file");
     
         int numLabels = dis.readInt();
         int labelCount = Math.min(numLabels, maxLabels);
-        int[][] labels = new int[labelCount][1];
+        float[] labels = new float[labelCount];
     
         for (int i = 0; i < labelCount; i++) {
-            labels[i][0] = dis.readUnsignedByte(); // Labels are from 0–9
+            labels[i] = dis.readUnsignedByte(); // Labels are from 0–9
         }
     
         dis.close();
@@ -80,7 +80,7 @@ public class Main {
     
     public static void main(String[] args) throws IOException {
         float[][][] testImages = loadMnist("src\\resources\\datasets\\mnist\\train-images.idx3-ubyte", 60000);
-        int[][] testLabels = loadMnistLabels("src\\resources\\datasets\\mnist\\train-labels.idx1-ubyte", 60000);
+        float[] testLabels = loadMnistLabels("src\\resources\\datasets\\mnist\\train-labels.idx1-ubyte", 60000);
         INDArray data_ = Nd4j.create(testImages);
         INDArray labels = Nd4j.create(testLabels);
 
