@@ -1,6 +1,7 @@
 package com.nn;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,10 +16,14 @@ import com.nn.utils.MathUtils;
 public class Data {
     private INDArray data;
     private INDArray labels;
-    private INDArray train;
-    private INDArray test;
-    private INDArray validation;
+    private INDArray trainData;
+    private INDArray trainLabels;
+    private INDArray testData;
+    private INDArray testLabels;
+    private INDArray valData;
+    private INDArray valLabels;
     private HashMap<String, Integer> classes;
+    // private HashMap<String, Float> classes2;
 
     public Data() {}
 
@@ -84,11 +89,44 @@ public class Data {
         
     }
 
+    public Data(INDArray data, INDArray labels) {
+        // System.out.println(labels.length);
+        this.data = data;
+
+        // create a hashtable of distinct labels mapped to an integer
+        HashMap<String, Integer> h = new HashMap<>();
+        for (int i: labels.toIntVector()) {
+            h.put(Integer.toString(i), i);
+        }
+
+        this.classes = h;
+
+        // create list of a label values
+        // float[] ls = new float[labels.length];
+        // for (int i = 0; i < labels.length; i++) {
+        //     ls[i] = classes.get(Integer.toString(labels[i]));
+        // }
+
+        // System.out.println(ls.length);
+
+        if (classes.size() > 2) {
+            this.labels = oneHot(labels);
+        } else {
+            this.labels = labels;
+        }
+
+        
+    }
+
+    public void flatten() {
+        this.data = data.reshape(data.size(0), data.size(1) * data.size(2));
+    }
+
     public INDArray oneHot(INDArray labels) {
-        INDArray encoded = Nd4j.create(labels.columns(), classes.size());
-        for (int i = 0; i < labels.columns(); i++) {
+        INDArray encoded = Nd4j.create(labels.rows(), classes.size());
+        for (int i = 0; i < labels.rows(); i++) {
             INDArray curr = Nd4j.create(1, classes.size());
-            curr.putScalar((int)labels.getFloat(i), 1.0);
+            curr.putScalar((int) labels.getFloat(i), 1.0);
             encoded.putRow(i, curr);
         }
 
@@ -104,15 +142,27 @@ public class Data {
     }
 
     public INDArray getTestData() {
-        return test;
+        return testData;
+    }
+
+    public INDArray getTestLabels() {
+        return testLabels;
     }
 
     public INDArray getTrainData() {
-        return train;
+        return trainData;
+    }
+
+    public INDArray getTrainLabels() {
+        return trainLabels;
     }
 
     public INDArray getValData() {
-        return validation;
+        return valData;
+    }
+
+    public INDArray getValLabels() {
+        return valLabels;
     }
 
     public HashMap<String, Integer> getClasses() {
@@ -144,22 +194,24 @@ public class Data {
     }
 
     public void split(double testSize, double valSize) {
-        INDArray all = Nd4j.concat(1, data, labels);
-        Nd4j.shuffle(all, new Random(), 1);
-        int rows = all.rows();
+        int rows = (int) data.size(0);
 
         int testSetSize = (int) (rows * testSize);
         int valSetSize = (int) (rows * valSize);
         int trainSetSize = rows - (testSetSize + valSetSize);
 
-        this.train = all.get(NDArrayIndex.interval(0,trainSetSize),
-                             NDArrayIndex.all());
-        this.test = all.get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize),
-                            NDArrayIndex.all());
-        this.validation = all.get(NDArrayIndex.interval(trainSetSize + testSetSize, rows),
-                                  NDArrayIndex.all());
-        
-        all = null;
+        this.trainData = data
+            .get(NDArrayIndex.interval(0, trainSetSize));
+        this.testData = data
+            .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize));
+        this.valData = data
+            .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows));
+        this.trainLabels = labels
+            .get(NDArrayIndex.interval(0, trainSetSize));
+        this.testLabels = labels
+            .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize));
+        this.valLabels = labels
+            .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows));
 
 
     }

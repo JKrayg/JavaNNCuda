@@ -6,13 +6,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.cpu.nativecpu.NDArray;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 
 import com.nn.activation.*;
@@ -25,107 +32,66 @@ import com.nn.training.optimizers.*;
 import com.nn.training.regularizers.*;
 
 public class Main {
-    public static void main(String[] args) {
-        // long totalStart = System.nanoTime();
-        // String filePath = "src\\resources\\datasets\\wdbc.data";
-        // String filePath = "src\\resources\\datasets\\iris.data";
-        String filePath = "src\\resources\\datasets\\mnist.csv";
-        // String mnistFolder = "src\\resources\\datasets\\mnist\\";
-        // String trainImages = mnistFolder + "train-images.idx3-ubyte";
-        // String trainLabels = mnistFolder + "train-labels.idx3-ubyte";
-        // String testImages = mnistFolder + "t10k-images.idx3-ubyte";
-        // String testLabels = mnistFolder + "t10k-labels.idx3-ubyte";
-        ArrayList<float[]> dataArrayList = new ArrayList<>();
-        // ArrayList<String> labelsArrayList = new ArrayList<>();
-        ArrayList<Integer> labelsArrayList = new ArrayList<>();
-        
+    private static String mnistFolder = "src\\resources\\datasets\\mnist\\";
+    private static String trainImages = mnistFolder + "train-images.idx3-ubyte";
+    private static String trainLabels = mnistFolder + "train-labels.idx3-ubyte";
+    private static String testImages = mnistFolder + "t10k-images.idx3-ubyte";
+    private static String testLabels = mnistFolder + "t10k-labels.idx3-ubyte";
+    public static float[][][] loadMnist(String path, int maxImages) throws IOException {
+        DataInputStream dis = new DataInputStream(new FileInputStream(path));
+        int magic = dis.readInt();
+        if (magic != 0x00000803) throw new IOException("Invalid MNIST image file");
 
-        try {
-            File f = new File(filePath);
-            Scanner scan = new Scanner(f);
-            while (scan.hasNextLine()) {
-                // ** iris data ** -----------------------------------------------
-                // String line = scan.nextLine();
-                // String values = line.substring(0, line.lastIndexOf(","));
-                // float[] toDub;
-                // String[] splitValues = values.split(",");
-                // toDub = new float[splitValues.length];
+        int numImages = dis.readInt();
+        int numRows = dis.readInt();
+        int numCols = dis.readInt();
 
-                // for (int i = 0; i < splitValues.length; i++) {
-                //     toDub[i] = float.parsefloat(splitValues[i]);
-                // }
+        int imageCount = Math.min(numImages, maxImages);
+        float[][][] images = new float[imageCount][numRows][numCols];
 
-                // dataArrayList.add(toDub);
-                // String label = line.substring(line.lastIndexOf(",") + 1);
-                // labelsArrayList.add(label);
-
-
-                // ** wdbc data ** ------------------------------------------------
-                // String line = scan.nextLine();
-                // String[] splitLine = line.split(",", 3);
-                // String label = splitLine[1];
-                // labelsArrayList.add(label);
-                // float[] toDub;
-                // String values = splitLine[2];
-                // String[] splitValues = values.split(",");
-                // toDub = new float[splitValues.length];
-
-                // for (int i = 0; i < splitValues.length; i++) {
-                //     toDub[i] = Float.parseFloat(splitValues[i]);
-                // }
-
-                // dataArrayList.add(toDub);
-
-                // ** mnist ** -----------------------------------------------------
-                String line = scan.nextLine();
-                String[] splitLine = line.split(",", 2);
-                int label = Integer.parseInt(splitLine[0]);
-                labelsArrayList.add(label);
-                float[] toDub;
-                String values = splitLine[1];
-                String[] splitValues = values.split(",");
-                toDub = new float[splitValues.length];
-
-                for (int i = 0; i < splitValues.length; i++) {
-                    toDub[i] = Float.parseFloat(splitValues[i]);
+        for (int i = 0; i < imageCount; i++) {
+            for (int r = 0; r < numRows; r++) {
+                for (int c = 0; c < numCols; c++) {
+                    images[i][r][c] = dis.readUnsignedByte(); // Normalize
                 }
-
-                dataArrayList.add(toDub);
-
             }
-            scan.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         }
 
+        dis.close();
+        return images;
+    }
 
-        float[][] data_ = dataArrayList.toArray(new float[0][]);
-        // String[] labels = labelsArrayList.toArray(new String[0]);
-        Integer[] labels = labelsArrayList.toArray(new Integer[0]);
-
-        // float[][] testerData = new float[45][];
-        // Integer[] testerLabels = new Integer[45];
-        // Random rand = new Random();
-
-        // for (int i = 0; i < 45; i++) {
-        //     int r = rand.nextInt(0, labels.length);
-        //     testerData[i] = data_[r].clone();
-        //     testerLabels[i] = labels[r];
-        // }
-
-        // Data data = new Data(testerData, testerLabels);
+    public static int[][] loadMnistLabels(String path, int maxLabels) throws IOException {
+        DataInputStream dis = new DataInputStream(new FileInputStream(path));
+        int magic = dis.readInt();
+        if (magic != 0x00000801) throw new IOException("Invalid MNIST label file");
+    
+        int numLabels = dis.readInt();
+        int labelCount = Math.min(numLabels, maxLabels);
+        int[][] labels = new int[labelCount][1];
+    
+        for (int i = 0; i < labelCount; i++) {
+            labels[i][0] = dis.readUnsignedByte(); // Labels are from 0–9
+        }
+    
+        dis.close();
+        return labels;
+    }
+    
+    public static void main(String[] args) throws IOException {
+        float[][][] testImages = loadMnist("src\\resources\\datasets\\mnist\\train-images.idx3-ubyte", 60000);
+        int[][] testLabels = loadMnistLabels("src\\resources\\datasets\\mnist\\train-labels.idx1-ubyte", 60000);
+        INDArray data_ = Nd4j.create(testImages);
+        INDArray labels = Nd4j.create(testLabels);
 
         Data data = new Data(data_, labels);
+        data.flatten();
         data.minMaxNormalization();
         // data.zScoreNormalization();
 
         
 
         data.split(0.15, 0.15);
-
-        
-        // double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
-        // System.out.println("Total data prep Time: " + totalTimeMs + " ms");
 
         // long totalStart = System.nanoTime();
         NeuralNet nn = new NeuralNet();
@@ -157,7 +123,9 @@ public class Main {
         
         long totalStart = System.nanoTime();
 
-        nn.miniBatchFit(data.getTrainData(), data.getTestData(), data.getValData(), 32, 5);
+        nn.miniBatchFit(data.getTrainData(), data.getTrainLabels(),
+                        data.getTestData(), data.getTestLabels(),
+                        data.getValData(), data.getValLabels(), 32, 1);
 
         double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
         System.out.println("Total mini batch Time: " + totalTimeMs + " ms");

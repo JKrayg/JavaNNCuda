@@ -281,7 +281,7 @@ public class BatchNormalization extends Normalization {
         INDArray scalingFactor = scale.div(std);
 
         for (int i = 0; i < rows; i++) {
-            dLdz.putRow(i, dLdzHat.getRow(i).transpose().mul(scalingFactor));
+            dLdz.putRow(i, dLdzHat.getRow(i).reshape(dLdzHat.columns(), 1).mul(scalingFactor));
         }
 
         return dLdz;
