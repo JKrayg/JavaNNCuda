@@ -1,2 +1,5 @@
 target/
 .vscode/
+src/resources/datasets/
+src/resources/datasets/cifar-10
+src/resources/datasets/mnist

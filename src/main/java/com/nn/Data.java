@@ -193,41 +193,43 @@ public class Data {
         }
     }
 
+    // only works for <= 3D
+    public void shuffle(INDArray data, INDArray labels) {
+         List<INDArray> arraysToShuffle;
+         boolean reshape = false;
+         long[] shape = data.shape();
+ 
+         if (data.shape().length == labels.shape().length) {
+             arraysToShuffle = Arrays.asList(data, labels);
+         } else {
+             arraysToShuffle = Arrays.asList(data.reshape(shape[0], shape[1]*shape[2]), labels);
+             reshape = true;
+         }
+ 
+         Nd4j.shuffle(arraysToShuffle, 1);
+         if (reshape) {
+             data = data.reshape(shape[0], shape[1], shape[2]);
+         }
+    }
+
     public void split(double testSize, double valSize) {
         int rows = (int) data.size(0);
-        List<INDArray> arraysToShuffle;
-        boolean reshape = false;
-        long[] shape = data.shape();
-
-        if (data.shape().length == labels.shape().length) {
-            arraysToShuffle = Arrays.asList(data, labels);
-        } else {
-            arraysToShuffle = Arrays.asList(data.reshape(shape[0], shape[1]*shape[2]), labels);
-            reshape = true;
-        }
-
-        Nd4j.shuffle(arraysToShuffle, 1);
-        if (reshape) {
-            data = data.reshape(shape[0], shape[1], shape[2]);
-        }
-
-
         int testSetSize = (int) (rows * testSize);
         int valSetSize = (int) (rows * valSize);
         int trainSetSize = rows - (testSetSize + valSetSize);
 
         this.trainData = data
-            .get(NDArrayIndex.interval(0, trainSetSize));
+            .get(NDArrayIndex.interval(0, trainSetSize), NDArrayIndex.all(), NDArrayIndex.all(), NDArrayIndex.all());
         this.testData = data
-            .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize));
+            .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize), NDArrayIndex.all(), NDArrayIndex.all(), NDArrayIndex.all());
         this.valData = data
-            .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows));
+            .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows), NDArrayIndex.all(), NDArrayIndex.all(), NDArrayIndex.all());
         this.trainLabels = labels
-            .get(NDArrayIndex.interval(0, trainSetSize));
+            .get(NDArrayIndex.interval(0, trainSetSize), NDArrayIndex.all());
         this.testLabels = labels
-            .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize));
+            .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize), NDArrayIndex.all());
         this.valLabels = labels
-            .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows));
+            .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows), NDArrayIndex.all());
 
 
     }

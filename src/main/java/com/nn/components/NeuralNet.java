@@ -219,39 +219,20 @@ public class NeuralNet {
     public void forwardPass(INDArray data, INDArray labels) {
         // this implies dense layer. we need to change this to do
         // a proper forward pass depending on the type of layer and input data 
-        // long totalStart = System.nanoTime();
-        Layer L1 = layers.get(0);
-        INDArray zL1 = maths.weightedSum(data, L1);
-        ActivationFunction actF = L1.getActFunc();
-        L1.setPreActivations(zL1);
-
-        // normalize before activation if batch normalization
-        Normalization nL1 = L1.getNormalization();
-        if (nL1 instanceof BatchNormalization) {
-            zL1 = nL1.normalize(zL1);
-        }
-        
-        INDArray aL1 = actF.execute(zL1);
-
-        // dropout [find a better way to do this]
-        if (L1.getRegularizers() != null) {
-            for (Regularizer r : L1.getRegularizers()) {
-                if (r instanceof Dropout) {
-                    aL1 = r.regularize(aL1);
-                }
-                break;
-            }
-        }
-        
-        L1.setActivations(aL1);
-        
-
-        for (int q = 1; q < layers.size(); q++) {
+        for (int q = 0; q < layers.size(); q++) {
             Layer curr = layers.get(q);
-            Layer prev = layers.get(q - 1);
-            INDArray z = maths.weightedSum(prev, curr);
+            Layer prev;
             Normalization norm = curr.getNormalization();
             ActivationFunction actFunc = curr.getActFunc();
+            INDArray z;
+
+            if (q == 0) {
+                z = maths.weightedSum(data, curr);
+            } else {
+                prev = layers.get(q - 1);
+                z = maths.weightedSum(prev, curr);
+            }
+            
             curr.setPreActivations(z);
             
             // normalize before activation if batch normalization
@@ -277,13 +258,9 @@ public class NeuralNet {
                 ((Output) curr).setLabels(labels);
             }
         }
-
-        // double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
-        // System.out.println("Total forward Time: " + totalTimeMs + " ms");
     }
 
     public void backprop(INDArray data, INDArray labels) {
-        long t1 = System.nanoTime();
         Output outLayer = (Output) layers.get(layers.size() - 1);
         Loss lossFunc = outLayer.getLoss();
         INDArray loss = Nd4j.create(new float[]{lossFunc.execute(outLayer.getActivations(), outLayer.getLabels())});
@@ -296,14 +273,8 @@ public class NeuralNet {
         INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getLabels());
 
         // recursively get gradients
-        // long totalStart = System.nanoTime();
-        long t2 = System.nanoTime();
         getGradients(outLayer, gradientWrtOutput, data);
-        long t3 = System.nanoTime();
-        // double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
-        // System.out.println("Total getGradients Time: " + totalTimeMs + " ms");
 
-        // totalStart = System.nanoTime();
         // update weights/biases
         for (Layer l : layers) {
             l.updateWeights(optimizer);
@@ -316,14 +287,6 @@ public class NeuralNet {
                 ((BatchNormalization) norm).updateScale(optimizer);
             }
         }
-        long t4 = System.nanoTime();
-
-        // System.out.println("first part: " + (t2 - t1)/1e6 + " ms");
-        // System.out.println("get gradients: " + (t3 - t2)/1e6 + " ms");
-        // System.out.println("weights/bias update: " + (t4 - t3)/1e6 + " ms");
-
-        // totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
-        // System.out.println("Total update Time: " + totalTimeMs + " ms");
     }
 
     public void getGradients(Layer currLayer, INDArray gradient, INDArray data) {
