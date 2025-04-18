@@ -189,7 +189,8 @@ public class Data {
     public void minMaxNormalization() {
         if (data != null) {
             float max = data.maxNumber().floatValue();
-            data = data.div(max);
+            float min = data.minNumber().floatValue();
+            data.subi(min / max - min);
         }
     }
 
