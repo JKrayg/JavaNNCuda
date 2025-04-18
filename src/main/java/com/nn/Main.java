@@ -79,32 +79,87 @@ public class Main {
     }
     
     public static void main(String[] args) throws IOException {
-        float[][][] testImages = loadMnist("src\\resources\\datasets\\mnist\\train-images.idx3-ubyte", 60000);
-        float[] testLabels = loadMnistLabels("src\\resources\\datasets\\mnist\\train-labels.idx1-ubyte", 60000);
-        INDArray data_ = Nd4j.create(testImages);
-        INDArray labels = Nd4j.create(testLabels);
+        // float[][][] testImages = loadMnist("src\\resources\\datasets\\mnist\\train-images.idx3-ubyte", 60000);
+        // float[] testLabels = loadMnistLabels("src\\resources\\datasets\\mnist\\train-labels.idx1-ubyte", 60000);
+        // INDArray data_ = Nd4j.create(testImages);
+        // INDArray labels = Nd4j.create(testLabels);
+        
+        String filePath = "src\\resources\\datasets\\iris.data";
+        ArrayList<String> labelsArrayList = new ArrayList<>();
+        ArrayList<float[]> dataArrayList = new ArrayList<>();
+
+        try {
+            File f = new File(filePath);
+            Scanner scan = new Scanner(f);
+            while (scan.hasNextLine()) {
+                // ** iris data ** -----------------------------------------------
+                String line = scan.nextLine();
+                String values = line.substring(0, line.lastIndexOf(","));
+                float[] toDub;
+                String[] splitValues = values.split(",");
+                toDub = new float[splitValues.length];
+
+                for (int i = 0; i < splitValues.length; i++) {
+                    toDub[i] = Float.parseFloat(splitValues[i]);
+                }
+
+                dataArrayList.add(toDub);
+                String label = line.substring(line.lastIndexOf(",") + 1);
+                labelsArrayList.add(label);
+
+            }
+            scan.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+
+        float[][] data_ = dataArrayList.toArray(new float[0][]);
+        String[] labels = labelsArrayList.toArray(new String[0]);
+
+        // float[][] testerData = new float[45][];
+        // Integer[] testerLabels = new Integer[45];
+        // Random rand = new Random();
+
+        // for (int i = 0; i < 45; i++) {
+        //     int r = rand.nextInt(0, labels.length);
+        //     testerData[i] = data_[r].clone();
+        //     testerLabels[i] = labels[r];
+        // }
+
+        // Data data = new Data(testerData, testerLabels);
 
         Data data = new Data(data_, labels);
-        data.flatten();
-        data.minMaxNormalization();
-        // data.zScoreNormalization();
+        // data.flatten();
+        // data.minMaxNormalization();
+        data.zScoreNormalization();
 
         
 
-        data.split(0.15, 0.15);
+        data.split(0.10, 0.10);
+
+        // System.out.println(Arrays.toString(data.getTrainData().shape()));
+        // System.out.println(Arrays.toString(data.getTrainLabels().shape()));
+        // System.out.println(Arrays.toString(data.getTestData().shape()));
+        // System.out.println(Arrays.toString(data.getTestLabels().shape()));
+        // System.out.println(Arrays.toString(data.getValData().shape()));
+        // System.out.println(Arrays.toString(data.getValLabels().shape()));
+
+        // System.out.println(data.getValData().get(NDArrayIndex.interval(0, 10)));
+        // System.out.println(data.getValLabels().get(NDArrayIndex.interval(0, 10)));
 
         // long totalStart = System.nanoTime();
         NeuralNet nn = new NeuralNet();
         Dense d1 = new Dense(
-            256,
+            16,
             new ReLU(),
-            784);
+            4);
         // d1.addRegularizer(new Dropout(0.2));
         // d1.addRegularizer(new L2(0.01));
         // d1.addNormalization(new BatchNormalization());
 
         Dense d2 = new Dense(
-            128,
+            8,
             new ReLU());
         // d2.addRegularizer(new Dropout(0.2));
         // d2.addRegularizer(new L2(0.01));
@@ -123,9 +178,9 @@ public class Main {
         
         long totalStart = System.nanoTime();
 
-        nn.miniBatchFit(data.getTrainData(), data.getTrainLabels(),
-                        data.getTestData(), data.getTestLabels(),
-                        data.getValData(), data.getValLabels(), 32, 1);
+        // nn.miniBatchFit(data.getTrainData(), data.getTrainLabels(),
+        //                 data.getTestData(), data.getTestLabels(),
+        //                 data.getValData(), data.getValLabels(), 16, 3);
 
         double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
         System.out.println("Total mini batch Time: " + totalTimeMs + " ms");

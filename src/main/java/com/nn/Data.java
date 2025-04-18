@@ -195,6 +195,22 @@ public class Data {
 
     public void split(double testSize, double valSize) {
         int rows = (int) data.size(0);
+        List<INDArray> arraysToShuffle;
+        boolean reshape = false;
+        long[] shape = data.shape();
+
+        if (data.shape().length == labels.shape().length) {
+            arraysToShuffle = Arrays.asList(data, labels);
+        } else {
+            arraysToShuffle = Arrays.asList(data.reshape(shape[0], shape[1]*shape[2]), labels);
+            reshape = true;
+        }
+
+        Nd4j.shuffle(arraysToShuffle, 1);
+        if (reshape) {
+            data = data.reshape(shape[0], shape[1], shape[2]);
+        }
+
 
         int testSetSize = (int) (rows * testSize);
         int valSetSize = (int) (rows * valSize);

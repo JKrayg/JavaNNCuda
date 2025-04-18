@@ -153,12 +153,10 @@ public class NeuralNet {
                 trainData = trainData.reshape(shape[0], shape[1], shape[2]);
             }
 
-
             // do below for each batch
             int rows = trainLabels.rows();
             INDArray dataBatch;
             INDArray labelsBatch;
-
 
             for (int k = 0; k < rows - (rows % batchSize); k += batchSize) {
                 dataBatch = trainData.get(NDArrayIndex.interval(k, (k + batchSize)));
@@ -183,24 +181,13 @@ public class NeuralNet {
                 }
             }
 
-
             // print loss
             int numL = lossHistory.columns();
             this.loss = lossHistory.sumNumber().floatValue() / numL;
             this.valLoss = loss(valData, valLabels);
 
             System.out.println("loss: " + this.loss + " - val loss: " + this.valLoss);
-
-
         }
-
-        // metrics
-        // System.out.println("train metrics: ");
-        // metrics(train);
-        // System.out.println("val metrics: ");
-        // metrics(validation);
-        // System.out.println("test metrics: ");
-        // metrics(test);
 
     }
 
@@ -230,6 +217,8 @@ public class NeuralNet {
     }
 
     public void forwardPass(INDArray data, INDArray labels) {
+        // this implies dense layer. we need to change this to do
+        // a proper forward pass depending on the type of layer and input data 
         // long totalStart = System.nanoTime();
         Layer L1 = layers.get(0);
         INDArray zL1 = maths.weightedSum(data, L1);
