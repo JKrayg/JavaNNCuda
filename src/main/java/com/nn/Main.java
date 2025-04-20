@@ -127,104 +127,46 @@ public class Main {
         return Nd4j.create(labels);
     }
 
-    public static void showImageFromINDArray(INDArray image, int scale) {
-        // Validate shape: Expecting [batchSize, height, width, channels]
-        if (image.rank() != 4) {
-            throw new IllegalArgumentException("Expected 4D array [batchSize, height, width, channels], got rank: " + image.rank());
-        }
-        int batchSize = (int) image.shape()[0];
-        if (batchSize != 1) {
-            throw new IllegalArgumentException("Expected batch size of 1, got: " + batchSize);
-        }
-        int height = (int) image.shape()[1];   // 32
-        int width = (int) image.shape()[2];    // 32
-        int channels = (int) image.shape()[3]; // 3 (RGB)
-    
-        if (channels != 3) {
-            throw new IllegalArgumentException("Expected 3 channels (RGB), got: " + channels);
-        }
-    
-        // Create BufferedImage
-        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-    
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                // Extract RGB from the single image (batch index 0)
-                int r = (int) image.getDouble(0, y, x, 0); // Red channel
-                int g = (int) image.getDouble(0, y, x, 1); // Green channel
-                int b = (int) image.getDouble(0, y, x, 2); // Blue channel
-    
-                // Ensure RGB values are within [0, 255] range
-                r = Math.min(255, Math.max(0, r));
-                g = Math.min(255, Math.max(0, g));
-                b = Math.min(255, Math.max(0, b));
-    
-                int rgb = (r << 16) | (g << 8) | b; // Combine RGB channels
-                img.setRGB(x, y, rgb);
-            }
-        }
-    
-        // Scale the image for better visibility
-        Image scaledImage = img.getScaledInstance(width * scale, height * scale, Image.SCALE_FAST);
-    
-        // Display in JFrame
-        JFrame frame = new JFrame();
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.getContentPane().add(new JLabel(new ImageIcon(scaledImage)));
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    
     // public static void showImageFromINDArray(INDArray image, int scale) {
-    //     // Determine if the input is 3D [height, width, channels] or 4D [batchSize, height, width, channels]
-    //     int rank = image.rank();
-    //     if (rank != 3 && rank != 4) {
-    //         throw new IllegalArgumentException("Expected 3D array [height, width, channels] or 4D array [batchSize, height, width, channels], got rank: " + rank);
+    //     // Validate shape: Expecting [batchSize, height, width, channels]
+    //     if (image.rank() != 4) {
+    //         throw new IllegalArgumentException("Expected 4D array [batchSize, height, width, channels], got rank: " + image.rank());
     //     }
-
-    //     // Extract dimensions
-    //     int batchSize, height, width, channels;
-    //     boolean is4D = (rank == 4);
-    //     if (is4D) {
-    //         batchSize = (int) image.shape()[0];
-    //         if (batchSize != 1) {
-    //             throw new IllegalArgumentException("Expected batch size of 1, got: " + batchSize);
-    //         }
-    //         height = (int) image.shape()[1];   // 28 for MNIST
-    //         width = (int) image.shape()[2];    // 28 for MNIST
-    //         channels = (int) image.shape()[3]; // 1 for grayscale
-    //     } else {
-    //         height = (int) image.shape()[0];   // 28 for MNIST
-    //         width = (int) image.shape()[1];    // 28 for MNIST
-    //         channels = (int) image.shape()[2]; // 1 for grayscale
+    //     int batchSize = (int) image.shape()[0];
+    //     if (batchSize != 1) {
+    //         throw new IllegalArgumentException("Expected batch size of 1, got: " + batchSize);
     //     }
-
-    //     // Validate channels for grayscale
-    //     if (channels != 1) {
-    //         throw new IllegalArgumentException("Expected 1 channel (grayscale), got: " + channels);
+    //     int height = (int) image.shape()[1];   // 32
+    //     int width = (int) image.shape()[2];    // 32
+    //     int channels = (int) image.shape()[3]; // 3 (RGB)
+    
+    //     if (channels != 3) {
+    //         throw new IllegalArgumentException("Expected 3 channels (RGB), got: " + channels);
     //     }
-
+    
     //     // Create BufferedImage
     //     BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-
+    
     //     for (int y = 0; y < height; y++) {
     //         for (int x = 0; x < width; x++) {
-    //             // Extract grayscale value
-    //             double value = is4D ? image.getDouble(0, y, x, 0) : image.getDouble(y, x, 0);
-
-    //             // Ensure value is within [0, 255] range
-    //             int gray = (int) Math.min(255, Math.max(0, value));
-
-    //             // For grayscale, R = G = B
-    //             int rgb = (gray << 16) | (gray << 8) | gray;
+    //             // Extract RGB from the single image (batch index 0)
+    //             int r = (int) (image.getDouble(0, y, x, 0) * 255); // Red channel
+    //             int g = (int) (image.getDouble(0, y, x, 1) * 255); // Green channel
+    //             int b = (int) (image.getDouble(0, y, x, 2) * 255); 
+    
+    //             // Ensure RGB values are within [0, 255] range
+    //             r = Math.min(255, Math.max(0, r));
+    //             g = Math.min(255, Math.max(0, g));
+    //             b = Math.min(255, Math.max(0, b));
+    
+    //             int rgb = (r << 16) | (g << 8) | b; // Combine RGB channels
     //             img.setRGB(x, y, rgb);
     //         }
     //     }
-
+    
     //     // Scale the image for better visibility
     //     Image scaledImage = img.getScaledInstance(width * scale, height * scale, Image.SCALE_FAST);
-
+    
     //     // Display in JFrame
     //     JFrame frame = new JFrame();
     //     frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -233,6 +175,64 @@ public class Main {
     //     frame.setVisible(true);
     // }
 
+    
+    public static void showImageFromINDArray(INDArray image, int scale) {
+        // Determine if the input is 3D [height, width, channels] or 4D [batchSize, height, width, channels]
+        int rank = image.rank();
+        if (rank != 3 && rank != 4) {
+            throw new IllegalArgumentException("Expected 3D array [height, width, channels] or 4D array [batchSize, height, width, channels], got rank: " + rank);
+        }
+
+        // Extract dimensions
+        int batchSize, height, width, channels;
+        boolean is4D = (rank == 4);
+        if (is4D) {
+            batchSize = (int) image.shape()[0];
+            if (batchSize != 1) {
+                throw new IllegalArgumentException("Expected batch size of 1, got: " + batchSize);
+            }
+            height = (int) image.shape()[1];   // 28 for MNIST
+            width = (int) image.shape()[2];    // 28 for MNIST
+            channels = (int) image.shape()[3]; // 1 for grayscale
+        } else {
+            height = (int) image.shape()[0];   // 28 for MNIST
+            width = (int) image.shape()[1];    // 28 for MNIST
+            channels = (int) image.shape()[2]; // 1 for grayscale
+        }
+
+        // Validate channels for grayscale
+        if (channels != 1) {
+            throw new IllegalArgumentException("Expected 1 channel (grayscale), got: " + channels);
+        }
+
+        // Create BufferedImage
+        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                // Extract grayscale value
+                double value = is4D ? image.getDouble(0, y, x, 0) : image.getDouble(y, x, 0);
+
+                // Ensure value is within [0, 255] range
+                int gray = (int) Math.min(255, Math.max(0, value));
+
+                // For grayscale, R = G = B
+                int rgb = (gray << 16) | (gray << 8) | gray;
+                img.setRGB(x, y, rgb);
+            }
+        }
+
+        // Scale the image for better visibility
+        Image scaledImage = img.getScaledInstance(width * scale, height * scale, Image.SCALE_FAST);
+
+        // Display in JFrame
+        JFrame frame = new JFrame();
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.getContentPane().add(new JLabel(new ImageIcon(scaledImage)));
+        frame.pack();
+        frame.setVisible(true);
+    }
+
     public static void main(String[] args) throws IOException {
         // mnist -----------------------------------------------------------
         // private static String mnistFolder = "src\\resources\\datasets\\mnist\\";
@@ -240,33 +240,33 @@ public class Main {
         // private static String trainLabels = mnistFolder + "train-labels.idx3-ubyte";
         // private static String testImages = mnistFolder + "t10k-images.idx3-ubyte";
         // private static String testLabels = mnistFolder + "t10k-labels.idx3-ubyte";
-        // float[][][][] testImages = loadMnist("src\\resources\\datasets\\mnist\\train-images.idx3-ubyte", 60000);
-        // float[] testLabels = loadMnistLabels("src\\resources\\datasets\\mnist\\train-labels.idx1-ubyte", 60000);
-        // INDArray data_ = Nd4j.create(testImages);
-        // INDArray labels = Nd4j.create(testLabels);
+        float[][][][] testImages = loadMnist("src\\resources\\datasets\\mnist\\train-images.idx3-ubyte", 60000);
+        float[] testLabels = loadMnistLabels("src\\resources\\datasets\\mnist\\train-labels.idx1-ubyte", 60000);
+        INDArray data_ = Nd4j.create(testImages);
+        INDArray labels = Nd4j.create(testLabels);
         // ------------------------------------------------------------------
 
         // cifar10 -----------------------------------------------------------
-        String cifarFolder = "src\\resources\\datasets\\cifar-10\\";
-        String[] files = {"data_batch_1.bin",
-                          "data_batch_2.bin",
-                          "data_batch_3.bin",
-                          "data_batch_4.bin",
-                          "data_batch_5.bin"};
-        INDArray data_ = Nd4j.create(50000, 32, 32, 3);
-        INDArray labels = Nd4j.create(50000);
-        int batch = 1;
-        for (String s: files) {
-            INDArray imgs = loadCifar10Images(cifarFolder + s, 10000);
-            INDArray labs = loadCifar10Labels(cifarFolder + s, 10000);
-            data_.put(
-                new INDArrayIndex[] {NDArrayIndex.interval(batch * 10000 - 10000, batch * 10000),
-                                     NDArrayIndex.all(), NDArrayIndex.all(), NDArrayIndex.all()},
-                                     imgs);
+        // String cifarFolder = "src\\resources\\datasets\\cifar-10\\";
+        // String[] files = {"data_batch_1.bin",
+        //                   "data_batch_2.bin",
+        //                   "data_batch_3.bin",
+        //                   "data_batch_4.bin",
+        //                   "data_batch_5.bin"};
+        // INDArray data_ = Nd4j.create(50000, 32, 32, 3);
+        // INDArray labels = Nd4j.create(50000);
+        // int batch = 1;
+        // for (String s: files) {
+        //     INDArray imgs = loadCifar10Images(cifarFolder + s, 10000);
+        //     INDArray labs = loadCifar10Labels(cifarFolder + s, 10000);
+        //     data_.put(
+        //         new INDArrayIndex[] {NDArrayIndex.interval(batch * 10000 - 10000, batch * 10000),
+        //                              NDArrayIndex.all(), NDArrayIndex.all(), NDArrayIndex.all()},
+        //                              imgs);
 
-            labels.put(new INDArrayIndex[] {NDArrayIndex.interval(batch * 10000 - 10000, batch * 10000)}, labs);
-            batch += 1;
-        }
+        //     labels.put(new INDArrayIndex[] {NDArrayIndex.interval(batch * 10000 - 10000, batch * 10000)}, labs);
+        //     batch += 1;
+        // }
 
         // -------------------------------------------------------------------
 
@@ -330,45 +330,48 @@ public class Main {
 
         INDArray singleImg = data.getTrainData().get(NDArrayIndex.interval(1205, 1206));
         INDArray singleLbl = data.getTrainLabels().get(NDArrayIndex.interval(1205, 1206)).argMax();
-        System.out.println(singleLbl);
-        showImageFromINDArray(singleImg, 4);
+        // System.out.println(singleLbl);
+        // showImageFromINDArray(singleImg, 4);
 
         // // long totalStart = System.nanoTime();
-        // NeuralNet nn = new NeuralNet();
-        // Conv2d d1 = new Conv2d(
-        //     new int[]{28, 28},
-        //     8,
-        //     new int[]{3, 3},
-        //     1,
-        //     0,
-        //     new ReLU());
+        NeuralNet nn = new NeuralNet();
+        Conv2d d1 = new Conv2d(
+            8,
+            new int[]{28, 28, 1},
+            new int[]{3, 3, 3},
+            1,
+            0,
+            new ReLU());
 
         // Conv2d d2 = new Conv2d(
-        //     new int[]{28, 28},
         //     8,
-        //     new int[]{3, 3},
+        //     new int[]{3, 3, 3},
         //     1,
         //     0,
         //     new ReLU());
+        // Dense d1 = new Dense(256, new ReLU(), 784);
+        Dense d2 = new Dense(128, new ReLU());
 
-        // Output d3 = new Output(
-        //     data.getClasses().size(),
-        //     new Softmax(),
-        //     new CatCrossEntropy());
+        Output d3 = new Output(
+            data.getClasses().size(),
+            new Softmax(),
+            new CatCrossEntropy());
 
-        // nn.addLayer(d1);
-        // nn.addLayer(d2);
-        // nn.addLayer(d3);
-        // nn.compile(new Adam(0.001), new MultiClassMetrics());
+        nn.addLayer(d1);
+        nn.addLayer(d2);
+        nn.addLayer(d3);
+        nn.compile(new Adam(0.001), new MultiClassMetrics());
         
-        // long totalStart = System.nanoTime();
+        long totalStart = System.nanoTime();
 
-        // // nn.miniBatchFit(data.getTrainData(), data.getTrainLabels(),
-        // //                 data.getTestData(), data.getTestLabels(),
-        // //                 data.getValData(), data.getValLabels(), 32, 5);
+        nn.miniBatchFit(data.getTrainData(), data.getTrainLabels(),
+                        data.getTestData(), data.getTestLabels(),
+                        data.getValData(), data.getValLabels(), 32, 1);
 
-        // double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
-        // System.out.println("Total mini batch Time: " + totalTimeMs + " ms");
+        System.out.println(d1.getFilters().get(NDArrayIndex.interval(0, 1)));
+
+        double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
+        System.out.println("Total mini batch Time: " + totalTimeMs + " ms");
 
 
         // long totalStart = System.nanoTime();

@@ -6,6 +6,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.ops.transforms.Transforms;
 
 import com.nn.components.Layer;
+import com.nn.layers.Dense;
 import com.nn.training.normalization.BatchNormalization;
 import com.nn.training.normalization.Normalization;
 
@@ -36,14 +37,15 @@ public class Adam extends Optimizer {
     public INDArray executeWeightsUpdate(Layer l) {
         float momBiasCor = 1 - (float) Math.pow(momentumDecay, updateCount);
         float varBiasCor = 1 - (float) Math.pow(varianceDecay, updateCount);
+        Dense lyr = (Dense) l;
 
-        l.setWeightsMomentum(l.getWeightsMomentum().mul(momentumDecay)
-                            .addi(l.getGradientWeights().mul(1 - momentumDecay)));
-        l.setWeightsVariance(l.getWeightsVariance().mul(varianceDecay)
-                            .addi(l.getGradientWeights().mul(l.getGradientWeights()).muli(1 - varianceDecay)));
+        lyr.setWeightsMomentum(lyr.getWeightsMomentum().mul(momentumDecay)
+                            .addi(lyr.getGradientWeights().mul(1 - momentumDecay)));
+        lyr.setWeightsVariance(lyr.getWeightsVariance().mul(varianceDecay)
+                            .addi(lyr.getGradientWeights().mul(lyr.getGradientWeights()).muli(1 - varianceDecay)));
 
-        return l.getWeights().subi(l.getWeightsMomentum().div(momBiasCor)
-                             .divi(Transforms.pow(l.getWeightsVariance().div(varBiasCor), 0.5).addi(epsilon))
+        return lyr.getWeights().subi(lyr.getWeightsMomentum().div(momBiasCor)
+                             .divi(Transforms.pow(lyr.getWeightsVariance().div(varBiasCor), 0.5).addi(epsilon))
                              .muli(learningRate));
     }
 

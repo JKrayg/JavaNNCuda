@@ -4,6 +4,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
 import com.nn.components.Layer;
+import com.nn.layers.Dense;
 import com.nn.training.normalization.Normalization;
 
 public class RMSProp extends Optimizer {
@@ -15,7 +16,7 @@ public class RMSProp extends Optimizer {
 
     public INDArray executeWeightsUpdate(Layer l) {
         // **
-        return l.getWeights();
+        return ((Dense)l).getWeights();
     }
 
     public INDArray executeBiasUpdate(Layer l) {

@@ -1,7 +1,10 @@
 package com.nn.utils;
 
+import java.util.Arrays;
+
 import org.nd4j.linalg.api.ndarray.INDArray;
 import com.nn.components.Layer;
+import com.nn.layers.Dense;
 
 public class MathUtils {
     // weighted sum ∑(wi⋅xi)+b
@@ -14,7 +17,7 @@ public class MathUtils {
     }
 
     private static INDArray getWeightedSum(INDArray prev, Layer curr) {
-        INDArray weights = curr.getWeights();
+        INDArray weights = ((Dense)curr).getWeights();
         INDArray biasT = curr.getBias().transpose();
         INDArray weighted  = prev.mmul(weights).add(biasT);
 

@@ -2,6 +2,7 @@ package com.nn.training.optimizers;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
 import com.nn.components.Layer;
+import com.nn.layers.Dense;
 import com.nn.training.normalization.BatchNormalization;
 import com.nn.training.normalization.Normalization;
 
@@ -13,7 +14,7 @@ public class SGD extends Optimizer {
     }
 
     public INDArray executeWeightsUpdate(Layer l) {
-        return l.getWeights().sub(l.getGradientWeights().mul(learningRate));
+        return ((Dense)l).getWeights().sub(((Dense)l).getGradientWeights().mul(learningRate));
     }
 
     public INDArray executeBiasUpdate(Layer l) {

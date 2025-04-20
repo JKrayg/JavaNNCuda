@@ -7,7 +7,7 @@ import com.nn.components.Layer;
 import com.nn.training.loss.Loss;
 import com.nn.training.regularizers.Regularizer;
 
-public class Output extends Layer {
+public class Output extends Dense {
     private INDArray labels;
     private Loss loss;
 

@@ -190,7 +190,7 @@ public class Data {
         if (data != null) {
             float max = data.maxNumber().floatValue();
             float min = data.minNumber().floatValue();
-            data.subi(min / max - min);
+            data.subi(min).divi(max - min);
         }
     }
 
@@ -220,17 +220,17 @@ public class Data {
         int trainSetSize = rows - (testSetSize + valSetSize);
 
         this.trainData = data
-            .get(NDArrayIndex.interval(0, trainSetSize), NDArrayIndex.all(), NDArrayIndex.all(), NDArrayIndex.all());
+            .get(NDArrayIndex.interval(0, trainSetSize));
         this.testData = data
-            .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize), NDArrayIndex.all(), NDArrayIndex.all(), NDArrayIndex.all());
+            .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize));
         this.valData = data
-            .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows), NDArrayIndex.all(), NDArrayIndex.all(), NDArrayIndex.all());
+            .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows));
         this.trainLabels = labels
-            .get(NDArrayIndex.interval(0, trainSetSize), NDArrayIndex.all());
+            .get(NDArrayIndex.interval(0, trainSetSize));
         this.testLabels = labels
-            .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize), NDArrayIndex.all());
+            .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize));
         this.valLabels = labels
-            .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows), NDArrayIndex.all());
+            .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows));
 
 
     }
