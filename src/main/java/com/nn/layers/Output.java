@@ -30,12 +30,15 @@ public class Output extends Dense {
 
     // check
     public INDArray gradientWeights(Layer prevLayer, INDArray gradientWrtOutput) {
-        return prevLayer.getActivations().transpose().mmul(gradientWrtOutput).div(labels.length());
+        return prevLayer.getActivations().transpose()
+                .mmul(gradientWrtOutput).div(labels.length());
     }
 
     // check
     public INDArray gradientBias(INDArray gradientWrtOutput) {
-        INDArray sums = gradientWrtOutput.sum(0).reshape(gradientWrtOutput.columns(), 1);
+        INDArray sums = gradientWrtOutput.sum(0)
+                .reshape(gradientWrtOutput.columns(), 1);
+                
         return sums.div(labels.length());
     }
 }

@@ -10,23 +10,21 @@ import com.nn.components.*;
 import com.nn.layers.Dense;
 
 public class GlorotInit extends InitWeights {
-    public INDArray initWeight(Layer prev, Layer curr) {
-        return Nd4j.create(setWeights(((Dense)prev).getNumNeurons(), ((Dense)curr).getNumNeurons()));
-    }
+    // public INDArray initWeight(Layer prev, Layer curr) {
+    //     return Nd4j.create(setWeights(((Dense)prev).getNumNeurons(), ((Dense)curr).getNumNeurons()));
+    // }
 
     public INDArray initWeight(int inputSize, Layer curr) {
         return Nd4j.create(setWeights(inputSize, ((Dense)curr).getNumNeurons()));
     }
 
     public INDArray initFilters(int[] inputSize, int numFilters) {
+        // slow
         INDArray filters = Nd4j.zeros(numFilters, inputSize[0], inputSize[1], inputSize[2]);
-        System.out.println("dilters: " + Arrays.toString(filters.shape()));
-        // Random rand = new Random();
         int fan_in = inputSize[0] * inputSize[1] * inputSize[2];
         float varW = (float) (2.0 / (fan_in + numFilters));
         for (int i = 0; i < numFilters; i++) {
             INDArray currFilt = filters.get(NDArrayIndex.interval(i, i + 1));
-            System.out.println("cttflt: " + Arrays.toString(currFilt.shape()));
             for (int j = 0; j < inputSize[0]; j++) {
                 for (int k = 0; k < inputSize[1]; k++) {
                     for (int m = 0; m < inputSize[2]; m++) {
@@ -37,7 +35,6 @@ public class GlorotInit extends InitWeights {
                 
             }
             
-            System.out.println(i);
         }
         // int fan_in = inputSize[0] * inputSize[1] * inputSize[2];
         // float varW = (float) (2.0 / (fan_in + numFilters));

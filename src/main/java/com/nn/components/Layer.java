@@ -197,5 +197,52 @@ public class Layer {
     }
 
     public void initForAdam() {};
+
+    public Layer initLayer(Layer prev) {
+        // if (l instanceof Dense) {
+        //     INDArray biases = Nd4j.create(((Dense)l).getNumNeurons(), 1);
+        //     if (this.layers != null) {
+        //         Layer prevLayer = this.layers.get(this.layers.size() - 1);
+        //         if (actFunc instanceof ReLU) {
+        //             ((Dense)l).setWeights(new HeInit().initWeight(prevLayer, l));
+        //             biases.addi(0.1);
+        //             l.setBiases(biases);
+        //         } else {
+        //             ((Dense)l).setWeights(new GlorotInit().initWeight(((Dense)prevLayer).getNumNeurons(), l));
+        //             l.setBiases(biases);
+        //         }
+        //     } else {
+        //         layers = new ArrayList<>();
+        //         if (actFunc instanceof ReLU) {
+        //             ((Dense)l).setWeights(new HeInit().initWeight(((Dense)l).getNumFeatures(), l));
+        //             biases.addi(0.1);
+        //             l.setBiases(biases);
+        //         } else {
+        //             ((Dense)l).setWeights(new GlorotInit().initWeight(((Dense)l).getNumFeatures(), l));
+        //             l.setBiases(biases);
+        //         }
+        //     }
+
+        //     // init for batch normalization
+        //     int numNeur = ((Dense)l).getNumNeurons();
+        //     if (l.getNormalization() instanceof BatchNormalization) {
+        //         BatchNormalization norm = (BatchNormalization) l.getNormalization();
+        //         INDArray scVar = Nd4j.create(numNeur, 1);
+        //         scVar.addi(1.0);
+        //         INDArray shMeans = Nd4j.create(numNeur, 1);
+        //         norm.setScale(scVar);
+        //         norm.setShift(shMeans);
+        //         norm.setMeans(shMeans);
+        //         norm.setVariances(scVar);
+        //         norm.setRunningMeans(shMeans);
+        //         norm.setRunningVariances(scVar);
+        //     }
+
+        //     this.layers.add(l);
+
+        // }
+
+        return new Layer();
+    }
     
 }

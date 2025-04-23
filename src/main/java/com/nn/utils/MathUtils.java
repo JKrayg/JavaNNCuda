@@ -8,13 +8,13 @@ import com.nn.layers.Dense;
 
 public class MathUtils {
     // weighted sum ∑(wi⋅xi)+b
-    public INDArray weightedSum(Layer prevLayer, Layer currLayer) {
-        return getWeightedSum(prevLayer.getActivations(), currLayer);
+    public INDArray weightedSum(INDArray prevAct, Layer currLayer) {
+        return getWeightedSum(prevAct, currLayer);
     }
 
-    public INDArray weightedSum(INDArray inputData, Layer currLayer) {
-        return getWeightedSum(inputData, currLayer);
-    }
+    // public INDArray weightedSum(INDArray inputData, Layer currLayer) {
+    //     return getWeightedSum(inputData, currLayer);
+    // }
 
     private static INDArray getWeightedSum(INDArray prev, Layer curr) {
         INDArray weights = ((Dense)curr).getWeights();

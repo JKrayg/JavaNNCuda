@@ -21,31 +21,29 @@ public class Conv2d extends Layer {
     public Conv2d(int filters, int[] inputSize, int[] kernelSize, int stride,
                   int padding, ActivationFunction actFunc) {
         this.filters = new GlorotInit().initFilters(kernelSize, filters);
-        System.out.println(Arrays.toString(this.filters.shape()));
         this.kernelSize = kernelSize;
         this.stride = stride;
         this.padding = padding;
         this.setActivationFunction(actFunc);
         this.inputSize = inputSize;
 
-        int actDim = ((inputSize[0] + (2*padding) - kernelSize[0]) / stride) + 1;
-        this.setActivations(Nd4j.create(actDim, actDim));
-        this.setBiases(Nd4j.create(this.filters.length()));
+        // int actDim = ((inputSize[0] + (2*padding) - kernelSize[0]) / stride) + 1;
+        // this.setActivations(Nd4j.create(filters, actDim, actDim));
+        this.setBiases(Nd4j.create(this.filters.size(0)));
 
     }
 
     public Conv2d(int filters, int[] kernelSize, int stride,
                   int padding, ActivationFunction actFunc) {
         this.filters = new GlorotInit().initFilters(kernelSize, filters);
-        System.out.println(Arrays.toString(this.filters.shape()));
         this.kernelSize = kernelSize;
         this.stride = stride;
         this.padding = padding;
         this.setActivationFunction(actFunc);
 
-        int actDim = ((25 + (2*padding) - kernelSize[0]) / stride) + 1;
-        this.setActivations(Nd4j.create(actDim, actDim));
-        this.setBiases(Nd4j.create(this.filters.length()));
+        // int actDim = ((25 + (2*padding) - kernelSize[0]) / stride) + 1;
+        // this.setActivations(Nd4j.create(actDim, actDim));
+        this.setBiases(Nd4j.create(this.filters.size(0)));
 
     }
 
@@ -76,23 +74,28 @@ public class Conv2d extends Layer {
 
     public INDArray convolve(INDArray data) {
         int kernelWdth = kernelSize[0];
+        int actDim = ((inputSize[0] + (2*padding) - kernelSize[0]) / stride) + 1;
+        INDArray acts = Nd4j.create(filters.shape()[0], actDim, actDim);
         INDArray z;
-        for (int j = 0 ; j < data.shape()[1] - kernelWdth; j += stride) {
-                for (int i = 0; i < data.shape()[1] - kernelWdth; i += stride) {
-                    System.out.println("filters shape: " + Arrays.toString(filters.shape()));
-                    INDArray fltr = filters.get(NDArrayIndex.interval(i, i + 1));
-                    System.out.println("fltr shape: " + Arrays.toString(fltr.shape()));
-                    System.out.println("data shape: " + Arrays.toString(data.shape()));
-                    INDArray currentDataChunk = data.get(NDArrayIndex.all(),
-                                                        NDArrayIndex.interval(j, j + kernelWdth),
-                                                        NDArrayIndex.interval(i, i + kernelWdth),
-                                                        NDArrayIndex.all());
-                    System.out.println(Arrays.toString(currentDataChunk.shape()));
+        for (int k = 1; k < filters.shape()[0]; k++) {
+            INDArray fltr = filters.get(NDArrayIndex.interval(k - 1, k));
+            for (int j = 1 ; j < data.shape()[1] - kernelWdth; j += 1) {
+                    for (int i = 1; i < data.shape()[1] - kernelWdth; i += 1) {
+                        // System.out.println("filters shape: " + Arrays.toString(filters.shape()));
+                        // System.out.println("fltr shape: " + Arrays.toString(fltr.shape()));
+                        // System.out.println("data shape: " + Arrays.toString(data.shape()));
+                        INDArray currentDataChunk = data.get(NDArrayIndex.all(),
+                                                            NDArrayIndex.interval(j - 1, j + kernelWdth),
+                                                            NDArrayIndex.interval(i - 1, i + kernelWdth),
+                                                            NDArrayIndex.all());
+                        // System.out.println(Arrays.toString(currentDataChunk.shape()));
+                }
             }
         }
         
+        
 
-        return this.getActivations();
+        return acts;
         
     }
 

@@ -44,58 +44,62 @@ public class NeuralNet {
     }
 
     public void addLayer(Layer l) {
-        ActivationFunction actFunc = l.getActFunc();
-        if (l instanceof Dense) {
-            INDArray biases = Nd4j.create(((Dense)l).getNumNeurons(), 1);
-            if (this.layers != null) {
-                Layer prevLayer = this.layers.get(this.layers.size() - 1);
-                if (actFunc instanceof ReLU) {
-                    ((Dense)l).setWeights(new HeInit().initWeight(prevLayer, l));
-                    biases.addi(0.1);
-                    l.setBiases(biases);
-                } else {
-                    ((Dense)l).setWeights(new GlorotInit().initWeight(prevLayer, l));
-                    l.setBiases(biases);
-                }
-            } else {
-                layers = new ArrayList<>();
-                if (actFunc instanceof ReLU) {
-                    ((Dense)l).setWeights(new HeInit().initWeight(((Dense)l).getNumFeatures(), l));
-                    biases.addi(0.1);
-                    l.setBiases(biases);
-                } else {
-                    ((Dense)l).setWeights(new GlorotInit().initWeight(((Dense)l).getNumFeatures(), l));
-                    l.setBiases(biases);
-                }
-            }
-
-            // init for batch normalization
-            int numNeur = ((Dense)l).getNumNeurons();
-            if (l.getNormalization() instanceof BatchNormalization) {
-                BatchNormalization norm = (BatchNormalization) l.getNormalization();
-                INDArray scVar = Nd4j.create(numNeur, 1);
-                scVar.addi(1.0);
-                INDArray shMeans = Nd4j.create(numNeur, 1);
-                norm.setScale(scVar);
-                norm.setShift(shMeans);
-                norm.setMeans(shMeans);
-                norm.setVariances(scVar);
-                norm.setRunningMeans(shMeans);
-                norm.setRunningVariances(scVar);
-            }
-
-            this.layers.add(l);
-
-        } else if (l instanceof Conv2d) {
-            if (this.layers == null) {
-                layers = new ArrayList<>();
-            }
-            this.layers.add(l);
-            // Conv2d lyr = (Conv2d) l;
-            // int actDim = ((25 + (2*lyr.getPadding()) - lyr.getKernelSize()[0]) / lyr.getStride()) + 1;
-            // l.setActivations(Nd4j.create(actDim, actDim));
-            // l.setBiases(Nd4j.create(lyr.getFilters().length()));
+        // layers.add(l);
+        Layer prev;
+        if (layers == null) {
+            prev = null;
+        } else {
+            prev = this.layers.get(this.layers.size() - 1);
         }
+        this.layers.add(l.initLayer(prev));
+        // ActivationFunction actFunc = l.getActFunc();
+        // if (l instanceof Dense) {
+        //     INDArray biases = Nd4j.create(((Dense)l).getNumNeurons(), 1);
+        //     if (this.layers != null) {
+        //         Layer prevLayer = this.layers.get(this.layers.size() - 1);
+        //         if (actFunc instanceof ReLU) {
+        //             ((Dense)l).setWeights(new HeInit().initWeight(prevLayer, l));
+        //             biases.addi(0.1);
+        //             l.setBiases(biases);
+        //         } else {
+        //             ((Dense)l).setWeights(new GlorotInit().initWeight(((Dense)prevLayer).getNumNeurons(), l));
+        //             l.setBiases(biases);
+        //         }
+        //     } else {
+        //         layers = new ArrayList<>();
+        //         if (actFunc instanceof ReLU) {
+        //             ((Dense)l).setWeights(new HeInit().initWeight(((Dense)l).getNumFeatures(), l));
+        //             biases.addi(0.1);
+        //             l.setBiases(biases);
+        //         } else {
+        //             ((Dense)l).setWeights(new GlorotInit().initWeight(((Dense)l).getNumFeatures(), l));
+        //             l.setBiases(biases);
+        //         }
+        //     }
+
+        //     // init for batch normalization
+        //     int numNeur = ((Dense)l).getNumNeurons();
+        //     if (l.getNormalization() instanceof BatchNormalization) {
+        //         BatchNormalization norm = (BatchNormalization) l.getNormalization();
+        //         INDArray scVar = Nd4j.create(numNeur, 1);
+        //         scVar.addi(1.0);
+        //         INDArray shMeans = Nd4j.create(numNeur, 1);
+        //         norm.setScale(scVar);
+        //         norm.setShift(shMeans);
+        //         norm.setMeans(shMeans);
+        //         norm.setVariances(scVar);
+        //         norm.setRunningMeans(shMeans);
+        //         norm.setRunningVariances(scVar);
+        //     }
+
+        //     this.layers.add(l);
+
+        // } else if (l instanceof Conv2d) {
+        //     if (this.layers == null) {
+        //         layers = new ArrayList<>();
+        //     }
+        //     this.layers.add(l);
+        // }
         
 
 
@@ -109,6 +113,15 @@ public class NeuralNet {
             if (lyr instanceof Output) {
                 this.numClasses = ((Output)lyr).getNumNeurons();
             }
+
+            Layer prev;
+            if (layers == null) {
+                prev = null;
+            } else {
+                prev = this.layers.get(this.layers.size() - 1);
+            }
+
+            lyr.initLayer(prev);
 
             if (optimizer instanceof Adam) {
                 lyr.initForAdam();
@@ -164,7 +177,7 @@ public class NeuralNet {
             Nd4j.shuffle(arraysToShuffle, new Random(), 1);
 
             if (reshape) {
-                trainData = trainData.reshape(shape[0], shape[1], shape[2]);
+                trainData = trainData.reshape(shape);
             }
 
             // do below for each batch
@@ -235,13 +248,11 @@ public class NeuralNet {
         // a proper forward pass depending on the type of layer and input data 
         for (int q = 0; q < layers.size(); q++) {
             Layer curr = layers.get(q);
-            Layer prev;
-            if (q == 0) {
-                prev = null;
-            } else {
+            Layer prev = null;
+            if (q > 0) {
                 prev = layers.get(q - 1);
             }
-            
+
             if (curr instanceof Dense) {
                 ((Dense)curr).forwardProp(prev, data, labels);
             } else if (curr instanceof Conv2d) {

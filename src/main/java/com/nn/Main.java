@@ -328,8 +328,9 @@ public class Main {
 
         data.split(0.20, 0.20);
 
-        INDArray singleImg = data.getTrainData().get(NDArrayIndex.interval(1205, 1206));
-        INDArray singleLbl = data.getTrainLabels().get(NDArrayIndex.interval(1205, 1206)).argMax();
+        INDArray batchImg = data.getTrainData().get(NDArrayIndex.interval(0, 32));
+        INDArray batchLbl = data.getTrainLabels().get(NDArrayIndex.interval(0, 32));
+        // System.out.println(Arrays.toString(batchImg.shape()));
         // System.out.println(singleLbl);
         // showImageFromINDArray(singleImg, 4);
 
@@ -338,40 +339,103 @@ public class Main {
         Conv2d d1 = new Conv2d(
             8,
             new int[]{28, 28, 1},
-            new int[]{3, 3, 3},
+            new int[]{3, 3, 1},
             1,
             0,
             new ReLU());
 
-        // Conv2d d2 = new Conv2d(
-        //     8,
-        //     new int[]{3, 3, 3},
-        //     1,
-        //     0,
-        //     new ReLU());
-        // Dense d1 = new Dense(256, new ReLU(), 784);
-        Dense d2 = new Dense(128, new ReLU());
+        System.out.println("class: " + d1.getClass().getSimpleName());
+        System.out.println("input size: " + Arrays.toString(d1.getInputSize()));
+        System.out.println("filters shape: " + Arrays.toString(d1.getFilters().shape()));
+        System.out.println("kernel size: " + Arrays.toString(d1.getKernelSize()));
+        System.out.println("Stride: " + d1.getStride());
+        System.out.println("padding: " + d1.getPadding());
+        System.out.println("activations shape: " + d1.getActivations());
+        System.out.println("biases shape: " + Arrays.toString(d1.getBias().shape()));
+        System.out.println("activation func: " + d1.getActFunc().getClass().getSimpleName());
 
-        Output d3 = new Output(
-            data.getClasses().size(),
-            new Softmax(),
-            new CatCrossEntropy());
+        d1.forwardProp(null, batchImg, batchLbl);
 
-        nn.addLayer(d1);
-        nn.addLayer(d2);
-        nn.addLayer(d3);
-        nn.compile(new Adam(0.001), new MultiClassMetrics());
+        System.out.println("\nclass: " + d1.getClass().getSimpleName());
+        System.out.println("input size: " + Arrays.toString(d1.getInputSize()));
+        System.out.println("filters shape: " + Arrays.toString(d1.getFilters().shape()));
+        System.out.println("kernel size: " + Arrays.toString(d1.getKernelSize()));
+        System.out.println("Stride: " + d1.getStride());
+        System.out.println("padding: " + d1.getPadding());
+        // System.out.println("activations: " + d1.getActivations());
+        System.out.println("activations shape: " + Arrays.toString(d1.getActivations().shape()));
+        System.out.println("biases shape: " + Arrays.toString(d1.getBias().shape()));
+        System.out.println("activation func: " + d1.getActFunc().getClass().getSimpleName());
         
-        long totalStart = System.nanoTime();
+        // Flatten d2 = new Flatten();
 
-        nn.miniBatchFit(data.getTrainData(), data.getTrainLabels(),
-                        data.getTestData(), data.getTestLabels(),
-                        data.getValData(), data.getValLabels(), 32, 1);
+        Conv2d d2 = new Conv2d(
+            8,
+            new int[]{3, 3, 1},
+            1,
+            0,
+            new ReLU());
+        
+        d2.setPreActivations(d1.getActivations());
 
-        System.out.println(d1.getFilters().get(NDArrayIndex.interval(0, 1)));
 
-        double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
-        System.out.println("Total mini batch Time: " + totalTimeMs + " ms");
+        System.out.println("\n\nclass: " + d2.getClass().getSimpleName());
+        // System.out.println("input size: " + Arrays.toString(d2.getInputSize()));
+        System.out.println("filters shape: " + Arrays.toString(d2.getFilters().shape()));
+        System.out.println("kernel size: " + Arrays.toString(d2.getKernelSize()));
+        System.out.println("Stride: " + d2.getStride());
+        System.out.println("padding: " + d2.getPadding());
+        System.out.println("activations shape: " + d2.getActivations());
+        System.out.println("biases shape: " + Arrays.toString(d2.getBias().shape()));
+        System.out.println("activation func: " + d2.getActFunc().getClass().getSimpleName());
+
+        d2.forwardProp(null, batchImg, batchLbl);
+
+        System.out.println("\nclass: " + d2.getClass().getSimpleName());
+        // System.out.println("input size: " + Arrays.toString(d2.getInputSize()));
+        System.out.println("filters shape: " + Arrays.toString(d2.getFilters().shape()));
+        System.out.println("kernel size: " + Arrays.toString(d2.getKernelSize()));
+        System.out.println("Stride: " + d2.getStride());
+        System.out.println("padding: " + d2.getPadding());
+        // System.out.println("activations: " + d2.getActivations());
+        System.out.println("activations shape: " + Arrays.toString(d2.getActivations().shape()));
+        System.out.println("biases shape: " + Arrays.toString(d2.getBias().shape()));
+        System.out.println("activation func: " + d2.getActFunc().getClass().getSimpleName());
+
+        // // Dense d1 = new Dense(256, new ReLU(), 784);
+        // // Dense d3 = new Dense(128, new ReLU());
+
+        // Output d4 = new Output(
+        //     data.getClasses().size(),
+        //     new Softmax(),
+        //     new CatCrossEntropy());
+
+        // nn.addLayer(d1);
+        // nn.addLayer(d2);
+        // // nn.addLayer(d3);
+        // nn.addLayer(d4);
+        // nn.compile(new Adam(0.001), new MultiClassMetrics());
+        // nn.forwardPass(data_, labels);
+        // for (Layer l : nn.getLayers()) {
+        //     System.out.println(l.getClass().getSimpleName());
+        //     System.out.println("Act Shape: " + Arrays.toString(l.getActivations().shape()));
+        //     if (l instanceof Conv2d) {
+        //         System.out.println("Filters Shape: " + Arrays.toString(((Conv2d)l).getFilters().shape()));
+        //     }
+        // }
+
+        
+        
+        // long totalStart = System.nanoTime();
+
+        // nn.miniBatchFit(data.getTrainData(), data.getTrainLabels(),
+        //                 data.getTestData(), data.getTestLabels(),
+        //                 data.getValData(), data.getValLabels(), 32, 1);
+
+        // System.out.println(d1.getFilters().get(NDArrayIndex.interval(0, 1)));
+
+        // double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
+        // System.out.println("Total mini batch Time: " + totalTimeMs + " ms");
 
 
         // long totalStart = System.nanoTime();
