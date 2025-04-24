@@ -45,13 +45,17 @@ public class NeuralNet {
 
     public void addLayer(Layer l) {
         // layers.add(l);
-        Layer prev;
+        // Layer prev;
+        // if (layers == null) {
+        //     prev = null;
+        // } else {
+        //     prev = this.layers.get(this.layers.size() - 1);
+        // }
+
         if (layers == null) {
-            prev = null;
-        } else {
-            prev = this.layers.get(this.layers.size() - 1);
+            layers = new ArrayList<>();
         }
-        this.layers.add(l.initLayer(prev));
+        this.layers.add(l);
         // ActivationFunction actFunc = l.getActFunc();
         // if (l instanceof Dense) {
         //     INDArray biases = Nd4j.create(((Dense)l).getNumNeurons(), 1);
@@ -109,39 +113,54 @@ public class NeuralNet {
         this.optimizer = o;
         this.metrics = m;
 
-        for (Layer lyr : layers) {
-            if (lyr instanceof Output) {
-                this.numClasses = ((Output)lyr).getNumNeurons();
-            }
-
+        for (int i = 0; i < layers.size(); i++) {
+            Layer curr = layers.get(i);
             Layer prev;
-            if (layers == null) {
+            if (i == 0) {
                 prev = null;
             } else {
                 prev = this.layers.get(this.layers.size() - 1);
             }
 
-            lyr.initLayer(prev);
-
+            curr.initLayer(prev);
             if (optimizer instanceof Adam) {
-                lyr.initForAdam();
-                // INDArray weightsO = Nd4j.create(lyr.getWeights().rows(), lyr.getWeights().columns());
-                // INDArray biasO = Nd4j.create(lyr.getBias().rows(), lyr.getBias().columns());
-                // lyr.setWeightsMomentum(weightsO);
-                // lyr.setWeightsVariance(weightsO);
-                // lyr.setBiasesMomentum(biasO);
-                // lyr.setBiasesVariance(biasO);
-                // Normalization norm = lyr.getNormalization();
-                // if (norm != null) {
-                //     INDArray shiftO = Nd4j.create(norm.getShift().rows(), norm.getShift().columns());
-                //     INDArray scaleO = Nd4j.create(norm.getScale().rows(), norm.getScale().columns());
-                //     norm.setShiftMomentum(shiftO);
-                //     norm.setShiftVariance(shiftO);
-                //     norm.setScaleMomentum(scaleO);
-                //     norm.setScaleVariance(scaleO);
-                // }
+                curr.initForAdam();
             }
         }
+
+        // for (Layer lyr : layers) {
+        //     if (lyr instanceof Output) {
+        //         this.numClasses = ((Output)lyr).getNumNeurons();
+        //     }
+
+        //     Layer prev;
+        //     if (layers == null) {
+        //         prev = null;
+        //     } else {
+        //         prev = this.layers.get(this.layers.size() - 1);
+        //     }
+
+        //     lyr.initLayer(prev);
+
+        //     if (optimizer instanceof Adam) {
+        //         lyr.initForAdam();
+        //         // INDArray weightsO = Nd4j.create(lyr.getWeights().rows(), lyr.getWeights().columns());
+        //         // INDArray biasO = Nd4j.create(lyr.getBias().rows(), lyr.getBias().columns());
+        //         // lyr.setWeightsMomentum(weightsO);
+        //         // lyr.setWeightsVariance(weightsO);
+        //         // lyr.setBiasesMomentum(biasO);
+        //         // lyr.setBiasesVariance(biasO);
+        //         // Normalization norm = lyr.getNormalization();
+        //         // if (norm != null) {
+        //         //     INDArray shiftO = Nd4j.create(norm.getShift().rows(), norm.getShift().columns());
+        //         //     INDArray scaleO = Nd4j.create(norm.getScale().rows(), norm.getScale().columns());
+        //         //     norm.setShiftMomentum(shiftO);
+        //         //     norm.setShiftVariance(shiftO);
+        //         //     norm.setScaleMomentum(scaleO);
+        //         //     norm.setScaleVariance(scaleO);
+        //         // }
+        //     }
+        // }
 
         // callbacks [find a better way to do this]
         // if (callbacks != null) {
@@ -253,12 +272,12 @@ public class NeuralNet {
                 prev = layers.get(q - 1);
             }
 
-            if (curr instanceof Dense) {
-                ((Dense)curr).forwardProp(prev, data, labels);
-            } else if (curr instanceof Conv2d) {
-                ((Conv2d)curr).forwardProp(prev, data, labels);
-            }
-            // curr.forwardProp(prev, data, labels);
+            // if (curr instanceof Dense) {
+            //     curr.forwardProp(prev, data, labels);
+            // } else if (curr instanceof Conv2d) {
+            //     curr.forwardProp(prev, data, labels);
+            // }
+            curr.forwardProp(prev, data, labels);
             // Layer prev;
             // Normalization norm = curr.getNormalization();
             // ActivationFunction actFunc = curr.getActFunc();

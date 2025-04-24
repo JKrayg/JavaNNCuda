@@ -81,11 +81,11 @@ public class Dense extends Layer {
 
     public void initForAdam() {
         INDArray weightsO = Nd4j.create(
-            this.getWeights().rows(),
-            this.getWeights().columns());
+                this.getWeights().rows(),
+                this.getWeights().columns());
         INDArray biasO = Nd4j.create(
-            this.getBias().rows(),
-            this.getBias().columns());
+                this.getBias().rows(),
+                this.getBias().columns());
 
         this.setWeightsMomentum(weightsO);
         this.setWeightsVariance(weightsO);
@@ -95,11 +95,11 @@ public class Dense extends Layer {
         Normalization norm = this.getNormalization();
         if (norm != null) {
             INDArray shiftO = Nd4j.create(
-                norm.getShift().rows(),
-                norm.getShift().columns());
+                    norm.getShift().rows(),
+                    norm.getShift().columns());
             INDArray scaleO = Nd4j.create(
-                norm.getScale().rows(),
-                norm.getScale().columns());
+                    norm.getScale().rows(),
+                    norm.getScale().columns());
 
             norm.setShiftMomentum(shiftO);
             norm.setShiftVariance(shiftO);
@@ -115,7 +115,7 @@ public class Dense extends Layer {
     public INDArray getGradient() {
         INDArray gradient = null;
         if (this instanceof Output) {
-            gradient = ((Output)this).getLoss().gradient(this, ((Output) this).getLabels());
+            gradient = ((Output) this).getLoss().gradient(this, ((Output) this).getLabels());
         } else {
             gradient = super.getActFunc().gradient(this, super.getPreActivation());
         }
@@ -131,25 +131,25 @@ public class Dense extends Layer {
     public void updateWeights(Optimizer o) {
         this.weights = o.executeWeightsUpdate(this);
     }
-    
+
     public void forwardProp(Layer prev, INDArray data, INDArray labels) {
         Normalization norm = this.getNormalization();
         ActivationFunction actFunc = this.getActFunc();
         MathUtils maths = new MathUtils();
-        INDArray z;
+        INDArray z = maths.weightedSum(prev.getActivations(), this);
 
-        if (prev instanceof Conv2d) {
-            // long[] shape = prev.getActivations().shape();
-            // INDArray act = prev.getActivations().reshape(shape[0], -1);
-            z = maths.weightedSum(prev.getActivations(), this);
-        } else if (prev instanceof Dense) {
-            z = maths.weightedSum(prev.getActivations(), this);
-        } else {
-            z = maths.weightedSum(data, this);
-        }
-            
+        // if (prev instanceof Conv2d) {
+        // // long[] shape = prev.getActivations().shape();
+        // // INDArray act = prev.getActivations().reshape(shape[0], -1);
+        // z = maths.weightedSum(prev.getActivations(), this);
+        // } else if (prev instanceof Dense) {
+        // z = maths.weightedSum(prev.getActivations(), this);
+        // } else {
+        // z = maths.weightedSum(data, this);
+        // }
+
         this.setPreActivations(z);
-        
+
         // normalize before activation if batch normalization
         if (norm instanceof BatchNormalization) {
             z = norm.normalize(z);
@@ -166,49 +166,51 @@ public class Dense extends Layer {
                 break;
             }
         }
-            
+
         this.setActivations(activated);
     }
 
-    public Layer initLayer(Dense prev) {
+    public Layer initLayer(Layer prev) {
         INDArray biases = Nd4j.create(numNeurons, 1);
         ActivationFunction actFunc = this.getActFunc();
         if (prev != null) {
+            INDArray prevAct = prev.getActivations();
+            this.setPreActivations(prevAct);
             if (actFunc instanceof ReLU) {
-                    this.setWeights(new HeInit().initWeight(prev.getActivations().columns(), this));
-                    biases.addi(0.1);
-                    this.setBiases(biases);
-                } else {
-                    this.setWeights(new GlorotInit().initWeight(prev.getActivations().columns(), this));
-                    this.setBiases(biases);
-                }
+                this.setWeights(new HeInit().initWeight(prevAct.columns(), this));
+                biases.addi(0.1);
+                this.setBiases(biases);
             } else {
-                if (actFunc instanceof ReLU) {
-                    this.setWeights(new HeInit().initWeight(this.getNumFeatures(), this));
-                    biases.addi(0.1);
-                    this.setBiases(biases);
-                } else {
-                    this.setWeights(new GlorotInit().initWeight(this.getNumFeatures(), this));
-                    this.setBiases(biases);
-                }
+                this.setWeights(new GlorotInit().initWeight(prevAct.columns(), this));
+                this.setBiases(biases);
             }
-
-            // init for batch normalization
-            int numNeur = this.getNumNeurons();
-            if (this.getNormalization() instanceof BatchNormalization) {
-                BatchNormalization norm = (BatchNormalization) this.getNormalization();
-                INDArray scVar = Nd4j.create(numNeur, 1);
-                scVar.addi(1.0);
-                INDArray shMeans = Nd4j.create(numNeur, 1);
-                norm.setScale(scVar);
-                norm.setShift(shMeans);
-                norm.setMeans(shMeans);
-                norm.setVariances(scVar);
-                norm.setRunningMeans(shMeans);
-                norm.setRunningVariances(scVar);
+        } else {
+            if (actFunc instanceof ReLU) {
+                this.setWeights(new HeInit().initWeight(this.getNumFeatures(), this));
+                biases.addi(0.1);
+                this.setBiases(biases);
+            } else {
+                this.setWeights(new GlorotInit().initWeight(this.getNumFeatures(), this));
+                this.setBiases(biases);
             }
-
-            return this;
-
         }
+
+        // init for batch normalization
+        int numNeur = this.getNumNeurons();
+        if (this.getNormalization() instanceof BatchNormalization) {
+            BatchNormalization norm = (BatchNormalization) this.getNormalization();
+            INDArray scVar = Nd4j.create(numNeur, 1);
+            scVar.addi(1.0);
+            INDArray shMeans = Nd4j.create(numNeur, 1);
+            norm.setScale(scVar);
+            norm.setShift(shMeans);
+            norm.setMeans(shMeans);
+            norm.setVariances(scVar);
+            norm.setRunningMeans(shMeans);
+            norm.setRunningVariances(scVar);
+        }
+
+        return this;
+
+    }
 }
