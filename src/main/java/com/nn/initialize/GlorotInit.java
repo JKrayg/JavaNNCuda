@@ -20,15 +20,15 @@ public class GlorotInit extends InitWeights {
 
     public INDArray initFilters(Layer curr, int[] kernelSize, int numFilters) {
         // slow
-        int preAct = (int)curr.getPreActivation().shape()[2];
-        INDArray filters = Nd4j.zeros(numFilters, kernelSize[0], kernelSize[1], preAct);
-        int fan_in = kernelSize[0] * kernelSize[1] * preAct;
+        // int preAct = (int)curr.getPreActivation().shape()[2];
+        INDArray filters = Nd4j.zeros(numFilters, kernelSize[0], kernelSize[1], kernelSize[1]);
+        int fan_in = kernelSize[0] * kernelSize[1] * kernelSize[1];
         float varW = (float) (2.0 / (fan_in + numFilters));
         for (int i = 0; i < numFilters; i++) {
             INDArray currFilt = filters.get(NDArrayIndex.interval(i, i + 1));
             for (int j = 0; j < kernelSize[0]; j++) {
                 for (int k = 0; k < kernelSize[1]; k++) {
-                    for (int m = 0; m < preAct; m++) {
+                    for (int m = 0; m < kernelSize[1]; m++) {
                         currFilt.getScalar(1, j, k, m).addi((float) (new Random().nextGaussian() * Math.sqrt(varW)));
                     }
                     

@@ -115,6 +115,7 @@ public class NeuralNet {
 
         for (int i = 0; i < layers.size(); i++) {
             Layer curr = layers.get(i);
+            System.out.println(curr.getClass().getSimpleName());
             Layer prev;
             if (i == 0) {
                 prev = null;
@@ -174,6 +175,24 @@ public class NeuralNet {
         // }
     }
 
+    // public void initLayers(int batchSize) {
+    //     for (int i = 0; i < layers.size(); i++) {
+    //         Layer curr = layers.get(i);
+    //         System.out.println(curr.getClass().getSimpleName());
+    //         Layer prev;
+    //         if (i == 0) {
+    //             prev = null;
+    //         } else {
+    //             prev = this.layers.get(this.layers.size() - 1);
+    //         }
+
+    //         curr.initLayer(prev);
+    //         if (optimizer instanceof Adam) {
+    //             curr.initForAdam();
+    //         }
+    //     }
+    // }
+
     public void miniBatchFit(INDArray trainData, INDArray trainLabels,
                              INDArray testData, INDArray testLabels,
                              INDArray valData, INDArray valLabels,
@@ -181,6 +200,7 @@ public class NeuralNet {
 
         boolean reshape = false;
         long[] shape = trainData.shape();
+        initLayers(batchSize);
 
         List<INDArray> arraysToShuffle;
         if (trainData.shape().length == trainLabels.shape().length) {

@@ -22,28 +22,41 @@ public class Conv2d extends Layer {
     private int padding;
 
     public Conv2d(int numFilters, int[] inputSize, int[] kernelSize, int stride,
-            int padding, ActivationFunction actFunc) {
-        // this.setPreActivations(Nd4j.create(inputSize));
+            String padding, ActivationFunction actFunc) {
+        this.setPreActivations(Nd4j.create(inputSize));
         this.numFilters = numFilters;
-        // this.filters = new GlorotInit().initFilters(this, kernelSize, numFilters);
+        this.filters = new GlorotInit().initFilters(this, kernelSize, numFilters);
         this.kernelSize = kernelSize;
         this.stride = stride;
-        this.padding = padding;
+        if (padding.equals("valid")) {
+            this.padding = 0;
+        } else {
+            int in = inputSize[1] * inputSize[2];
+            this.padding = Math.max(((in / stride) - 1) * stride + (kernelSize[0]*kernelSize[1]) - in, 0);
+            System.out.println("padding: " + this.padding);
+        }
+        
         this.inputSize = inputSize;
         this.setActivationFunction(actFunc);
-        // this.setBiases(Nd4j.create(this.filters.size(0)));
+        this.setBiases(Nd4j.create(this.filters.size(0)));
 
     }
 
     public Conv2d(int numFilters, int[] kernelSize, int stride,
-            int padding, ActivationFunction actFunc) {
+            String padding, ActivationFunction actFunc) {
         this.numFilters = numFilters;
-        // this.filters = new GlorotInit().initFilters(this, kernelSize, numFilters);
+        this.filters = new GlorotInit().initFilters(this, kernelSize, numFilters);
         this.kernelSize = kernelSize;
         this.stride = stride;
-        this.padding = padding;
+        if (padding.equals("valid")) {
+            this.padding = 0;
+        } else {
+            int in = inputSize[1] * inputSize[2];
+            this.padding = Math.max(((in / stride) - 1) * stride + (kernelSize[0]*kernelSize[1]) - in, 0);
+            System.out.println("padding: " + this.padding);
+        }
         this.setActivationFunction(actFunc);
-        // this.setBiases(Nd4j.create(this.filters.size(0)));
+        this.setBiases(Nd4j.create(this.filters.size(0)));
 
     }
 
@@ -74,7 +87,7 @@ public class Conv2d extends Layer {
     public INDArray convolve(INDArray data) {
         int kernelWdth = kernelSize[0];
         int actDim = ((((int) this.getPreActivation().shape()[1]) + (2 * padding) - kernelSize[0]) / stride) + 1;
-        INDArray acts = Nd4j.create(actDim, actDim, filters.shape()[0]);
+        INDArray acts = Nd4j.create((int) this.getPreActivation().shape()[0], actDim, actDim, filters.shape()[0]);
         INDArray z;
         for (int k = 1; k < filters.shape()[0]; k++) {
             INDArray fltr = filters.get(NDArrayIndex.interval(k - 1, k));
@@ -98,28 +111,30 @@ public class Conv2d extends Layer {
     public void forwardProp(Layer prev, INDArray data, INDArray labels) {
         INDArray z;
         if (prev == null) {
+            this.setPreActivations(data);
             z = this.convolve(data);
         } else {
+            this.setPreActivations(prev.getActivations());
             z = this.convolve(prev.getActivations());
         }
 
         this.setActivations(z);
     }
 
-    public Layer initLayer(Layer prev) {
-        if (prev != null) {
-            INDArray prevAct = prev.getActivations();
-            this.setPreActivations(prevAct);
-        } else {
-            this.setPreActivations(Nd4j.create(inputSize));
-        }
+    // public Layer initLayer(Layer prev) {
+    //     if (prev != null) {
+    //         INDArray prevAct = prev.getActivations();
+    //         this.setPreActivations(prevAct);
+    //     } else {
+    //         this.setPreActivations(Nd4j.create(inputSize));
+    //     }
 
-        // this.filters = new GlorotInit().initFilters(this, kernelSize, numFilters);
-        this.setBiases(Nd4j.create(this.filters.size(0)));
+    //     this.filters = new GlorotInit().initFilters(this, kernelSize, numFilters);
+    //     this.setBiases(Nd4j.create(this.filters.size(0)));
             
-        return this;
+    //     return this;
 
-    }
+    // }
 
     public void initForAdam() {
     }
