@@ -131,6 +131,10 @@ public class Layer {
     //     return weightsVariance;
     // }
 
+    public int getNumFeatures() {
+        return numFeatures;
+    }
+
     public INDArray getBiasMomentum() {
         return biasMomentum;
     }
@@ -198,7 +202,7 @@ public class Layer {
 
     public void initForAdam() {}
 
-    public Layer initLayer(Layer prev) {
+    public Layer initLayer(Layer prev, int batchSize) {
         return new Layer();
     }
 

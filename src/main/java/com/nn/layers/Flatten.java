@@ -1,13 +1,29 @@
 package com.nn.layers;
 
+import org.nd4j.linalg.api.ndarray.INDArray;
+
 import com.nn.activation.ActivationFunction;
 import com.nn.components.Layer;
 
-public class Flatten extends Layer {
+public class Flatten extends Dense {
 
-    public Layer initLayer(Layer prev) {
-        super.setActivations(prev.getActivations().reshape(1, prev.getActivations().length()));
+    public Layer initLayer(Layer prev, int betachSize) {
+        this.setPreActivations(prev.getActivations());
+        long[] shape = prev.getActivations().shape();
+        INDArray newShape = prev.getActivations().reshape(shape[0], -1);
+        this.setActivations(newShape);
+        this.setNumNeurons((int)newShape.shape()[1]);
         return this;
     }
+
+    public void forwardProp(Layer prev, INDArray data, INDArray labels) {
+        this.setPreActivations(prev.getActivations());
+        long[] shape = prev.getActivations().shape();
+        INDArray newShape = prev.getActivations().reshape(shape[0], -1);
+        this.setActivations(newShape);
+        this.setNumNeurons((int)newShape.shape()[1]);
+    }
+
+    public void initForAdam() {}
     
 }

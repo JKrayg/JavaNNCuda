@@ -10,17 +10,16 @@ import com.nn.layers.Dense;
 
 public class HeInit extends InitWeights {
     public INDArray initWeight(Layer prev, Layer curr) {
-        if (prev instanceof Dense) {
-            return Nd4j.create(
-                setWeights(((Dense)prev).getNumNeurons(),
-                ((Dense)curr).getNumNeurons()));
+        // if (prev instanceof Dense) {
+        //     return Nd4j.create(setWeights(((Dense)prev).getNumNeurons(), ((Dense)curr).getNumNeurons()));
+        // } else {
+        //     return Nd4j.create(setWeights(
+        //         (int)(((Conv2d)prev).getActivations().shape()[1]),
+        //         ((Dense)curr).getNumNeurons()));
+        // }
 
-        } else {
-            return Nd4j.create(setWeights(
-                (int)(((Conv2d)prev).getActivations()
-                .reshape(((Conv2d)prev).getActivations().shape()[0], -1).shape()[1]),
-                ((Dense)curr).getNumNeurons()));
-        }
+        // return Nd4j.create(setWeights((int)prev.getActivations().shape()[1], ((Dense)curr).getNumNeurons()));
+        return Nd4j.create(setWeights(((Dense)prev).getNumNeurons(), ((Dense)curr).getNumNeurons()));
         
     }
 

@@ -25,8 +25,10 @@ public class Dense extends Layer {
     private INDArray weightsMomentum;
     private INDArray weightsVariance;
     private INDArray gradientWrtWeights;
-    private int numFeatures;
-    private int inputSize;
+    // private int numFeatures;
+    // private int inputSize;
+
+    public Dense() {}
 
     public Dense(int numNeurons) {
         this.numNeurons = numNeurons;
@@ -40,12 +42,12 @@ public class Dense extends Layer {
     public Dense(int numNeurons, ActivationFunction actFunc, int inputSize) {
         super(actFunc, inputSize);
         this.numNeurons = numNeurons;
-        this.numFeatures = inputSize;
+        // this.numFeatures = inputSize;
     }
 
-    public int getNumFeatures() {
-        return numFeatures;
-    }
+    // public int getNumFeatures() {
+    //     return numFeatures;
+    // }
 
     public INDArray getWeightsMomentum() {
         return weightsMomentum;
@@ -62,6 +64,10 @@ public class Dense extends Layer {
     public int getNumNeurons() {
         return numNeurons;
     }
+
+    public void setNumNeurons(int numNeurons) {
+		this.numNeurons = numNeurons;
+	}
 
     public void setGradientWeights(INDArray gWrtW) {
         this.gradientWrtWeights = gWrtW;
@@ -133,10 +139,16 @@ public class Dense extends Layer {
     }
 
     public void forwardProp(Layer prev, INDArray data, INDArray labels) {
+        
         Normalization norm = this.getNormalization();
         ActivationFunction actFunc = this.getActFunc();
         MathUtils maths = new MathUtils();
-        INDArray z = maths.weightedSum(prev.getActivations(), this);
+        INDArray z;
+        if (prev == null) {
+            z = maths.weightedSum(data, this);
+        } else {
+            z = maths.weightedSum(prev.getActivations(), this);
+        }
 
         // if (prev instanceof Conv2d) {
         // // long[] shape = prev.getActivations().shape();
@@ -170,21 +182,25 @@ public class Dense extends Layer {
         this.setActivations(activated);
     }
 
-    public Layer initLayer(Layer prev) {
+    public Layer initLayer(Layer prev, int batchSize) {
         INDArray biases = Nd4j.create(numNeurons, 1);
         ActivationFunction actFunc = this.getActFunc();
+        this.setActivations(Nd4j.create(batchSize, numNeurons));
         if (prev != null) {
-            INDArray prevAct = prev.getActivations();
-            this.setPreActivations(prevAct);
+            // INDArray prevAct = prev.getActivations();
+            this.setPreActivations(prev.getActivations());
+            
             if (actFunc instanceof ReLU) {
-                this.setWeights(new HeInit().initWeight(prevAct.columns(), this));
+                this.setWeights(new HeInit().initWeight(prev, this));
                 biases.addi(0.1);
                 this.setBiases(biases);
             } else {
-                this.setWeights(new GlorotInit().initWeight(prevAct.columns(), this));
+                this.setWeights(new GlorotInit().initWeight(prev, this));
                 this.setBiases(biases);
             }
+            // this.setActivations(Nd4j.create(prevAct.shape()[0], numNeurons));
         } else {
+            this.setPreActivations(Nd4j.create(batchSize, numNeurons));
             if (actFunc instanceof ReLU) {
                 this.setWeights(new HeInit().initWeight(this.getNumFeatures(), this));
                 biases.addi(0.1);
@@ -193,7 +209,9 @@ public class Dense extends Layer {
                 this.setWeights(new GlorotInit().initWeight(this.getNumFeatures(), this));
                 this.setBiases(biases);
             }
+            
         }
+
 
         // init for batch normalization
         int numNeur = this.getNumNeurons();

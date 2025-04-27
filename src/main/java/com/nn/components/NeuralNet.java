@@ -113,21 +113,37 @@ public class NeuralNet {
         this.optimizer = o;
         this.metrics = m;
 
-        for (int i = 0; i < layers.size(); i++) {
-            Layer curr = layers.get(i);
-            System.out.println(curr.getClass().getSimpleName());
-            Layer prev;
-            if (i == 0) {
-                prev = null;
-            } else {
-                prev = this.layers.get(this.layers.size() - 1);
-            }
+        // for (int i = 0; i < layers.size(); i++) {
+        //     Layer prev = null;
+        //     Layer curr = layers.get(i);
+        //     if (i != 0) {
+        //         prev = layers.get(i - 1);
+        //     }
+        //     curr.initLayer(prev, 1);
 
-            curr.initLayer(prev);
-            if (optimizer instanceof Adam) {
-                curr.initForAdam();
-            }
-        }
+        //     if (optimizer instanceof Adam) {
+        //         curr.initForAdam();
+        //     }
+        // }
+
+
+
+
+        // for (int i = 0; i < layers.size(); i++) {
+        //     Layer curr = layers.get(i);
+        //     System.out.println(curr.getClass().getSimpleName());
+        //     Layer prev;
+        //     if (i == 0) {
+        //         prev = null;
+        //     } else {
+        //         prev = this.layers.get(i - 1);
+        //     }
+
+        //     curr.initLayer(prev);
+        //     if (optimizer instanceof Adam) {
+        //         curr.initForAdam();
+        //     }
+        // }
 
         // for (Layer lyr : layers) {
         //     if (lyr instanceof Output) {
@@ -193,14 +209,46 @@ public class NeuralNet {
     //     }
     // }
 
+    // public void initLayers(int batchSize) {
+    //     for (int i = 0; i < layers.size(); i++) {
+    //         Layer curr = layers.get(i);
+    //         System.out.println(curr.getClass().getSimpleName());
+    //         Layer prev;
+    //         if (i == 0) {
+    //             prev = null;
+    //         } else {
+    //             prev = this.layers.get(i - 1);
+    //         }
+
+    //         curr.initLayer(prev);
+    //         if (optimizer instanceof Adam) {
+    //             curr.initForAdam();
+    //         }
+    //     }
+    // }
+
     public void miniBatchFit(INDArray trainData, INDArray trainLabels,
                              INDArray testData, INDArray testLabels,
                              INDArray valData, INDArray valLabels,
                              int batchSize, int epochs) {
 
+
+
+        for (int i = 0; i < layers.size(); i++) {
+            Layer prev = null;
+            Layer curr = layers.get(i);
+            if (i != 0) {
+                prev = layers.get(i - 1);
+            }
+            curr.initLayer(prev, batchSize);
+            if (optimizer instanceof Adam) {
+                curr.initForAdam();
+            }
+        }
+
         boolean reshape = false;
         long[] shape = trainData.shape();
-        initLayers(batchSize);
+        // initLayers(batchSize);
 
         List<INDArray> arraysToShuffle;
         if (trainData.shape().length == trainLabels.shape().length) {
@@ -228,7 +276,7 @@ public class NeuralNet {
                 dataBatch = trainData.get(NDArrayIndex.interval(k, (k + batchSize)));
                 labelsBatch = trainLabels.get(NDArrayIndex.interval(k, (k + batchSize)));
                 forwardPass(dataBatch, labelsBatch);
-                backprop(dataBatch, labelsBatch);
+                // backprop(dataBatch, labelsBatch);
 
                 if (optimizer instanceof Adam) {
                     ((Adam) optimizer).updateCount();
@@ -240,7 +288,7 @@ public class NeuralNet {
                 dataBatch = trainData.get(NDArrayIndex.interval(batchSize - (rows % batchSize), batchSize));
                 labelsBatch = trainLabels.get(NDArrayIndex.interval(batchSize - (rows % batchSize), batchSize));
                 forwardPass(dataBatch, labelsBatch);
-                backprop(dataBatch, labelsBatch);
+                // backprop(dataBatch, labelsBatch);
 
                 if (optimizer instanceof Adam) {
                     ((Adam) optimizer).updateCount();
@@ -248,11 +296,11 @@ public class NeuralNet {
             }
 
             // print loss
-            int numL = lossHistory.columns();
-            this.loss = lossHistory.sumNumber().floatValue() / numL;
-            this.valLoss = loss(valData, valLabels);
+            // int numL = lossHistory.columns();
+            // this.loss = lossHistory.sumNumber().floatValue() / numL;
+            // this.valLoss = loss(valData, valLabels);
 
-            System.out.println("loss: " + this.loss + " - val loss: " + this.valLoss);
+            // System.out.println("loss: " + this.loss + " - val loss: " + this.valLoss);
         }
 
     }

@@ -319,7 +319,7 @@ public class Main {
 
 
         Data data = new Data(data_, labels);
-        // data.flatten();
+        data.flatten();
         data.minMaxNormalization();
         // // data.zScoreNormalization();
 
@@ -341,28 +341,28 @@ public class Main {
             new int[]{28, 28, 1},
             new int[]{3, 3},
             1,
-            "valid",
+            "same",
             new ReLU());
 
         Conv2d d2 = new Conv2d(
             20,
             new int[]{3, 3},
             1,
-            0,
+            "same",
             new ReLU());
 
-        Conv2d d3 = new Conv2d(
-            40,
-            new int[]{3, 3},
-            1,
-            0,
-            new ReLU());  
+        // Conv2d d3 = new Conv2d(
+        //     40,
+        //     new int[]{3, 3},
+        //     1,
+        //     "same",
+        //     new ReLU());  
 
-        Flatten d4 = new Flatten();
+        Flatten d3 = new Flatten();
+        // Dense d1 = new Dense(256, new ReLU(), 784);
+        Dense d4 = new Dense(128, new ReLU());
 
-        Dense d5 = new Dense(128, new ReLU());
-
-        Output d6 = new Output(
+        Output d5 = new Output(
             data.getClasses().size(),
             new Softmax(),
             new CatCrossEntropy());
@@ -372,89 +372,127 @@ public class Main {
         nn.addLayer(d3);
         nn.addLayer(d4);
         nn.addLayer(d5);
-        nn.addLayer(d6);
+        // nn.addLayer(d6);
 
-        // nn.compile(new Adam(0.001), new MultiClassMetrics());
+        nn.compile(new Adam(0.001), new MultiClassMetrics());
 
-        d1.forwardProp(null, batchImg, batchLbl);
-        // d2.setPreActivations(d1.getActivations());
-        d2.forwardProp(d1, batchImg, batchLbl);
-        // d3.setPreActivations(d2.getActivations());
-        d3.forwardProp(d2, batchImg, batchLbl);
-        d4.initLayer(d3);
-        d5.setPreActivations(d4.getActivations());
-        ((Dense)d5).initLayer(d4);
-        d5.forwardProp(d4, batchImg, batchLbl);
-        d6.setPreActivations(d5.getActivations());
-        ((Output)d6).initLayer(d5);
-        d6.forwardProp(d5, batchImg, batchLbl);
+        // d1.forwardProp(null, batchImg, batchLbl);
+        // // d2.setPreActivations(d1.getActivations());
+        // d2.forwardProp(d1, batchImg, batchLbl);
+        // // d3.setPreActivations(d2.getActivations());
+        // d3.forwardProp(d2, batchImg, batchLbl);
+        // d4.initLayer(d3);
+        // // d5.setPreActivations(d4.getActivations());
+        // ((Dense)d5).initLayer(d4);
+        // d5.forwardProp(d4, batchImg, batchLbl);
+        // // d6.setPreActivations(d5.getActivations());
+        // ((Output)d6).initLayer(d5);
+        // d6.forwardProp(d5, batchImg, batchLbl);
 
-        System.out.println("\nclass: " + d1.getClass().getSimpleName());
-        System.out.println("Activation func: " + d1.getActFunc().getClass().getSimpleName());
-        System.out.println("preactivations shape: " + Arrays.toString(d1.getPreActivation().shape()));
-        System.out.println("input size: " + Arrays.toString(d1.getInputSize()));
-        System.out.println("filters shape: " + Arrays.toString(d1.getFilters().shape()));
-        System.out.println("kernel size: " + Arrays.toString(d1.getKernelSize()));
-        System.out.println("Stride: " + d1.getStride());
-        System.out.println("padding: " + d1.getPadding());
-        // System.out.println("activations: " + d1.getActivations());
-        System.out.println("activations shape: " + Arrays.toString(d1.getActivations().shape()));
-        System.out.println("biases shape: " + Arrays.toString(d1.getBias().shape()));
-        System.out.println("activation func: " + d1.getActFunc().getClass().getSimpleName());
+        // nn.forwardPass(batchImg, batchLbl);
+
+        long totalStart = System.nanoTime();
+
+        nn.miniBatchFit(data.getTrainData(), data.getTrainLabels(),
+                        data.getTestData(), data.getTestLabels(),
+                        data.getValData(), data.getValLabels(), 32, 1);
+
+        double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
+        System.out.println("Total mini batch Time: " + totalTimeMs + " ms");
+
+        for (Layer l: nn.getLayers()) {
+            if (l instanceof Conv2d) {
+                Conv2d lyr = (Conv2d) l;
+                System.out.println("class: " + lyr.getClass().getSimpleName());
+                System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
+                System.out.println("filters: " + Arrays.toString(lyr.getFilters().shape()));
+                System.out.println("kernel: " + Arrays.toString(lyr.getKernelSize()));
+                System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
+                System.out.println("stride: " + lyr.getStride());
+                System.out.println("padding: " + lyr.getPadding());
+                System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
+
+            } else if (l.getClass() != Flatten.class) {
+                Dense lyr = (Dense) l;
+                System.out.println("class: " + lyr.getClass().getSimpleName());
+                System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
+                System.out.println("weights: " + Arrays.toString(lyr.getWeights().shape()));
+                System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
+                System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
+            } else {
+                Flatten lyr = (Flatten) l;
+                System.out.println("class: " + lyr.getClass().getSimpleName());
+                System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
+                System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
+            }
+        } 
+
+        // System.out.println("\nclass: " + d1.getClass().getSimpleName());
+        // System.out.println("Activation func: " + d1.getActFunc().getClass().getSimpleName());
+        // System.out.println("preactivations shape: " + Arrays.toString(d1.getPreActivation().shape()));
+        // System.out.println("input size: " + Arrays.toString(d1.getInputSize()));
+        // System.out.println("filters shape: " + Arrays.toString(d1.getFilters().shape()));
+        // System.out.println("kernel size: " + Arrays.toString(d1.getKernelSize()));
+        // System.out.println("Stride: " + d1.getStride());
+        // System.out.println("padding: " + d1.getPadding());
+        // // System.out.println("activations: " + d1.getActivations());
+        // System.out.println("activations shape: " + Arrays.toString(d1.getActivations().shape()));
+        // System.out.println("biases shape: " + Arrays.toString(d1.getBias().shape()));
+        // System.out.println("activation func: " + d1.getActFunc().getClass().getSimpleName());
 
         
-        System.out.println("\n=====================================================");
-        System.out.println("class: " + d2.getClass().getSimpleName());
-        System.out.println("Activation func: " + d2.getActFunc().getClass().getSimpleName());
-        System.out.println("preactivations shape: " + Arrays.toString(d2.getPreActivation().shape()));
-        System.out.println("input size: " + Arrays.toString(d2.getPreActivation().shape()));
-        System.out.println("filters shape: " + Arrays.toString(d2.getFilters().shape()));
-        System.out.println("kernel size: " + Arrays.toString(d2.getKernelSize()));
-        System.out.println("Stride: " + d2.getStride());
-        System.out.println("padding: " + d2.getPadding());
-        // System.out.println("activations: " + d2.getActivations());
-        System.out.println("activations shape: " + Arrays.toString(d2.getActivations().shape()));
-        System.out.println("biases shape: " + Arrays.toString(d2.getBias().shape()));
-        System.out.println("activation func: " + d2.getActFunc().getClass().getSimpleName());
+        // System.out.println("\n=====================================================");
+        // System.out.println("class: " + d2.getClass().getSimpleName());
+        // System.out.println("Activation func: " + d2.getActFunc().getClass().getSimpleName());
+        // System.out.println("preactivations shape: " + Arrays.toString(d2.getPreActivation().shape()));
+        // System.out.println("input size: " + Arrays.toString(d2.getPreActivation().shape()));
+        // System.out.println("filters shape: " + Arrays.toString(d2.getFilters().shape()));
+        // System.out.println("kernel size: " + Arrays.toString(d2.getKernelSize()));
+        // System.out.println("Stride: " + d2.getStride());
+        // System.out.println("padding: " + d2.getPadding());
+        // // System.out.println("activations: " + d2.getActivations());
+        // System.out.println("activations shape: " + Arrays.toString(d2.getActivations().shape()));
+        // System.out.println("biases shape: " + Arrays.toString(d2.getBias().shape()));
+        // System.out.println("activation func: " + d2.getActFunc().getClass().getSimpleName());
 
         
-        System.out.println("\n=====================================================");
-        System.out.println("class: " + d3.getClass().getSimpleName());
-        System.out.println("Activation func: " + d3.getActFunc().getClass().getSimpleName());
-        System.out.println("preactivations shape: " + Arrays.toString(d3.getPreActivation().shape()));
-        System.out.println("input size: " + Arrays.toString(d3.getPreActivation().shape()));
-        System.out.println("filters shape: " + Arrays.toString(d3.getFilters().shape()));
-        System.out.println("kernel size: " + Arrays.toString(d3.getKernelSize()));
-        System.out.println("Stride: " + d3.getStride());
-        System.out.println("padding: " + d3.getPadding());
-        // System.out.println("activations: " + d2.getActivations());
-        System.out.println("activations shape: " + Arrays.toString(d3.getActivations().shape()));
-        System.out.println("biases shape: " + Arrays.toString(d3.getBias().shape()));
-        System.out.println("activation func: " + d3.getActFunc().getClass().getSimpleName());
+        // System.out.println("\n=====================================================");
+        // System.out.println("class: " + d3.getClass().getSimpleName());
+        // System.out.println("Activation func: " + d3.getActFunc().getClass().getSimpleName());
+        // System.out.println("preactivations shape: " + Arrays.toString(d3.getPreActivation().shape()));
+        // System.out.println("input size: " + Arrays.toString(d3.getPreActivation().shape()));
+        // System.out.println("filters shape: " + Arrays.toString(d3.getFilters().shape()));
+        // System.out.println("kernel size: " + Arrays.toString(d3.getKernelSize()));
+        // System.out.println("Stride: " + d3.getStride());
+        // System.out.println("padding: " + d3.getPadding());
+        // // System.out.println("activations: " + d2.getActivations());
+        // System.out.println("activations shape: " + Arrays.toString(d3.getActivations().shape()));
+        // System.out.println("biases shape: " + Arrays.toString(d3.getBias().shape()));
+        // System.out.println("activation func: " + d3.getActFunc().getClass().getSimpleName());
 
 
         
-        // d4.setActivations(d3.getActivations().reshape(1, d3.getActivations().length()));
-        System.out.println("\n======================================================");
-        System.out.println("class: " + d4.getClass().getSimpleName());
-        System.out.println("activation: " + Arrays.toString(d4.getActivations().shape()));
+        // // d4.setActivations(d3.getActivations().reshape(1, d3.getActivations().length()));
+        // System.out.println("\n======================================================");
+        // System.out.println("class: " + d4.getClass().getSimpleName());
+        // System.out.println("activation: " + Arrays.toString(d4.getActivations().shape()));
 
 
-        System.out.println("\n======================================================");
-        System.out.println("class: " + d5.getClass().getSimpleName());
-        System.out.println("Activation func: " + d5.getActFunc().getClass().getSimpleName());
-        System.out.println("preact: " + Arrays.toString(d5.getPreActivation().shape()));
-        System.out.println("activation: " + Arrays.toString(d5.getActivations().shape()));
-        System.out.println("weights: " + Arrays.toString(d5.getWeights().shape()));
-        System.out.println("bias: " + Arrays.toString(d5.getBias().shape()));
+        // System.out.println("\n======================================================");
+        // System.out.println("class: " + d5.getClass().getSimpleName());
+        // System.out.println("Activation func: " + d5.getActFunc().getClass().getSimpleName());
+        // System.out.println("preact: " + Arrays.toString(d5.getPreActivation().shape()));
+        // System.out.println("activation: " + Arrays.toString(d5.getActivations().shape()));
+        // System.out.println("weights: " + Arrays.toString(d5.getWeights().shape()));
+        // System.out.println("bias: " + Arrays.toString(d5.getBias().shape()));
 
-        System.out.println("\n======================================================");
-        System.out.println("class: " + d6.getClass().getSimpleName());
-        System.out.println("Activation func: " + d6.getActFunc().getClass().getSimpleName());
-        System.out.println("preact: " + Arrays.toString(d6.getPreActivation().shape()));
-        System.out.println("activation: " + Arrays.toString(d6.getActivations().shape()));
-        System.out.println("weights: " + Arrays.toString(d6.getWeights().shape()));
-        System.out.println("bias: " + Arrays.toString(d6.getBias().shape()));
+        // System.out.println("\n======================================================");
+        // System.out.println("class: " + d6.getClass().getSimpleName());
+        // System.out.println("Activation func: " + d6.getActFunc().getClass().getSimpleName());
+        // System.out.println("preact: " + Arrays.toString(d6.getPreActivation().shape()));
+        // System.out.println("activation: " + Arrays.toString(d6.getActivations().shape()));
+        // System.out.println("weights: " + Arrays.toString(d6.getWeights().shape()));
+        // System.out.println("bias: " + Arrays.toString(d6.getBias().shape()));
 
         // // Dense d1 = new Dense(256, new ReLU(), 784);
         
@@ -474,17 +512,7 @@ public class Main {
         // }
 
         
-        
-        // long totalStart = System.nanoTime();
 
-        // nn.miniBatchFit(data.getTrainData(), data.getTrainLabels(),
-        //                 data.getTestData(), data.getTestLabels(),
-        //                 data.getValData(), data.getValLabels(), 32, 1);
-
-        // System.out.println(d1.getFilters().get(NDArrayIndex.interval(0, 1)));
-
-        // double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
-        // System.out.println("Total mini batch Time: " + totalTimeMs + " ms");
 
 
         // long totalStart = System.nanoTime();
