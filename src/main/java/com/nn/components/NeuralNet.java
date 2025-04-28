@@ -244,6 +244,32 @@ public class NeuralNet {
             if (optimizer instanceof Adam) {
                 curr.initForAdam();
             }
+
+            if (curr instanceof Conv2d) {
+                Conv2d lyr = (Conv2d) curr;
+                System.out.println("class: " + lyr.getClass().getSimpleName());
+                System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
+                System.out.println("filters: " + Arrays.toString(lyr.getFilters().shape()));
+                System.out.println("kernel: " + Arrays.toString(lyr.getKernelSize()));
+                System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
+                System.out.println("stride: " + lyr.getStride());
+                System.out.println("padding: " + lyr.getPadding());
+                System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
+
+            } else if (curr.getClass() != Flatten.class) {
+                Dense lyr = (Dense) curr;
+                System.out.println("class: " + lyr.getClass().getSimpleName());
+                System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
+                System.out.println("weights: " + Arrays.toString(lyr.getWeights().shape()));
+                System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
+                System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
+            } else {
+                Flatten lyr = (Flatten) curr;
+                System.out.println("class: " + lyr.getClass().getSimpleName());
+                System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
+                System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
+            }
+
         }
 
         boolean reshape = false;
@@ -345,6 +371,13 @@ public class NeuralNet {
             // } else if (curr instanceof Conv2d) {
             //     curr.forwardProp(prev, data, labels);
             // }
+            // System.out.println(curr.getClass().getSimpleName());
+            // if (prev != null) {
+            //     System.out.println("class: " + prev.getClass().getSimpleName());
+            //     System.out.println("prev: " + Arrays.toString(prev.getActivations().shape()));
+            // }
+            // System.out.println("class: " + curr.getClass().getSimpleName());
+            // System.out.println("curr: " + Arrays.toString(curr.getActivations().shape()));
             curr.forwardProp(prev, data, labels);
             // Layer prev;
             // Normalization norm = curr.getNormalization();

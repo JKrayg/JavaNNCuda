@@ -19,6 +19,8 @@ public class MathUtils {
     private static INDArray getWeightedSum(INDArray prev, Layer curr) {
         INDArray weights = ((Dense)curr).getWeights();
         INDArray biasT = curr.getBias().transpose();
+        // System.out.println("prev: " + Arrays.toString(prev.shape()));
+        // System.out.println("weights: " + Arrays.toString(weights.shape()));
         INDArray weighted = prev.mmul(weights).add(biasT);
 
         return weighted;

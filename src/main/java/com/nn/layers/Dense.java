@@ -139,7 +139,6 @@ public class Dense extends Layer {
     }
 
     public void forwardProp(Layer prev, INDArray data, INDArray labels) {
-        
         Normalization norm = this.getNormalization();
         ActivationFunction actFunc = this.getActFunc();
         MathUtils maths = new MathUtils();
@@ -147,6 +146,7 @@ public class Dense extends Layer {
         if (prev == null) {
             z = maths.weightedSum(data, this);
         } else {
+            // System.out.println("=============" + Arrays.toString(prev.getActivations().shape()));
             z = maths.weightedSum(prev.getActivations(), this);
         }
 
@@ -188,7 +188,7 @@ public class Dense extends Layer {
         this.setActivations(Nd4j.create(batchSize, numNeurons));
         if (prev != null) {
             // INDArray prevAct = prev.getActivations();
-            this.setPreActivations(prev.getActivations());
+            // this.setPreActivations(prev.getActivations());
             
             if (actFunc instanceof ReLU) {
                 this.setWeights(new HeInit().initWeight(prev, this));
@@ -200,7 +200,7 @@ public class Dense extends Layer {
             }
             // this.setActivations(Nd4j.create(prevAct.shape()[0], numNeurons));
         } else {
-            this.setPreActivations(Nd4j.create(batchSize, numNeurons));
+            // this.setPreActivations(Nd4j.create(batchSize, numNeurons));
             if (actFunc instanceof ReLU) {
                 this.setWeights(new HeInit().initWeight(this.getNumFeatures(), this));
                 biases.addi(0.1);
@@ -211,6 +211,8 @@ public class Dense extends Layer {
             }
             
         }
+
+        this.setPreActivations(Nd4j.create(batchSize, numNeurons));
 
 
         // init for batch normalization

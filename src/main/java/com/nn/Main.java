@@ -341,14 +341,14 @@ public class Main {
             new int[]{28, 28, 1},
             new int[]{3, 3},
             1,
-            "same",
+            "valid",
             new ReLU());
 
         Conv2d d2 = new Conv2d(
             20,
             new int[]{3, 3},
             1,
-            "same",
+            "valid",
             new ReLU());
 
         // Conv2d d3 = new Conv2d(
@@ -400,32 +400,32 @@ public class Main {
         double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
         System.out.println("Total mini batch Time: " + totalTimeMs + " ms");
 
-        for (Layer l: nn.getLayers()) {
-            if (l instanceof Conv2d) {
-                Conv2d lyr = (Conv2d) l;
-                System.out.println("class: " + lyr.getClass().getSimpleName());
-                System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
-                System.out.println("filters: " + Arrays.toString(lyr.getFilters().shape()));
-                System.out.println("kernel: " + Arrays.toString(lyr.getKernelSize()));
-                System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
-                System.out.println("stride: " + lyr.getStride());
-                System.out.println("padding: " + lyr.getPadding());
-                System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
+        // for (Layer l: nn.getLayers()) {
+        //     if (l instanceof Conv2d) {
+        //         Conv2d lyr = (Conv2d) l;
+        //         System.out.println("class: " + lyr.getClass().getSimpleName());
+        //         System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
+        //         System.out.println("filters: " + Arrays.toString(lyr.getFilters().shape()));
+        //         System.out.println("kernel: " + Arrays.toString(lyr.getKernelSize()));
+        //         System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
+        //         System.out.println("stride: " + lyr.getStride());
+        //         System.out.println("padding: " + lyr.getPadding());
+        //         System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
 
-            } else if (l.getClass() != Flatten.class) {
-                Dense lyr = (Dense) l;
-                System.out.println("class: " + lyr.getClass().getSimpleName());
-                System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
-                System.out.println("weights: " + Arrays.toString(lyr.getWeights().shape()));
-                System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
-                System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
-            } else {
-                Flatten lyr = (Flatten) l;
-                System.out.println("class: " + lyr.getClass().getSimpleName());
-                System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
-                System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
-            }
-        } 
+        //     } else if (l.getClass() != Flatten.class) {
+        //         Dense lyr = (Dense) l;
+        //         System.out.println("class: " + lyr.getClass().getSimpleName());
+        //         System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
+        //         System.out.println("weights: " + Arrays.toString(lyr.getWeights().shape()));
+        //         System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
+        //         System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
+        //     } else {
+        //         Flatten lyr = (Flatten) l;
+        //         System.out.println("class: " + lyr.getClass().getSimpleName());
+        //         System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
+        //         System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
+        //     }
+        // } 
 
         // System.out.println("\nclass: " + d1.getClass().getSimpleName());
         // System.out.println("Activation func: " + d1.getActFunc().getClass().getSimpleName());
