@@ -44,69 +44,10 @@ public class NeuralNet {
     }
 
     public void addLayer(Layer l) {
-        // layers.add(l);
-        // Layer prev;
-        // if (layers == null) {
-        //     prev = null;
-        // } else {
-        //     prev = this.layers.get(this.layers.size() - 1);
-        // }
-
         if (layers == null) {
             layers = new ArrayList<>();
         }
         this.layers.add(l);
-        // ActivationFunction actFunc = l.getActFunc();
-        // if (l instanceof Dense) {
-        //     INDArray biases = Nd4j.create(((Dense)l).getNumNeurons(), 1);
-        //     if (this.layers != null) {
-        //         Layer prevLayer = this.layers.get(this.layers.size() - 1);
-        //         if (actFunc instanceof ReLU) {
-        //             ((Dense)l).setWeights(new HeInit().initWeight(prevLayer, l));
-        //             biases.addi(0.1);
-        //             l.setBiases(biases);
-        //         } else {
-        //             ((Dense)l).setWeights(new GlorotInit().initWeight(((Dense)prevLayer).getNumNeurons(), l));
-        //             l.setBiases(biases);
-        //         }
-        //     } else {
-        //         layers = new ArrayList<>();
-        //         if (actFunc instanceof ReLU) {
-        //             ((Dense)l).setWeights(new HeInit().initWeight(((Dense)l).getNumFeatures(), l));
-        //             biases.addi(0.1);
-        //             l.setBiases(biases);
-        //         } else {
-        //             ((Dense)l).setWeights(new GlorotInit().initWeight(((Dense)l).getNumFeatures(), l));
-        //             l.setBiases(biases);
-        //         }
-        //     }
-
-        //     // init for batch normalization
-        //     int numNeur = ((Dense)l).getNumNeurons();
-        //     if (l.getNormalization() instanceof BatchNormalization) {
-        //         BatchNormalization norm = (BatchNormalization) l.getNormalization();
-        //         INDArray scVar = Nd4j.create(numNeur, 1);
-        //         scVar.addi(1.0);
-        //         INDArray shMeans = Nd4j.create(numNeur, 1);
-        //         norm.setScale(scVar);
-        //         norm.setShift(shMeans);
-        //         norm.setMeans(shMeans);
-        //         norm.setVariances(scVar);
-        //         norm.setRunningMeans(shMeans);
-        //         norm.setRunningVariances(scVar);
-        //     }
-
-        //     this.layers.add(l);
-
-        // } else if (l instanceof Conv2d) {
-        //     if (this.layers == null) {
-        //         layers = new ArrayList<>();
-        //     }
-        //     this.layers.add(l);
-        // }
-        
-
-
     }
 
     public void compile(Optimizer o, Metrics m) {
@@ -126,59 +67,6 @@ public class NeuralNet {
         //     }
         // }
 
-
-
-
-        // for (int i = 0; i < layers.size(); i++) {
-        //     Layer curr = layers.get(i);
-        //     System.out.println(curr.getClass().getSimpleName());
-        //     Layer prev;
-        //     if (i == 0) {
-        //         prev = null;
-        //     } else {
-        //         prev = this.layers.get(i - 1);
-        //     }
-
-        //     curr.initLayer(prev);
-        //     if (optimizer instanceof Adam) {
-        //         curr.initForAdam();
-        //     }
-        // }
-
-        // for (Layer lyr : layers) {
-        //     if (lyr instanceof Output) {
-        //         this.numClasses = ((Output)lyr).getNumNeurons();
-        //     }
-
-        //     Layer prev;
-        //     if (layers == null) {
-        //         prev = null;
-        //     } else {
-        //         prev = this.layers.get(this.layers.size() - 1);
-        //     }
-
-        //     lyr.initLayer(prev);
-
-        //     if (optimizer instanceof Adam) {
-        //         lyr.initForAdam();
-        //         // INDArray weightsO = Nd4j.create(lyr.getWeights().rows(), lyr.getWeights().columns());
-        //         // INDArray biasO = Nd4j.create(lyr.getBias().rows(), lyr.getBias().columns());
-        //         // lyr.setWeightsMomentum(weightsO);
-        //         // lyr.setWeightsVariance(weightsO);
-        //         // lyr.setBiasesMomentum(biasO);
-        //         // lyr.setBiasesVariance(biasO);
-        //         // Normalization norm = lyr.getNormalization();
-        //         // if (norm != null) {
-        //         //     INDArray shiftO = Nd4j.create(norm.getShift().rows(), norm.getShift().columns());
-        //         //     INDArray scaleO = Nd4j.create(norm.getScale().rows(), norm.getScale().columns());
-        //         //     norm.setShiftMomentum(shiftO);
-        //         //     norm.setShiftVariance(shiftO);
-        //         //     norm.setScaleMomentum(scaleO);
-        //         //     norm.setScaleVariance(scaleO);
-        //         // }
-        //     }
-        // }
-
         // callbacks [find a better way to do this]
         // if (callbacks != null) {
         //     for (Callback c : callbacks) {
@@ -190,42 +78,6 @@ public class NeuralNet {
         //     }
         // }
     }
-
-    // public void initLayers(int batchSize) {
-    //     for (int i = 0; i < layers.size(); i++) {
-    //         Layer curr = layers.get(i);
-    //         System.out.println(curr.getClass().getSimpleName());
-    //         Layer prev;
-    //         if (i == 0) {
-    //             prev = null;
-    //         } else {
-    //             prev = this.layers.get(this.layers.size() - 1);
-    //         }
-
-    //         curr.initLayer(prev);
-    //         if (optimizer instanceof Adam) {
-    //             curr.initForAdam();
-    //         }
-    //     }
-    // }
-
-    // public void initLayers(int batchSize) {
-    //     for (int i = 0; i < layers.size(); i++) {
-    //         Layer curr = layers.get(i);
-    //         System.out.println(curr.getClass().getSimpleName());
-    //         Layer prev;
-    //         if (i == 0) {
-    //             prev = null;
-    //         } else {
-    //             prev = this.layers.get(i - 1);
-    //         }
-
-    //         curr.initLayer(prev);
-    //         if (optimizer instanceof Adam) {
-    //             curr.initForAdam();
-    //         }
-    //     }
-    // }
 
     public void miniBatchFit(INDArray trainData, INDArray trainLabels,
                              INDArray testData, INDArray testLabels,
@@ -240,35 +92,37 @@ public class NeuralNet {
             if (i != 0) {
                 prev = layers.get(i - 1);
             }
+
             curr.initLayer(prev, batchSize);
+
             if (optimizer instanceof Adam) {
                 curr.initForAdam();
             }
 
-            if (curr instanceof Conv2d) {
-                Conv2d lyr = (Conv2d) curr;
-                System.out.println("class: " + lyr.getClass().getSimpleName());
-                System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
-                System.out.println("filters: " + Arrays.toString(lyr.getFilters().shape()));
-                System.out.println("kernel: " + Arrays.toString(lyr.getKernelSize()));
-                System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
-                System.out.println("stride: " + lyr.getStride());
-                System.out.println("padding: " + lyr.getPadding());
-                System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
+            // if (curr instanceof Conv2d) {
+            //     Conv2d lyr = (Conv2d) curr;
+            //     System.out.println("class: " + lyr.getClass().getSimpleName());
+            //     System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
+            //     System.out.println("filters: " + Arrays.toString(lyr.getFilters().shape()));
+            //     System.out.println("kernel: " + Arrays.toString(lyr.getKernelSize()));
+            //     System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
+            //     System.out.println("stride: " + lyr.getStride());
+            //     System.out.println("padding: " + lyr.getPadding());
+            //     System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
 
-            } else if (curr.getClass() != Flatten.class) {
-                Dense lyr = (Dense) curr;
-                System.out.println("class: " + lyr.getClass().getSimpleName());
-                System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
-                System.out.println("weights: " + Arrays.toString(lyr.getWeights().shape()));
-                System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
-                System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
-            } else {
-                Flatten lyr = (Flatten) curr;
-                System.out.println("class: " + lyr.getClass().getSimpleName());
-                System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
-                System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
-            }
+            // } else if (curr.getClass() != Flatten.class) {
+            //     Dense lyr = (Dense) curr;
+            //     System.out.println("class: " + lyr.getClass().getSimpleName());
+            //     System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
+            //     System.out.println("weights: " + Arrays.toString(lyr.getWeights().shape()));
+            //     System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
+            //     System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
+            // } else {
+            //     Flatten lyr = (Flatten) curr;
+            //     System.out.println("class: " + lyr.getClass().getSimpleName());
+            //     System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
+            //     System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
+            // }
 
         }
 
@@ -365,52 +219,8 @@ public class NeuralNet {
             if (q > 0) {
                 prev = layers.get(q - 1);
             }
-
-            // if (curr instanceof Dense) {
-            //     curr.forwardProp(prev, data, labels);
-            // } else if (curr instanceof Conv2d) {
-            //     curr.forwardProp(prev, data, labels);
-            // }
-            // System.out.println(curr.getClass().getSimpleName());
-            // if (prev != null) {
-            //     System.out.println("class: " + prev.getClass().getSimpleName());
-            //     System.out.println("prev: " + Arrays.toString(prev.getActivations().shape()));
-            // }
-            // System.out.println("class: " + curr.getClass().getSimpleName());
-            // System.out.println("curr: " + Arrays.toString(curr.getActivations().shape()));
+            
             curr.forwardProp(prev, data, labels);
-            // Layer prev;
-            // Normalization norm = curr.getNormalization();
-            // ActivationFunction actFunc = curr.getActFunc();
-            // INDArray z;
-
-            // if (q == 0) {
-            //     z = maths.weightedSum(data, curr);
-            // } else {
-            //     prev = layers.get(q - 1);
-            //     z = maths.weightedSum(prev, curr);
-            // }
-            
-            // curr.setPreActivations(z);
-            
-            // // normalize before activation if batch normalization
-            // if (norm instanceof BatchNormalization) {
-            //     z = norm.normalize(z);
-            // }
-
-            // INDArray activated = actFunc.execute(z); 
-
-            // // dropout [find a better way to do this]
-            // if (curr.getRegularizers() != null) {
-            //     for (Regularizer r : curr.getRegularizers()) {
-            //         if (r instanceof Dropout) {
-            //             activated = r.regularize(activated);
-            //         }
-            //         break;
-            //     }
-            // }
-            
-            // curr.setActivations(activated);
 
             if (curr instanceof Output) {
                 ((Output) curr).setLabels(labels);

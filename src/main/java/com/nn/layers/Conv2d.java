@@ -3,6 +3,7 @@ package com.nn.layers;
 import java.util.Arrays;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.pad;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 
@@ -93,6 +94,21 @@ public class Conv2d extends Layer {
     }
 
     public INDArray convolve(INDArray data) {
+        long[] imgShape = data.shape();
+        System.out.println(Arrays.toString(imgShape));
+        long[] filtersShape = filters.shape();
+        int outShape = (int) Math.floor(((imgShape[1] + (2 * padding) - filtersShape[0]) / stride) + 1);
+        for (int i = 0; i < imgShape[0]; i++) {
+            INDArray currImg = data.get(NDArrayIndex.interval(i, i));
+            for (int j = 0; j < filtersShape[0]; j++) {
+                INDArray currFilt = filters.get(NDArrayIndex.interval(j, j));
+                for (int k = 0; k < outShape; k += stride) {
+                    for (int m = 0; m < outShape; m += stride) {
+                        INDArray currPatch = currImg.get(NDArrayIndex.interval(k, k + outShape), NDArrayIndex.interval(m, m + outShape));
+                    }
+                }
+            }
+        }
         // int kernelWdth = kernelSize[0];
         // int actDim = ((((int) this.getPreActivation().shape()[1]) + (2 * padding) - kernelSize[0]) / stride) + 1;
         // INDArray acts = Nd4j.create((int) this.getPreActivation().shape()[0], actDim, actDim, filters.shape()[0]);
