@@ -84,8 +84,10 @@ public class NeuralNet {
                              INDArray valData, INDArray valLabels,
                              int batchSize, int epochs) {
 
+                                
 
-
+        long[] imgShape = trainData.shape();
+        // System.out.println(Arrays.toString(imgShape));
         for (int i = 0; i < layers.size(); i++) {
             Layer prev = null;
             Layer curr = layers.get(i);
@@ -213,13 +215,15 @@ public class NeuralNet {
     public void forwardPass(INDArray data, INDArray labels) {
         // this implies dense layer. we need to change this to do
         // a proper forward pass depending on the type of layer and input data 
+        long[] imgShape = data.shape();
+        // System.out.println(Arrays.toString(imgShape));
         for (int q = 0; q < layers.size(); q++) {
             Layer curr = layers.get(q);
             Layer prev = null;
             if (q > 0) {
                 prev = layers.get(q - 1);
             }
-            
+
             curr.forwardProp(prev, data, labels);
 
             if (curr instanceof Output) {

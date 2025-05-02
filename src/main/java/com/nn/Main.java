@@ -22,6 +22,7 @@ import java.awt.image.BufferedImage;
 import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.cpu.nativecpu.NDArray;
+import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.conv2d;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
@@ -233,6 +234,22 @@ public class Main {
         frame.setVisible(true);
     }
 
+    // public static INDArray padImages(INDArray images) {
+    //     INDArray padded = Nd4j.zeros(images.size(0),
+    //                                 images.size(1) + 1 * 2,
+    //                                 images.size(2) + 1 * 2,
+    //                                 images.size(3));
+    //     padded.get(
+    //         NDArrayIndex.all(),
+    //         NDArrayIndex.interval(1, 29),
+    //         NDArrayIndex.interval(1, 29),
+    //         NDArrayIndex.all()
+    //     ).assign(images);
+
+    //     return padded;
+    
+    // }
+
     public static void main(String[] args) throws IOException {
         // mnist -----------------------------------------------------------
         // private static String mnistFolder = "src\\resources\\datasets\\mnist\\";
@@ -319,7 +336,7 @@ public class Main {
 
 
         Data data = new Data(data_, labels);
-        data.flatten();
+        // data.flatten();
         data.minMaxNormalization();
         // // data.zScoreNormalization();
 
@@ -328,8 +345,21 @@ public class Main {
 
         data.split(0.20, 0.20);
 
-        INDArray batchImg = data.getTrainData().get(NDArrayIndex.interval(0, 32));
-        INDArray batchLbl = data.getTrainLabels().get(NDArrayIndex.interval(0, 32));
+        // INDArray batchImg = data.getTrainData().get(NDArrayIndex.interval(0, 1));
+        // INDArray batchLbl = data.getTrainLabels().get(NDArrayIndex.interval(0, 1));
+        // System.out.println(Arrays.toString(batchImg.shape()));
+        // // System.out.println(batchImg.data());
+        // System.out.println(batchLbl.argMax());
+
+        // // INDArray images = data;
+        // if (1 != 0) {
+        //     batchImg = padImages(batchImg);
+        //     batchImg = batchImg.reshape(batchImg.size(1), batchImg.size(1));
+        // }
+
+        // System.out.println(Arrays.toString(batchImg.shape()));
+        // System.out.println(batchImg);
+        // System.out.println(batchLbl.argMax());
         // System.out.println(Arrays.toString(batchImg.shape()));
         // System.out.println(singleLbl);
         // showImageFromINDArray(singleImg, 4);

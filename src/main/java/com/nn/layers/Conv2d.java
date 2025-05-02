@@ -93,40 +93,55 @@ public class Conv2d extends Layer {
         this.filters = filters;
     }
 
+    public INDArray padImages(INDArray images) {
+        INDArray padded = Nd4j.zeros(32,
+                                    images.size(1) + padding * 2,
+                                    images.size(2) + padding * 2,
+                                    images.size(3));
+        padded.get(
+            NDArrayIndex.all(),
+            NDArrayIndex.interval(1, 29),
+            NDArrayIndex.interval(1, 29),
+            NDArrayIndex.all()
+        ).assign(images);
+
+        return padded;
+    
+    }
+
     public INDArray convolve(INDArray data) {
-        long[] imgShape = data.shape();
-        System.out.println(Arrays.toString(imgShape));
-        long[] filtersShape = filters.shape();
-        int outShape = (int) Math.floor(((imgShape[1] + (2 * padding) - filtersShape[0]) / stride) + 1);
-        for (int i = 0; i < imgShape[0]; i++) {
-            INDArray currImg = data.get(NDArrayIndex.interval(i, i));
-            for (int j = 0; j < filtersShape[0]; j++) {
-                INDArray currFilt = filters.get(NDArrayIndex.interval(j, j));
-                for (int k = 0; k < outShape; k += stride) {
-                    for (int m = 0; m < outShape; m += stride) {
-                        INDArray currPatch = currImg.get(NDArrayIndex.interval(k, k + outShape), NDArrayIndex.interval(m, m + outShape));
-                    }
-                }
-            }
+        System.out.println(Arrays.toString(data.shape()));
+        INDArray images = data;
+        if (padding != 0) {
+            images = padImages(data);
         }
-        // int kernelWdth = kernelSize[0];
-        // int actDim = ((((int) this.getPreActivation().shape()[1]) + (2 * padding) - kernelSize[0]) / stride) + 1;
-        // INDArray acts = Nd4j.create((int) this.getPreActivation().shape()[0], actDim, actDim, filters.shape()[0]);
-        // INDArray z;
-        // for (int k = 1; k < filters.shape()[0]; k++) {
-        //     INDArray fltr = filters.get(NDArrayIndex.interval(k - 1, k));
-        //     for (int j = 1; j < data.shape()[1] - kernelWdth; j += 1) {
-        //         for (int i = 1; i < data.shape()[1] - kernelWdth; i += 1) {
-        //             // System.out.println("filters shape: " + Arrays.toString(filters.shape()));
-        //             // System.out.println("fltr shape: " + Arrays.toString(fltr.shape()));
-        //             // System.out.println("data shape: " + Arrays.toString(data.shape()));
-        //             INDArray currentDataChunk = data.get(NDArrayIndex.interval(j - 1, j + kernelWdth),
-        //                     NDArrayIndex.interval(i - 1, i + kernelWdth),
-        //                     NDArrayIndex.all());
-        //             // System.out.println(Arrays.toString(currentDataChunk.shape()));
-        //         }
-        //     }
-        // }
+
+        
+        
+        long[] imgShape = images.shape();
+        long[] filtersShape = filters.shape();
+        int outShapeH = (int) Math.floor(((imgShape[1] + (2 * padding) - filtersShape[1]) / stride) + 1);
+        int outShapeW = (int) Math.floor(((imgShape[2] + (2 * padding) - filtersShape[2]) / stride) + 1);
+        int patchSize = (int) (filtersShape[0] * filtersShape[1] * filtersShape[2]);
+        INDArray patches = Nd4j.create(patchSize, outShapeH * outShapeW);
+        // System.out.println(outShape);
+        // INDArray activation = Nd4j.create(imgShape[0], outShape, outShape, filtersShape[0]);
+        // INDArray patches = Nd4j.create(imgShape[0], outShape, outShape, filtersShape[1], filtersShape[2], filtersShape[3]);
+        // // int iter = Math.floor()
+
+        for (int i = 0; i < outShapeH - filtersShape[1]; i+= stride) {
+            // INDArray currImg = images.get(NDArrayIndex.interval(i, i + 1));
+        //     long[] currImgShape = currImg.shape();
+        //     currImg = currImg.reshape(currImgShape[1], currImgShape[2], currImgShape[3]);
+                for (int k = 0; k < outShapeW - filtersShape[2]; k += stride) {
+                    INDArray currPatch = images.get(
+                        NDArrayIndex.all(),
+                        NDArrayIndex.interval(i, i + filtersShape[1]),
+                        NDArrayIndex.interval(k, k + filtersShape[2]));
+                        
+                    System.out.println(Arrays.toString(currPatch.shape()));
+                }
+        }
 
         return this.getActivations();
 
