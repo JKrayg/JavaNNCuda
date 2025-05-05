@@ -95,6 +95,7 @@ public class NeuralNet {
                 prev = layers.get(i - 1);
             }
 
+            // init layers
             curr.initLayer(prev, batchSize);
 
             if (optimizer instanceof Adam) {
@@ -132,6 +133,7 @@ public class NeuralNet {
         long[] shape = trainData.shape();
         // initLayers(batchSize);
 
+        // shuffle
         List<INDArray> arraysToShuffle;
         if (trainData.shape().length == trainLabels.shape().length) {
             arraysToShuffle = Arrays.asList(trainData, trainLabels);
@@ -140,6 +142,7 @@ public class NeuralNet {
             reshape = true;
         }
 
+        // forward/backprop batches per epoch
         for (int i = 0; i < epochs; i++) {
             this.lossHistory = null;
 
