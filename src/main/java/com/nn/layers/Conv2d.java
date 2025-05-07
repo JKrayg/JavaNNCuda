@@ -6,6 +6,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.pad;
 import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.shape_of;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 
 import com.nn.activation.ActivationFunction;
@@ -113,54 +114,104 @@ public class Conv2d extends Layer {
     }
 
     public INDArray convolve(INDArray data) {
-        // System.out.println(Arrays.toString(data.shape()));
-        long[] dataShape = data.shape();
-        INDArray images = data;
-        int batchSize = (int) dataShape[0];
+        INDArray paddedData = null;
 
         // add padding
         if (padding != 0) {
-            images = padImages(data);
+            paddedData = padImages(data);
         }
 
-        
-        long[] imgShape = images.shape();
+        long[] paddedShape = paddedData.shape();
+        int batchSize = (int) paddedShape[0];
         // long[] kernelShape = filters.shape();
-        // System.out.println(Arrays.toString(imgShape));
-        int outShapeH = (int) Math.floor(((dataShape[1] + (2 * padding) - kernelSize[0]) / stride) + 1);
-        int outShapeW = (int) Math.floor(((dataShape[2] + (2 * padding) - kernelSize[1]) / stride) + 1);
-        int patchSize = (int) (kernelSize[0] * kernelSize[1] * kernelSize[2]);
-        INDArray patches = Nd4j.create(batchSize, outShapeH * outShapeW, kernelSize[0], kernelSize[1], imgShape[3]);
+        // System.out.println("+++++++++++++: " + Arrays.toString(paddedShape));
+        int outShapeH = (int) Math.floor(((paddedShape[1] + (2 * padding) - kernelSize[0]) / stride) + 1);
+        int outShapeW = (int) Math.floor(((paddedShape[2] + (2 * padding) - kernelSize[1]) / stride) + 1);
+        int patchShape = (int) (kernelSize[0] * kernelSize[1] * kernelSize[2]);
+        INDArray patches = Nd4j.create(batchSize, outShapeH * outShapeW, kernelSize[0], kernelSize[1], paddedShape[3]);
         // System.out.println(padding);
         // System.out.println("---: " + Arrays.toString(patches.shape()));
+        // INDArray currPatch = paddedData.get(
+        //                 NDArrayIndex.all(),
+        //                 NDArrayIndex.interval(10, 13),
+        //                 NDArrayIndex.interval(10, 13),
+        //                 NDArrayIndex.point(3)
+        //             );
+        
+        // System.out.println("-------------: " + currPatch);
 
         int count = 0;
 
-        for (int i = 0; i < dataShape[1] + (2 * padding) - kernelSize[0] + 1; i+= stride) {
-                for (int k = 0; k < dataShape[2] + (2 * padding) - kernelSize[1] + 1; k += stride) {
-                    INDArray currPatch = images.get(
+        for (int i = 0; i < outShapeH - kernelSize[0]; i += stride) {
+                for (int k = 0; k < outShapeW - kernelSize[1]; k += stride) {
+                    // System.out.println("i: " + i + " | i + kernelsize: " + (i + kernelSize[0]));
+                    // System.out.println("k: " + k + " | k + kernelsize: " + (k + kernelSize[1]));
+                    // INDArray currPatch = data.get(
+                    //     NDArrayIndex.all(),
+                    //     NDArrayIndex.interval(i, i + kernelSize[0]),
+                    //     NDArrayIndex.interval(k, k + kernelSize[1]),
+                    //     NDArrayIndex.point(1));
+
+                    INDArray currPatch = paddedData.get(
                         NDArrayIndex.all(),
                         NDArrayIndex.interval(i, i + kernelSize[0]),
-                        NDArrayIndex.interval(k, k + kernelSize[1]));
+                        NDArrayIndex.interval(k, k + kernelSize[1]),
+                        NDArrayIndex.all());
                     
-                    // System.out.println(Arrays.toString(currPatch.ravel().shape()));
-                    // System.out.println("K: " + k);
-                    // System.out.println("+++: " + Arrays.toString(currPatch.shape()));
-                    // System.out.println("k: " + k + " | i: " + i);
-                    // System.out.println("0: " + k * i);
-                    // System.out.println("1: " + ((k * i) + k));
-                    // System.out.println(Arrays.toString(patches.get(NDArrayIndex.all(), NDArrayIndex.interval(k * i, (k * i) + k)).shape()));
-                    // patches.get(NDArrayIndex.all(), NDArrayIndex.interval((k * i) - k, k * i)).assign(currPatch.ravel());
-                    // count += 1;
+                    // double before = patches.getDouble(0, i, 0, 0, 0);
+                    // System.out.println("Before: " + before);
+                    // System.out.println("----------: " + currPatch);
+                    // System.out.println(Arrays.toString(currPatch.shape()));
+
+                    INDArray ptchs = patches.get(
+                        NDArrayIndex.all(),
+                        NDArrayIndex.point(count),
+                        NDArrayIndex.all(),
+                        NDArrayIndex.all(),
+                        NDArrayIndex.all());
+
+                    // System.out.println("patches b4: " + ptchs);
+
+                    
+                    patches.put(
+                        new INDArrayIndex[] {
+                            NDArrayIndex.all(),
+                            NDArrayIndex.point(count),
+                            NDArrayIndex.all(),
+                            NDArrayIndex.all(),
+                            NDArrayIndex.all()
+                        }, currPatch);
+                    
+
+                    // System.out.println("patches aft: " + ptchs);
+
+                    // System.out.println(slice);
+
+                    // slice.assign(currPatch);
+                    // double after = patches.getDouble(0, i, 0, 0, 0);
+                    // System.out.println("After: " + after);
+                    // System.out.println(slice);
+                    count += 1;
                     // break;
                 }
-                System.out.println(Arrays.toString(patches.get(NDArrayIndex.all(), NDArrayIndex.interval(k * i, (k * i) + k)).shape()));
                 // break;
                 // System.out.println("i: " + i);
         }
-        // System.out.println("--------------: " + Arrays.toString(patches.shape()));
+        // System.out.println("+++: " + Arrays.toString(patches.shape()));
+        System.out.println("--------------: " + Arrays.toString(patches.shape()));
+        System.out.println("++++++++++++++: " + Arrays.toString(filters.shape()));
 
-        return this.getActivations();
+        int a;
+
+        if (data.shape()[3] == 1) {
+            a = (int) 10;
+            return data.repeat(3, a);
+        } else if (data.shape()[3] == 10){
+            a = (int) 2;
+            return data.repeat(3, a);
+        } else {
+            return data;
+        }
 
     }
 
@@ -168,8 +219,10 @@ public class Conv2d extends Layer {
         INDArray z;
         if (prev == null) {
             z = this.convolve(data);
+            // System.out.println("z1: " + Arrays.toString(z.shape()));
         } else {
             z = this.convolve(prev.getActivations());
+            // System.out.println("z2: " + Arrays.toString(z.shape()));
         }
 
         this.setActivations(z);
