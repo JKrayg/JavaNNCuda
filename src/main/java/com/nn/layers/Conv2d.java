@@ -30,14 +30,14 @@ public class Conv2d extends Layer {
         // this.setPreActivations(Nd4j.create(inputSize));
         this.numFilters = numFilters;
         // this.filters = new GlorotInit().initFilters(this, kernelSize, numFilters);
-        int[] k = new int[]{kernelSize[0], kernelSize[1], numFilters};
+        int[] k = new int[]{inputSize[0], kernelSize[0], kernelSize[1]};
         this.kernelSize = k;
         this.stride = stride;
         if (padding.equals("valid")) {
             this.padding = 0;
         } else {
-            int in = inputSize[1];
-            this.padding = (in * stride - in + kernelSize[0] - stride) / 2;
+            int in = inputSize[2];
+            this.padding = (in * stride - in + kernelSize[1] - stride) / 2;
             // this.padding = Math.max(((in / stride) - 1) * stride + (kernelSize[0]) - in, 0);
         }
         // int actDim = ((inputSize[1] + (2 * this.padding) - kernelSize[0]) / stride) + 1;
@@ -53,8 +53,8 @@ public class Conv2d extends Layer {
             String padding, ActivationFunction actFunc) {
         this.numFilters = numFilters;
         // this.filters = new GlorotInit().initFilters(this, kernelSize, numFilters);
-        int[] k = new int[]{kernelSize[0], kernelSize[1], numFilters};
-        this.kernelSize = k;
+        // int[] k = new int[]{numFilters, kernelSize[0], kernelSize[1]};
+        this.kernelSize = kernelSize;
         this.stride = stride;
         if (padding.equals("valid")) {
             this.padding = 0;
@@ -97,40 +97,42 @@ public class Conv2d extends Layer {
         this.filters = filters;
     }
 
-    public INDArray padImages(INDArray images) {
-        INDArray padded = Nd4j.zeros(32,
-                                    images.size(1) + padding * 2,
-                                    images.size(2) + padding * 2,
-                                    images.size(3));
+    public INDArray padData(INDArray data) {
+        INDArray padded = Nd4j.zeros(data.size(0),
+            data.size(1),
+            data.size(2) + padding * 2,
+            data.size(3) + padding * 2);
         padded.get(
             NDArrayIndex.all(),
-            NDArrayIndex.interval(1, 29),
-            NDArrayIndex.interval(1, 29),
-            NDArrayIndex.all()
-        ).assign(images);
+            NDArrayIndex.all(),
+            NDArrayIndex.interval(padding, (data.size(2) + padding)),
+            NDArrayIndex.interval(padding, (data.size(3) + padding))
+        ).assign(data);
 
         return padded;
     
     }
 
     public INDArray convolve(INDArray data) {
-        INDArray paddedData = null;
+        long[] dataShape = data.shape();
+        INDArray paddedData = data.dup();
+        // System.out.println(Arrays.toString(paddedData.shape()));
 
         // add padding
         if (padding != 0) {
-            paddedData = padImages(data);
+            paddedData = padData(data);
         }
 
         long[] paddedShape = paddedData.shape();
         int batchSize = (int) paddedShape[0];
         // long[] kernelShape = filters.shape();
         // System.out.println("+++++++++++++: " + Arrays.toString(paddedShape));
-        int outShapeH = (int) Math.floor(((paddedShape[1] + (2 * padding) - kernelSize[0]) / stride) + 1);
-        int outShapeW = (int) Math.floor(((paddedShape[2] + (2 * padding) - kernelSize[1]) / stride) + 1);
+        int outShapeH = (int) Math.floor(((paddedShape[2] + (2 * padding) - kernelSize[1]) / stride) + 1);
+        int outShapeW = (int) Math.floor(((paddedShape[3] + (2 * padding) - kernelSize[2]) / stride) + 1);
         int patchShape = (int) (kernelSize[0] * kernelSize[1] * kernelSize[2]);
-        INDArray patches = Nd4j.create(batchSize, outShapeH * outShapeW, kernelSize[0], kernelSize[1], paddedShape[3]);
+        INDArray patches = Nd4j.create(batchSize, dataShape[2] * dataShape[3], kernelSize[0], kernelSize[1], kernelSize[2]);
         // System.out.println(padding);
-        // System.out.println("---: " + Arrays.toString(patches.shape()));
+        // System.out.println("---: " + Arrays.toString(paddedData.shape()));
         // INDArray currPatch = paddedData.get(
         //                 NDArrayIndex.all(),
         //                 NDArrayIndex.interval(10, 13),
@@ -142,37 +144,15 @@ public class Conv2d extends Layer {
 
         int count = 0;
 
-        for (int i = 0; i < outShapeH - kernelSize[0]; i += stride) {
-                for (int k = 0; k < outShapeW - kernelSize[1]; k += stride) {
-                    // System.out.println("i: " + i + " | i + kernelsize: " + (i + kernelSize[0]));
-                    // System.out.println("k: " + k + " | k + kernelsize: " + (k + kernelSize[1]));
-                    // INDArray currPatch = data.get(
-                    //     NDArrayIndex.all(),
-                    //     NDArrayIndex.interval(i, i + kernelSize[0]),
-                    //     NDArrayIndex.interval(k, k + kernelSize[1]),
-                    //     NDArrayIndex.point(1));
+        for (int i = 0; i < /*dataShape[1]*/ 1; i += stride) {
+                for (int k = 0; k < /*dataShape[2]*/ 1; k += stride) {
 
                     INDArray currPatch = paddedData.get(
                         NDArrayIndex.all(),
-                        NDArrayIndex.interval(i, i + kernelSize[0]),
-                        NDArrayIndex.interval(k, k + kernelSize[1]),
-                        NDArrayIndex.all());
-                    
-                    // double before = patches.getDouble(0, i, 0, 0, 0);
-                    // System.out.println("Before: " + before);
-                    // System.out.println("----------: " + currPatch);
-                    // System.out.println(Arrays.toString(currPatch.shape()));
-
-                    INDArray ptchs = patches.get(
                         NDArrayIndex.all(),
-                        NDArrayIndex.point(count),
-                        NDArrayIndex.all(),
-                        NDArrayIndex.all(),
-                        NDArrayIndex.all());
+                        NDArrayIndex.interval(i, i + kernelSize[1]),
+                        NDArrayIndex.interval(k, k + kernelSize[2]));
 
-                    // System.out.println("patches b4: " + ptchs);
-
-                    
                     patches.put(
                         new INDArrayIndex[] {
                             NDArrayIndex.all(),
@@ -181,34 +161,31 @@ public class Conv2d extends Layer {
                             NDArrayIndex.all(),
                             NDArrayIndex.all()
                         }, currPatch);
-                    
 
-                    // System.out.println("patches aft: " + ptchs);
-
-                    // System.out.println(slice);
-
-                    // slice.assign(currPatch);
-                    // double after = patches.getDouble(0, i, 0, 0, 0);
-                    // System.out.println("After: " + after);
-                    // System.out.println(slice);
                     count += 1;
-                    // break;
                 }
-                // break;
-                // System.out.println("i: " + i);
         }
-        // System.out.println("+++: " + Arrays.toString(patches.shape()));
-        System.out.println("--------------: " + Arrays.toString(patches.shape()));
-        System.out.println("++++++++++++++: " + Arrays.toString(filters.shape()));
+
+        long[] pShape = patches.shape();
+        long[] fShape = filters.shape();
+        patches = patches.reshape(pShape[0], pShape[1], -1);
+        INDArray reShapefilters = filters.reshape(fShape[0], -1).transpose();
+
+
+        // INDArray output = Nd4j.batchedGEMM(patches, filters);
+
+
+        System.out.println("---: " + Arrays.toString(patches.shape()));
+        System.out.println("+++: " + Arrays.toString(reShapefilters.shape()));
 
         int a;
 
-        if (data.shape()[3] == 1) {
+        if (data.shape()[1] == 1) {
             a = (int) 10;
-            return data.repeat(3, a);
-        } else if (data.shape()[3] == 10){
+            return data.repeat(1, a);
+        } else if (data.shape()[1] == 10){
             a = (int) 2;
-            return data.repeat(3, a);
+            return data.repeat(1, a);
         } else {
             return data;
         }
@@ -216,6 +193,7 @@ public class Conv2d extends Layer {
     }
 
     public void forwardProp(Layer prev, INDArray data, INDArray labels) {
+        // System.out.println("Data: " + Arrays.toString(data.shape()));
         INDArray z;
         if (prev == null) {
             z = this.convolve(data);
@@ -254,16 +232,17 @@ public class Conv2d extends Layer {
             // this.filters = new GlorotInit().initFilters(this, kernelSize, numFilters);
             long[] inShape = prev.getActivations().shape();
             if (this.padding == -1) {
-                this.padding = (int)(inShape[1] * stride - inShape[1] + kernelSize[0] - stride) / 2;
+                this.padding = (int)(inShape[2] * stride - inShape[3] + kernelSize[1] - stride) / 2;
             }
-            actDim = (int)((inShape[1] + (2 * this.padding) - kernelSize[0]) / stride) + 1;
+            this.kernelSize = new int[]{(int)inShape[1], kernelSize[0], kernelSize[1]};
+            actDim = (int)((inShape[2] + (2 * this.padding) - kernelSize[1]) / stride) + 1;
             this.filters = new GlorotInit().initFilters(prev, kernelSize, numFilters);
             // int[] actShape = new int[]{batchSize, actDim, actDim, numFilters};
             // this.setActivations(Nd4j.create(actShape));
         } else {
             // this.setPreActivations(Nd4j.create(batchSize, inputSize[0], inputSize[1], inputSize[2]));
             // this.filters = new GlorotInit().initFilters(this, kernelSize, numFilters);
-            actDim = ((inputSize[1] + (2 * this.padding) - kernelSize[0]) / stride) + 1;
+            actDim = ((inputSize[1] + (2 * this.padding) - kernelSize[1]) / stride) + 1;
             prev = new Layer();
             prev.setActivations(Nd4j.create(batchSize, inputSize[0], inputSize[1], inputSize[2]));
             this.filters = new GlorotInit().initFilters(prev, kernelSize, numFilters);
@@ -271,7 +250,7 @@ public class Conv2d extends Layer {
             // this.setActivations(Nd4j.create(actShape));
         }
 
-        int[] actShape = new int[]{batchSize, actDim, actDim, numFilters};
+        int[] actShape = new int[]{batchSize, numFilters, actDim, actDim};
         this.setPreActivations(Nd4j.create(actShape));
         // this.filters = new GlorotInit().initFilters(prev, kernelSize, numFilters);
         this.setActivations(Nd4j.create(actShape));

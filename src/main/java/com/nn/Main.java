@@ -47,14 +47,14 @@ public class Main {
         int numCols = dis.readInt();
 
         int imageCount = Math.min(numImages, maxImages);
-        float[][][][] images = new float[imageCount][numRows][numCols][1];
+        float[][][][] images = new float[imageCount][1][numRows][numCols];
 
         byte[] buffer = new byte[numRows * numCols];
         for (int i = 0; i < imageCount; i++) {
             dis.readFully(buffer);
             for (int r = 0; r < numRows; r++) {
                 for (int c = 0; c < numCols; c++) {
-                    images[i][r][c][0] = buffer[r * numCols + c] & 0xFF;
+                    images[i][0][r][c] = buffer[r * numCols + c] & 0xFF;
                 }
             }
 }
@@ -368,7 +368,7 @@ public class Main {
         NeuralNet nn = new NeuralNet();
         Conv2d d1 = new Conv2d(
             10,
-            new int[]{28, 28, 1},
+            new int[]{1, 28, 28},
             new int[]{3, 3},
             1,
             "same",
@@ -408,9 +408,7 @@ public class Main {
 
         long totalStart = System.nanoTime();
 
-        nn.miniBatchFit(data.getTrainData(), data.getTrainLabels(),
-                        data.getTestData(), data.getTestLabels(),
-                        data.getValData(), data.getValLabels(), 32, 1);
+        nn.miniBatchFit(data, 32, 1);
 
         double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
         System.out.println("Total mini batch Time: " + totalTimeMs + " ms");

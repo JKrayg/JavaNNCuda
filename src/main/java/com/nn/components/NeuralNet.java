@@ -17,6 +17,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 
+import com.nn.Data;
 import com.nn.activation.*;
 import com.nn.initialize.*;
 import com.nn.layers.*;
@@ -79,10 +80,13 @@ public class NeuralNet {
         // }
     }
 
-    public void miniBatchFit(INDArray trainData, INDArray trainLabels,
-                             INDArray testData, INDArray testLabels,
-                             INDArray valData, INDArray valLabels,
-                             int batchSize, int epochs) {
+    public void miniBatchFit(Data data, int batchSize, int epochs) {
+        INDArray trainData = data.getTrainData();
+        INDArray trainLabels = data.getTrainLabels();
+        INDArray testData = data.getTestData();
+        INDArray testLabels = data.getTestLabels();
+        INDArray valData = data.getValData();
+        INDArray valLabels = data.getValLabels();
 
                                 
 
@@ -131,14 +135,13 @@ public class NeuralNet {
 
         boolean reshape = false;
         long[] shape = trainData.shape();
-        // initLayers(batchSize);
 
         // shuffle
         List<INDArray> arraysToShuffle;
         if (trainData.shape().length == trainLabels.shape().length) {
             arraysToShuffle = Arrays.asList(trainData, trainLabels);
         } else {
-            arraysToShuffle = Arrays.asList(trainData.reshape(shape[0], shape[1]*shape[2]), trainLabels);
+            arraysToShuffle = Arrays.asList(trainData.reshape(shape[0], shape[2]*shape[3]), trainLabels);
             reshape = true;
         }
 
