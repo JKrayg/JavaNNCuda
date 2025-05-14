@@ -83,15 +83,11 @@ public class NeuralNet {
     public void miniBatchFit(Data data, int batchSize, int epochs) {
         INDArray trainData = data.getTrainData();
         INDArray trainLabels = data.getTrainLabels();
-        INDArray testData = data.getTestData();
-        INDArray testLabels = data.getTestLabels();
-        INDArray valData = data.getValData();
-        INDArray valLabels = data.getValLabels();
+        // INDArray testData = data.getTestData();
+        // INDArray testLabels = data.getTestLabels();
+        // INDArray valData = data.getValData();
+        // INDArray valLabels = data.getValLabels();
 
-                                
-
-        long[] imgShape = trainData.shape();
-        // System.out.println(Arrays.toString(imgShape));
         for (int i = 0; i < layers.size(); i++) {
             Layer prev = null;
             Layer curr = layers.get(i);
@@ -105,31 +101,6 @@ public class NeuralNet {
             if (optimizer instanceof Adam) {
                 curr.initForAdam();
             }
-
-            // if (curr instanceof Conv2d) {
-            //     Conv2d lyr = (Conv2d) curr;
-            //     System.out.println("class: " + lyr.getClass().getSimpleName());
-            //     System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
-            //     System.out.println("filters: " + Arrays.toString(lyr.getFilters().shape()));
-            //     System.out.println("kernel: " + Arrays.toString(lyr.getKernelSize()));
-            //     System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
-            //     System.out.println("stride: " + lyr.getStride());
-            //     System.out.println("padding: " + lyr.getPadding());
-            //     System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
-
-            // } else if (curr.getClass() != Flatten.class) {
-            //     Dense lyr = (Dense) curr;
-            //     System.out.println("class: " + lyr.getClass().getSimpleName());
-            //     System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
-            //     System.out.println("weights: " + Arrays.toString(lyr.getWeights().shape()));
-            //     System.out.println("biases: " + Arrays.toString(lyr.getBias().shape()));
-            //     System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
-            // } else {
-            //     Flatten lyr = (Flatten) curr;
-            //     System.out.println("class: " + lyr.getClass().getSimpleName());
-            //     System.out.println("preactivation: " + Arrays.toString(lyr.getPreActivation().shape()));
-            //     System.out.println("activation: " + Arrays.toString(lyr.getActivations().shape()));
-            // }
 
         }
 
@@ -219,10 +190,6 @@ public class NeuralNet {
     }
 
     public void forwardPass(INDArray data, INDArray labels) {
-        // this implies dense layer. we need to change this to do
-        // a proper forward pass depending on the type of layer and input data 
-        long[] imgShape = data.shape();
-        // System.out.println(Arrays.toString(imgShape));
         for (int q = 0; q < layers.size(); q++) {
             Layer curr = layers.get(q);
             Layer prev = null;

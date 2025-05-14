@@ -386,7 +386,7 @@ public class Main {
         //     new int[]{3, 3},
         //     1,
         //     "same",
-        //     new ReLU());  
+        //     new ReLU());
 
         Flatten d3 = new Flatten();
         // Dense d1 = new Dense(256, new ReLU(), 784);
@@ -412,6 +412,10 @@ public class Main {
 
         double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
         System.out.println("Total mini batch Time: " + totalTimeMs + " ms");
+
+        // INDArray patch = Nd4j.zeros(784, 90);
+        // INDArray filter = Nd4j.zeros(90, 20);
+        // System.out.println(Arrays.toString(patch.mmul(filter).shape()));
 
 
         // long totalStart = System.nanoTime();

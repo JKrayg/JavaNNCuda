@@ -90,7 +90,11 @@ public class Data {
     }
 
     public Data(INDArray data, INDArray labels) {
-        // System.out.println(labels.length);
+        // long[] dataShape = data.shape();
+        // if (dataShape[1] == 1) {
+        //     data = data.reshape(dataShape[0], dataShape[2], dataShape[3]);
+        // }
+
         this.data = data;
 
         // create a hashtable of distinct labels mapped to an integer
