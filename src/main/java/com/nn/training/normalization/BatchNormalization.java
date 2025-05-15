@@ -240,7 +240,7 @@ public class BatchNormalization extends Normalization {
         this.variances = variances;
         this.runningMeans = runningMeans.mul(momentum).add(means.mul((1 - momentum)));
         this.runningVariances = runningVariances.mul(momentum).add(variances.mul((1 - momentum)));
-        this.preNormZ = z.dup();
+        this.preNormZ = z;
         this.preScaleShiftZ = preSclShft;
 
         return norm;

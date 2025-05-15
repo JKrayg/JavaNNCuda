@@ -11,10 +11,13 @@ import com.nn.activation.ReLU;
 import com.nn.components.*;
 import com.nn.initialize.GlorotInit;
 import com.nn.initialize.HeInit;
+import com.nn.training.loss.Loss;
 import com.nn.training.normalization.BatchNormalization;
 import com.nn.training.normalization.Normalization;
 import com.nn.training.optimizers.Optimizer;
 import com.nn.training.regularizers.Dropout;
+import com.nn.training.regularizers.L1;
+import com.nn.training.regularizers.L2;
 import com.nn.training.regularizers.Regularizer;
 import com.nn.utils.MathUtils;
 
@@ -138,50 +141,6 @@ public class Dense extends Layer {
         this.weights = o.executeWeightsUpdate(this);
     }
 
-    public void forwardProp(Layer prev, INDArray data, INDArray labels) {
-        Normalization norm = this.getNormalization();
-        ActivationFunction actFunc = this.getActFunc();
-        MathUtils maths = new MathUtils();
-        INDArray z;
-        if (prev == null) {
-            z = maths.weightedSum(data, this);
-        } else {
-            // System.out.println("=============" + Arrays.toString(prev.getActivations().shape()));
-            z = maths.weightedSum(prev.getActivations(), this);
-        }
-
-        // if (prev instanceof Conv2d) {
-        // // long[] shape = prev.getActivations().shape();
-        // // INDArray act = prev.getActivations().reshape(shape[0], -1);
-        // z = maths.weightedSum(prev.getActivations(), this);
-        // } else if (prev instanceof Dense) {
-        // z = maths.weightedSum(prev.getActivations(), this);
-        // } else {
-        // z = maths.weightedSum(data, this);
-        // }
-
-        this.setPreActivations(z);
-
-        // normalize before activation if batch normalization
-        if (norm instanceof BatchNormalization) {
-            z = norm.normalize(z);
-        }
-
-        INDArray activated = actFunc.execute(z);
-
-        // dropout [find a better way to do this]
-        if (this.getRegularizers() != null) {
-            for (Regularizer r : this.getRegularizers()) {
-                if (r instanceof Dropout) {
-                    activated = r.regularize(activated);
-                }
-                break;
-            }
-        }
-
-        this.setActivations(activated);
-    }
-
     public Layer initLayer(Layer prev, int batchSize) {
         INDArray biases = Nd4j.create(numNeurons, 1);
         ActivationFunction actFunc = this.getActFunc();
@@ -233,4 +192,129 @@ public class Dense extends Layer {
         return this;
 
     }
+
+    public void forwardProp(Layer prev, INDArray data, INDArray labels) {
+        long totalStart1 = System.nanoTime();
+        Normalization norm = this.getNormalization();
+        ActivationFunction actFunc = this.getActFunc();
+        MathUtils maths = new MathUtils();
+        INDArray z;
+        if (prev == null) {
+            z = maths.weightedSum(data, this);
+        } else {
+            // System.out.println("=============" + Arrays.toString(prev.getActivations().shape()));
+            z = maths.weightedSum(prev.getActivations(), this);
+        }
+
+        this.setPreActivations(z);
+
+        // normalize before activation if batch normalization
+        if (norm instanceof BatchNormalization) {
+            z = norm.normalize(z);
+        }
+
+        INDArray activated = actFunc.execute(z);
+
+        // dropout [find a better way to do this]
+        if (this.getRegularizers() != null) {
+            for (Regularizer r : this.getRegularizers()) {
+                if (r instanceof Dropout) {
+                    activated = r.regularize(activated);
+                }
+                break;
+            }
+        }
+
+        this.setActivations(activated);
+
+        double totalTimeMs2 = (System.nanoTime() - totalStart1) / 1e6;
+        // System.out.println("dense forward Time: " + totalTimeMs2 + " ms");
+    }
+
+    // public void backprop(Layer prev, Layer curr, INDArray gradient, INDArray data) {
+    //     // Output outLayer = (Output) layers.get(layers.size() - 1);
+    //     // Loss lossFunc = outLayer.getLoss();
+    //     // INDArray loss = Nd4j.create(new float[]{lossFunc.execute(outLayer.getActivations(), outLayer.getLabels())});
+    //     // if (this.lossHistory == null) {
+    //     //     this.lossHistory = loss;
+    //     // } else {
+    //     //     this.lossHistory = Nd4j.hstack(this.lossHistory, loss);
+    //     // }
+
+    //     // INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getLabels());
+
+    //     // recursively get gradients
+    //     this.getGradients(prev, this, gradient, data);
+
+    //     // update weights/biases
+    //     for (Layer l : layers) {
+    //         ((Dense)l).updateWeights(optimizer);
+    //         l.updateBiases(optimizer);
+
+    //         // update beta/gamma if batch normalzation
+    //         if (l.getNormalization() instanceof BatchNormalization) {
+    //             Normalization norm = l.getNormalization();
+    //             ((BatchNormalization) norm).updateShift(optimizer);
+    //             ((BatchNormalization) norm).updateScale(optimizer);
+    //         }
+    //     }
+    // }
+
+    // public void getGradients(Layer prevLayer, Layer currLayer, INDArray gradient, INDArray data) {
+    //     Layer curr = currLayer;
+    //     INDArray gradientWrtWeights;
+    //     INDArray gradientWrtBias;
+
+    //     // batch normalization gradients
+    //     Normalization norm = currLayer.getNormalization();
+    //     INDArray grad;
+    //     if (norm instanceof BatchNormalization) {
+    //         BatchNormalization batchNorm = (BatchNormalization) norm;
+    //         grad = batchNorm.gradientPreBNSimple(gradient);
+    //         batchNorm.setGradientShift(batchNorm.gradientShift(gradient));
+    //         batchNorm.setGradientScale(batchNorm.gradientScale(gradient));
+    //     } else {
+    //         grad = gradient;
+    //     }
+
+    //     // weights/bias gradients
+    //     if (currLayer instanceof Output) {
+    //         Layer prev = layers.get(layers.indexOf(currLayer) - 1);
+    //         gradientWrtWeights = ((Output) currLayer).gradientWeights(prev, gradient);
+    //         gradientWrtBias = ((Output) currLayer).gradientBias(gradient);
+    //     } else {
+    //         Layer prev;
+    //         if (layers.indexOf(curr) > 0) {
+    //             prev = layers.get(layers.indexOf(curr) - 1);
+    //         } else {
+    //             prev = new Layer();
+    //             prev.setActivations(data);
+    //         }
+
+    //         gradientWrtWeights = ((Dense)currLayer).gradientWeights(prev, grad);
+    //         gradientWrtBias = currLayer.gradientBias(grad);
+            
+    //     }
+
+    //     // regularization (L1/L2) [find a better way to do this]
+    //     if (curr.getRegularizers() != null) {
+    //         for (Regularizer r : curr.getRegularizers()) {
+    //             if (r instanceof L1 || r instanceof L2) {
+    //                 gradientWrtWeights = gradientWrtWeights.add(r.regularize(((Dense)currLayer).getWeights()));
+    //             }
+    //             break;
+    //         }
+    //     }
+
+
+    //     ((Dense)currLayer).setGradientWeights(gradientWrtWeights);
+    //     curr.setGradientBiases(gradientWrtBias);
+
+    //     if (layers.indexOf(curr) > 0) {
+    //         Layer prev = layers.get(layers.indexOf(curr) - 1);
+    //         INDArray next = prev.getActFunc().gradient(prev, grad.mmul(((Dense)currLayer).getWeights().transpose()));
+    //         getGradients(prev, next, data);
+    //     }
+    // }
+    
 }

@@ -345,6 +345,12 @@ public class Main {
 
         data.split(0.20, 0.20);
 
+        // boolean onGpu = Nd4j.getAffinityManager().getDeviceForArray(data.getTrainData()) >= 0;
+        // System.out.println("Is on GPU: " + onGpu);
+
+
+        // Nd4j.getExecutioner().printEnvironmentInformation();
+
         // INDArray batchImg = data.getTrainData().get(NDArrayIndex.interval(0, 1));
         // INDArray batchLbl = data.getTrainLabels().get(NDArrayIndex.interval(0, 1));
         // System.out.println(Arrays.toString(batchImg.shape()));
@@ -371,14 +377,14 @@ public class Main {
             new int[]{1, 28, 28},
             new int[]{3, 3},
             1,
-            "same",
+            "valid",
             new ReLU());
 
         Conv2d d2 = new Conv2d(
             20,
             new int[]{3, 3},
             1,
-            "same",
+            "valid",
             new ReLU());
 
         // Conv2d d3 = new Conv2d(
@@ -404,11 +410,40 @@ public class Main {
         nn.addLayer(d5);
         // nn.addLayer(d6);
 
+        // INDArray testconv = Nd4j.create(new int[][]{
+        //     {1, 2, 3, 4, 5},
+        //     {6, 7, 8, 9, 10},
+        //     {11, 12, 13, 14, 15},
+        //     {16, 17, 18, 19, 20},
+        //     {21, 22, 23, 24, 25}
+        // });
+
+        // testconv = testconv.reshape(1, 1, testconv.shape()[0], testconv.shape()[1]);
+        // System.out.println(Arrays.toString(testconv.shape()));
+
+        // INDArray testker = Nd4j.ones(1, 2, 2);
+        // // testker = testker.reshape(1, testker.shape()[0], testker.shape()[1]);
+        // INDArray testfilt = Nd4j.ones(5, 1, 2, 2);
+        // // testfilt = testfilt.reshape(5, 1, testfilt.shape()[0], testfilt.shape()[1]);
+        // int padding = 0;
+        // int stride = 1;
+
+        // Conv2d c = new Conv2d(5, new int[]{1, 1, 5, 5} , new int[]{1, 2, 2}, stride, "valid", new ReLU());
+        // c.initLayer(null, 1);
+
+        // c.convolve(testconv);
+
+
         nn.compile(new Adam(0.001), new MultiClassMetrics());
+
+        // System.out.println(d1.getBias().isAttached());
 
         long totalStart = System.nanoTime();
 
         nn.miniBatchFit(data, 32, 1);
+
+        // System.out.println(Arrays.toString(d4.getActivations().shape()));
+        // System.out.println(Arrays.toString(d5.getActivations().shape()));
 
         double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
         System.out.println("Total mini batch Time: " + totalTimeMs + " ms");

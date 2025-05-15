@@ -18,7 +18,7 @@ public class Layer {
     // private int numNeurons;
     private INDArray preActivation;
     private INDArray activations;
-    // private INDArray weights;
+    private INDArray weights;
     // private INDArray weightsMomentum;
     // private INDArray weightsVariance;
     private INDArray bias;
@@ -192,9 +192,7 @@ public class Layer {
         return sums.div(gradient.rows());
     }
 
-    // public void updateWeights(Optimizer o) {
-    //     this.weights = o.executeWeightsUpdate(this);
-    // }
+    public void updateWeights(Optimizer o) {}
 
     public void updateBiases(Optimizer o) {
         this.bias = o.executeBiasUpdate(this);
