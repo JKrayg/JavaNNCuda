@@ -60,6 +60,11 @@ public class Data {
         
     }
 
+    public Data(float[][] data, float[] targetVals) {
+        this.data = Nd4j.create(data);
+        this.labels = Nd4j.create(targetVals);
+    }
+
     public Data(float[][] data, Integer[] labels) {
         // System.out.println(labels.length);
         this.data = Nd4j.create(data);

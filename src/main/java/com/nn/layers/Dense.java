@@ -193,43 +193,43 @@ public class Dense extends Layer {
 
     }
 
-    public void forwardProp(Layer prev, INDArray data, INDArray labels) {
-        long totalStart1 = System.nanoTime();
-        Normalization norm = this.getNormalization();
-        ActivationFunction actFunc = this.getActFunc();
-        MathUtils maths = new MathUtils();
-        INDArray z;
-        if (prev == null) {
-            z = maths.weightedSum(data, this);
-        } else {
-            // System.out.println("=============" + Arrays.toString(prev.getActivations().shape()));
-            z = maths.weightedSum(prev.getActivations(), this);
-        }
+    // public void forwardProp(Layer prev, INDArray data, INDArray labels) {
+    //     // long totalStart1 = System.nanoTime();
+    //     Normalization norm = this.getNormalization();
+    //     ActivationFunction actFunc = this.getActFunc();
+    //     MathUtils maths = new MathUtils();
+    //     INDArray z;
+    //     if (prev == null) {
+    //         z = maths.weightedSum(data, this);
+    //     } else {
+    //         // System.out.println("=============" + Arrays.toString(prev.getActivations().shape()));
+    //         z = maths.weightedSum(prev.getActivations(), this);
+    //     }
 
-        this.setPreActivations(z);
+    //     this.setPreActivations(z);
 
-        // normalize before activation if batch normalization
-        if (norm instanceof BatchNormalization) {
-            z = norm.normalize(z);
-        }
+    //     // normalize before activation if batch normalization
+    //     if (norm instanceof BatchNormalization) {
+    //         z = norm.normalize(z);
+    //     }
 
-        INDArray activated = actFunc.execute(z);
+    //     INDArray activated = actFunc.execute(z);
 
-        // dropout [find a better way to do this]
-        if (this.getRegularizers() != null) {
-            for (Regularizer r : this.getRegularizers()) {
-                if (r instanceof Dropout) {
-                    activated = r.regularize(activated);
-                }
-                break;
-            }
-        }
+    //     // dropout [find a better way to do this]
+    //     if (this.getRegularizers() != null) {
+    //         for (Regularizer r : this.getRegularizers()) {
+    //             if (r instanceof Dropout) {
+    //                 activated = r.regularize(activated);
+    //             }
+    //             break;
+    //         }
+    //     }
 
-        this.setActivations(activated);
+    //     this.setActivations(activated);
 
-        double totalTimeMs2 = (System.nanoTime() - totalStart1) / 1e6;
-        // System.out.println("dense forward Time: " + totalTimeMs2 + " ms");
-    }
+    //     // double totalTimeMs2 = (System.nanoTime() - totalStart1) / 1e6;
+    //     // System.out.println("dense forward Time: " + totalTimeMs2 + " ms");
+    // }
 
     // public void backprop(Layer prev, Layer curr, INDArray gradient, INDArray data) {
     //     // Output outLayer = (Output) layers.get(layers.size() - 1);

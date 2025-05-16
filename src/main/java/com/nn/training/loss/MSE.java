@@ -6,7 +6,8 @@ import com.nn.components.Layer;
 
 public class MSE extends Loss {
     public float execute(INDArray activations, INDArray labels) {
-        return 0.0f;
+        INDArray dif = activations.sub(labels);
+        return dif.mul(dif).sumNumber().floatValue() / labels.length();
     }
 
     // public INDArray outputGradientWeights(Layer out, Layer prev, float[] labels) {
@@ -15,7 +16,8 @@ public class MSE extends Loss {
 
     public INDArray gradient(Layer out, INDArray labels) {
         // ***
-        return out.getActivations().sub(labels);
+        INDArray dif = out.getActivations().sub(labels);
+        return dif.div(labels.length());
     }
     
 }
