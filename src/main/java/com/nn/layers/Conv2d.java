@@ -207,7 +207,7 @@ public class Conv2d extends Layer {
 
 
 
-    public void forwardProp(Layer prev, INDArray data, INDArray labels) {
+    public void forwardProp(Layer prev, INDArray data) {
         // long totalStart1 = System.nanoTime();
         INDArray z;
         if (prev == null) {

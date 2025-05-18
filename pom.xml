@@ -39,7 +39,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>31.1-jre</version> <!-- Note: Your guava-1.0.0-M2.1.jar might be custom; latest stable instead -->
+            <version>31.1-jre</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>

@@ -440,7 +440,7 @@ public class Main {
 
         long totalStart = System.nanoTime();
 
-        nn.miniBatchFit(data, 32, 1);
+        nn.miniBatchFit(data, 16, 1);
 
         // System.out.println(Arrays.toString(d4.getActivations().shape()));
         // System.out.println(Arrays.toString(d5.getActivations().shape()));

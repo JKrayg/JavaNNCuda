@@ -204,5 +204,5 @@ public class Layer {
         return new Layer();
     }
 
-    public void forwardProp(Layer prev, INDArray data, INDArray labels) {}
+    public void forwardProp(Layer prev, INDArray data) {}
 }

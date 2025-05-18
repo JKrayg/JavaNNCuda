@@ -1,6 +1,8 @@
 package com.nn.training.optimizers;
 
 import java.sql.BatchUpdateException;
+import java.util.Arrays;
+
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.ops.transforms.Transforms;
@@ -38,6 +40,9 @@ public class Adam extends Optimizer {
         float momBiasCor = 1 - (float) Math.pow(momentumDecay, updateCount);
         float varBiasCor = 1 - (float) Math.pow(varianceDecay, updateCount);
         Dense lyr = (Dense) l;
+
+        // System.out.println(Arrays.toString(lyr.getWeightsMomentum().shape()));
+        // System.out.println(Arrays.toString(lyr.getGradientWeights().shape()));
 
         lyr.setWeightsMomentum(lyr.getWeightsMomentum().mul(momentumDecay)
                             .addi(lyr.getGradientWeights().mul(1 - momentumDecay)));
