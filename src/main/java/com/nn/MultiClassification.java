@@ -21,7 +21,7 @@ import com.nn.training.metrics.BinaryMetrics;
 import com.nn.training.optimizers.Adam;
 import com.nn.training.regularizers.L2;
 
-public class BinClassification {
+public class MultiClassification {
     // ** iris data ** --------------------------------------------------
     public static void main(String[] args) {
         String filePath = "src\\resources\\datasets\\iris.data";
@@ -63,10 +63,10 @@ public class BinClassification {
         data.split(0.20, 0.20);
 
         NeuralNet nn = new NeuralNet();
-        Dense dense1 = new Dense(4, new ReLU(), 4);
-        dense1.addRegularizer(new L2());
-        Dense dense2 = new Dense(4, new ReLU());
-        dense2.addRegularizer(new L2());
+        Dense dense1 = new Dense(16, new ReLU(), 4);
+        // dense1.addRegularizer(new L2());
+        Dense dense2 = new Dense(8, new ReLU());
+        // dense2.addRegularizer(new L2());
         Output out = new Output(data.getClasses().size(), new Softmax(), new CatCrossEntropy());
 
         nn.addLayer(dense1);
@@ -75,22 +75,7 @@ public class BinClassification {
 
         nn.compile(new Adam(0.001), new BinaryMetrics());
 
-        nn.miniBatchFit(data, 8, 10);
-
-        // for (Layer l : nn.getLayers()) {
-        //     if (l.getPreActivation() != null) {
-        //         System.out.println("preactivation: " + l.getPreActivation().data());
-        //     }
-            
-        //     System.out.println("activation: " + l.getActivations().data());
-        //     System.out.println("weights: " + ((Dense) l).getWeights().data());
-        //     System.out.println("bias: " + l.getBias().data());
-        //     if (l instanceof Output) {
-        //         System.out.println("pred: " + l.getActivations());
-        //         System.out.println(Arrays.toString(((Output) l).getLabels().shape()));
-        //         System.out.println("labels: " + ((Output) l).getLabels());
-        //     }
-        // }
+        nn.miniBatchFit(data, 16, 30);
     }
 
 }
