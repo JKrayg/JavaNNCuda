@@ -204,7 +204,7 @@ public class Data {
     }
 
     // only works for <= 3D
-    public void shuffle(INDArray data, INDArray labels) {
+    public void shuffle() {
          List<INDArray> arraysToShuffle;
          boolean reshape = false;
          long[] shape = data.shape();

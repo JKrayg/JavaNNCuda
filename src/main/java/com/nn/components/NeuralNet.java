@@ -59,10 +59,11 @@ public class NeuralNet {
     public void miniBatchFit(Data data, int batchSize, int epochs) {
         INDArray trainData = data.getTrainData();
         INDArray trainLabels = data.getTrainLabels();
+        // System.out.println(Arrays.toString(trainLabels.shape()));
         INDArray testData = data.getTestData();
         INDArray testLabels = data.getTestLabels();
         INDArray valData = data.getValData();
-        INDArray valLabels = data.getValLabels().reshape(data.getValLabels().shape()[0], 1);
+        INDArray valLabels = data.getValLabels();//.reshape(data.getValLabels().shape()[0]);
 
         for (int i = 0; i < layers.size(); i++) {
             Layer prev = null;
@@ -332,6 +333,10 @@ public class NeuralNet {
     public float loss(INDArray d, INDArray l) {
         forwardPass(d, l);
         Output outLayer = (Output) layers.get(layers.size() - 1);
+        // System.out.println(Arrays.toString(outLayer.getActivations().shape()));
+        // System.out.println(Arrays.toString(outLayer.getLabels().shape()));
+        // System.out.println(outLayer.getActivations().data());
+        // System.out.println(outLayer.getLabels().data());
 
         return outLayer.getLoss().execute(outLayer.getActivations(), l);
     }
