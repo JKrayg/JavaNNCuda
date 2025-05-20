@@ -59,11 +59,10 @@ public class NeuralNet {
     public void miniBatchFit(Data data, int batchSize, int epochs) {
         INDArray trainData = data.getTrainData();
         INDArray trainLabels = data.getTrainLabels();
-        // System.out.println(Arrays.toString(trainLabels.shape()));
         INDArray testData = data.getTestData();
         INDArray testLabels = data.getTestLabels();
         INDArray valData = data.getValData();
-        INDArray valLabels = data.getValLabels();//.reshape(data.getValLabels().shape()[0]);
+        INDArray valLabels = data.getValLabels();
 
         for (int i = 0; i < layers.size(); i++) {
             Layer prev = null;
@@ -147,9 +146,9 @@ public class NeuralNet {
             // print loss
             int numL = lossHistory.columns();
             this.loss = lossHistory.sumNumber().floatValue() / numL;
-            this.valLoss = loss(valData, valLabels);
+            // this.valLoss = loss(valData, valLabels);
 
-            System.out.println("loss: " + this.loss + " - val loss: " + this.valLoss);
+            System.out.println("loss: " + this.loss);// + " - val loss: " + this.valLoss);
         }
 
         // System.out.println("train metrics: ");
@@ -213,7 +212,6 @@ public class NeuralNet {
         }
 
         INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getLabels());
-
         // recursively get gradients
         getGradients(outLayer, gradientWrtOutput, data);
 

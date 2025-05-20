@@ -1,5 +1,7 @@
 package com.nn.layers;
 
+import java.util.Arrays;
+
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import com.nn.activation.ActivationFunction;

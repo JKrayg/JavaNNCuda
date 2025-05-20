@@ -1,6 +1,8 @@
 package com.nn.activation;
 
 
+import java.util.Arrays;
+
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
@@ -14,7 +16,9 @@ public class Sigmoid extends ActivationFunction {
         for (int i = 0; i < rows; i++) {
             v[i] = (float) (1 / (1 + Math.exp(-(z.getFloat(i)))));
         }
-        return Nd4j.create(v);
+
+        INDArray out = Nd4j.create(v);
+        return out.reshape(out.shape()[0], z.columns());
     }
 
     public INDArray derivative(INDArray z) {
