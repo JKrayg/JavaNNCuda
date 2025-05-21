@@ -39,7 +39,7 @@ public class Adam extends Optimizer {
     public INDArray executeWeightsUpdate(Layer l) {
         float momBiasCor = 1 - (float) Math.pow(momentumDecay, updateCount);
         float varBiasCor = 1 - (float) Math.pow(varianceDecay, updateCount);
-        Dense lyr = (Dense) l;
+        Layer lyr = l;
 
         // System.out.println(Arrays.toString(lyr.getWeightsMomentum().shape()));
         // System.out.println(Arrays.toString(lyr.getGradientWeights().shape()));

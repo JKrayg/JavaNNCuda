@@ -17,7 +17,11 @@ import com.nn.components.Layer;
 import com.nn.initialize.GlorotInit;
 import com.nn.initialize.HeInit;
 import com.nn.training.normalization.BatchNormalization;
+import com.nn.training.normalization.Normalization;
 import com.nn.training.optimizers.Optimizer;
+import com.nn.training.regularizers.L1;
+import com.nn.training.regularizers.L2;
+import com.nn.training.regularizers.Regularizer;
 
 public class Conv2d extends Layer {
     private int[] inputSize;
@@ -97,8 +101,33 @@ public class Conv2d extends Layer {
         this.filters = filters;
     }
 
+    public INDArray getWeights() {
+        return this.filters;
+    }
+
+    public void initForAdam() {
+        INDArray weightsO = Nd4j.create(filters.shape());
+        INDArray biasO = Nd4j.create(this.getBias().shape());
+
+        this.setWeightsMomentum(weightsO);
+        this.setWeightsVariance(weightsO);
+        this.setBiasesMomentum(biasO);
+        this.setBiasesVariance(biasO);
+
+        Normalization norm = this.getNormalization();
+        if (norm != null) {
+            INDArray shiftO = Nd4j.create(norm.getShift().shape());
+            INDArray scaleO = Nd4j.create(norm.getScale().shape());
+
+            norm.setShiftMomentum(shiftO);
+            norm.setShiftVariance(shiftO);
+            norm.setScaleMomentum(scaleO);
+            norm.setScaleVariance(scaleO);
+        }
+    }
+
     public void updateWeights(Optimizer o) {
-        // (filters)
+        this.filters = o.executeWeightsUpdate(this);
     }
 
     public Layer initLayer(Layer prev, int batchSize) {
@@ -132,8 +161,6 @@ public class Conv2d extends Layer {
 
     }
 
-    public void initForAdam() {
-    }
 
     public INDArray padData(INDArray data) {
         INDArray padded = Nd4j.zeros(data.size(0),
@@ -151,13 +178,11 @@ public class Conv2d extends Layer {
     
     }
 
-
-
-    public INDArray convolve(INDArray data) {
+    public INDArray im2col(INDArray data) {
         long[] dataShape = data.shape();
-        // INDArray d = data.dup();
+        // // INDArray d = data.dup();
 
-        // add padding
+        // // add padding
         if (padding != 0) {
             data = padData(data);
         }
@@ -195,30 +220,42 @@ public class Conv2d extends Layer {
             }
         }
 
-        long[] fShape = filters.shape();
         INDArray reshPatches = patches.reshape(imgLen * batchSize, patchLen);
-        INDArray out = reshPatches.mmul(filters.reshape(-1, fShape[0])).reshape(batchSize, numFilters, outShapeH, outShapeW);
-        // INDArray out = Nd4j.tensorMmul(patches.reshape(batchSize, -1, imgLen), filters.reshape(-1, fShape[0]), new int[][]{{1},{0}})
-        //     .reshape(batchSize, numFilters, outShapeH, outShapeW);
+
+        return reshPatches;
+    }
+
+
+
+    public INDArray convolve(INDArray data) {
+        long[] dataShape = data.shape();
+        int outShapeH = (int) Math.floor(((dataShape[2] + (2 * padding) - kernelSize[1]) / stride) + 1);
+        int outShapeW = (int) Math.floor(((dataShape[3] + (2 * padding) - kernelSize[2]) / stride) + 1);
+        INDArray patches = im2col(data);
+        long[] fShape = filters.shape();
+        INDArray out = patches.mmul(filters.reshape(-1, fShape[0])).reshape(data.shape()[0], numFilters, outShapeH, outShapeW);
 
         return out;
 
     }
 
-
-
-    public void forwardProp(Layer prev, INDArray data) {
-        // long totalStart1 = System.nanoTime();
-        INDArray z;
-        if (prev == null) {
-            z = this.convolve(data);
-        } else {
-            z = this.convolve(prev.getActivations());
-        }
-
+    public void forwardProp(Layer prev) {
+        INDArray z = this.convolve(prev.getActivations());
         this.setActivations(z);
-        // double totalTimeMs2 = (System.nanoTime() - totalStart1) / 1e6;
-        // System.out.println("conv forward Time: " + totalTimeMs2 + " ms");
+    }
+
+    public void getGradients(Layer prev, INDArray gradient, INDArray data) {
+        if (!(prev instanceof Conv2d)) {
+            this.setGradientWeights(this.gradientWeights(prev, gradient));
+        } else {
+            this.setGradientWeights(this.gradientWeights(prev, im2col(gradient)));
+        }
+        
+        this.setGradientBiases(this.gradientBias(im2col(gradient)));
+
+        if (this.getPrev() != null) {
+            prev.getGradients(prev.getPrev(), gradient, data);
+        }
     }
     
 }

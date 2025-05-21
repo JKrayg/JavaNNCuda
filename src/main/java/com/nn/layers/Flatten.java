@@ -3,8 +3,6 @@ package com.nn.layers;
 import java.util.Arrays;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
-
-import com.nn.activation.ActivationFunction;
 import com.nn.components.Layer;
 
 public class Flatten extends Dense {
@@ -18,7 +16,7 @@ public class Flatten extends Dense {
         return this;
     }
 
-    public void forwardProp(Layer prev, INDArray data, INDArray labels) {
+    public void forwardProp(Layer prev) {
         this.setPreActivations(prev.getActivations());
         long[] shape = prev.getActivations().shape();
         // System.out.println("shape: " + Arrays.toString(shape));

@@ -16,15 +16,17 @@ import com.nn.training.regularizers.Regularizer;
 
 public class Layer {
     // private int numNeurons;
+    private Layer next;
+    private Layer previous;
     private INDArray preActivation;
     private INDArray activations;
     private INDArray weights;
-    // private INDArray weightsMomentum;
-    // private INDArray weightsVariance;
+    private INDArray weightsMomentum;
+    private INDArray weightsVariance;
     private INDArray bias;
     private INDArray biasMomentum;
     private INDArray biasVariance;
-    // private INDArray gradientWrtWeights;
+    private INDArray gradientWrtWeights;
     private INDArray gradientWrtBiases;
     private ActivationFunction func;
     // private Loss loss;
@@ -59,6 +61,14 @@ public class Layer {
     //     this.weights = weights;
     // }
 
+    public void setNext(Layer next) {
+        this.next = next;
+    }
+
+    public void setPrev(Layer prev) {
+        this.previous = prev;
+    }
+
     public void setActivationFunction(ActivationFunction a) {
         this.func = a;
     }
@@ -67,17 +77,17 @@ public class Layer {
         this.bias = biases;
     }
 
-    // public void setWeightsMomentum(INDArray m) {
-    //     this.weightsMomentum = m;
-    // }
+    public void setWeightsMomentum(INDArray m) {
+        this.weightsMomentum = m;
+    }
 
     public void setBiasesMomentum(INDArray m) {
         this.biasMomentum = m;
     }
 
-    // public void setWeightsVariance(INDArray v) {
-    //     this.weightsVariance = v;
-    // }
+    public void setWeightsVariance(INDArray v) {
+        this.weightsVariance = v;
+    }
 
     public void setBiasesVariance(INDArray v) {
         this.biasVariance = v;
@@ -91,9 +101,9 @@ public class Layer {
         this.activations = activations;
     }
 
-    // public void setGradientWeights(INDArray gWrtW) {
-    //     this.gradientWrtWeights = gWrtW;
-    // }
+    public void setGradientWeights(INDArray gWrtW) {
+        this.gradientWrtWeights = gWrtW;
+    }
 
     public void setGradientBiases(INDArray gWrtB) {
         this.gradientWrtBiases = gWrtB;
@@ -107,6 +117,14 @@ public class Layer {
     //     return numNeurons;
     // }
 
+    public Layer getNext() {
+        return next;
+    }
+
+    public Layer getPrev() {
+        return previous;
+    }
+
     public INDArray getActivations() {
         return activations;
     }
@@ -115,21 +133,21 @@ public class Layer {
         return preActivation;
     }
 
-    // public INDArray getWeights() {
-    //     return weights;
-    // }
+    public INDArray getWeights() {
+        return weights;
+    }
 
     public INDArray getBias() {
         return bias;
     }
 
-    // public INDArray getWeightsMomentum() {
-    //     return weightsMomentum;
-    // }
+    public INDArray getWeightsMomentum() {
+        return weightsMomentum;
+    }
 
-    // public INDArray getWeightsVariance() {
-    //     return weightsVariance;
-    // }
+    public INDArray getWeightsVariance() {
+        return weightsVariance;
+    }
 
     public int getNumFeatures() {
         return numFeatures;
@@ -163,29 +181,29 @@ public class Layer {
     // //     return loss;
     // // }
 
-    // public INDArray getGradientWeights() {
-    //     return gradientWrtWeights;
-    // }
+    public INDArray getGradientWeights() {
+        return gradientWrtWeights;
+    }
 
     public INDArray getGradientBias() {
         return gradientWrtBiases;
     }
 
-    // public INDArray getGradient() {
-    //     INDArray gradient = null;
-    //     if (this instanceof Output) {
-    //         gradient = ((Output)this).getLoss().gradient(this, ((Output) this).getLabels());
-    //     } else {
-    //         gradient = func.gradient(this, preActivation);
-    //     }
+    public INDArray getGradient() {
+        INDArray gradient = null;
+        if (this instanceof Output) {
+            gradient = ((Output)this).getLoss().gradient(this, ((Output) this).getLabels());
+        } else {
+            gradient = func.gradient(this, preActivation);
+        }
 
-    //     return gradient;
-    // }
+        return gradient;
+    }
 
-    // public INDArray gradientWeights(Layer prevLayer, INDArray gradient) {
-    //     INDArray gWrtW = prevLayer.getActivations().transpose().mmul(gradient).div(prevLayer.getActivations().rows());
-    //     return gWrtW;
-    // }
+    public INDArray gradientWeights(Layer prevLayer, INDArray gradient) {
+        INDArray gWrtW = prevLayer.getActivations().transpose().mmul(gradient).div(prevLayer.getActivations().rows());
+        return gWrtW;
+    }
 
     public INDArray gradientBias(INDArray gradient) {
         INDArray sums = gradient.sum(0).reshape(gradient.columns(), 1);
@@ -204,5 +222,7 @@ public class Layer {
         return new Layer();
     }
 
-    public void forwardProp(Layer prev, INDArray data) {}
+    public void forwardProp(Layer prev) {}
+
+    public void getGradients(Layer prev, INDArray gradient, INDArray data) {}
 }

@@ -287,36 +287,6 @@ public class Main {
 
         // -------------------------------------------------------------------
 
-        // ** iris data ** --------------------------------------------------
-        // String filePath = "src\\resources\\datasets\\iris.data";
-        // ArrayList<String> labelsArrayList = new ArrayList<>();
-        // ArrayList<float[]> dataArrayList = new ArrayList<>();
-
-        // try {
-        //     File f = new File(filePath);
-        //     Scanner scan = new Scanner(f);
-        //     while (scan.hasNextLine()) {
-        //         
-        //         String line = scan.nextLine();
-        //         String values = line.substring(0, line.lastIndexOf(","));
-        //         float[] toDub;
-        //         String[] splitValues = values.split(",");
-        //         toDub = new float[splitValues.length];
-
-        //         for (int i = 0; i < splitValues.length; i++) {
-        //             toDub[i] = Float.parseFloat(splitValues[i]);
-        //         }
-
-        //         dataArrayList.add(toDub);
-        //         String label = line.substring(line.lastIndexOf(",") + 1);
-        //         labelsArrayList.add(label);
-
-        //     }
-        //     scan.close();
-        // } catch (FileNotFoundException e) {
-        //     e.printStackTrace();
-        // }
-
 
         // float[][] data_ = dataArrayList.toArray(new float[0][]);
         // String[] labels = labelsArrayList.toArray(new String[0]);
@@ -336,43 +306,12 @@ public class Main {
 
 
         Data data = new Data(data_, labels);
-        // data.flatten();
         data.minMaxNormalization();
-        // // data.zScoreNormalization();
 
-        // only works for <= 3D right now
-        // data.shuffle(data_, labels);
+        data.split(0.47, 0.47);
 
-        data.split(0.20, 0.20);
-
-        // boolean onGpu = Nd4j.getAffinityManager().getDeviceForArray(data.getTrainData()) >= 0;
-        // System.out.println("Is on GPU: " + onGpu);
-
-
-        // Nd4j.getExecutioner().printEnvironmentInformation();
-
-        // INDArray batchImg = data.getTrainData().get(NDArrayIndex.interval(0, 1));
-        // INDArray batchLbl = data.getTrainLabels().get(NDArrayIndex.interval(0, 1));
-        // System.out.println(Arrays.toString(batchImg.shape()));
-        // // System.out.println(batchImg.data());
-        // System.out.println(batchLbl.argMax());
-
-        // // INDArray images = data;
-        // if (1 != 0) {
-        //     batchImg = padImages(batchImg);
-        //     batchImg = batchImg.reshape(batchImg.size(1), batchImg.size(1));
-        // }
-
-        // System.out.println(Arrays.toString(batchImg.shape()));
-        // System.out.println(batchImg);
-        // System.out.println(batchLbl.argMax());
-        // System.out.println(Arrays.toString(batchImg.shape()));
-        // System.out.println(singleLbl);
-        // showImageFromINDArray(singleImg, 4);
-
-        // // long totalStart = System.nanoTime();
         NeuralNet nn = new NeuralNet();
-        Conv2d d1 = new Conv2d(
+        Conv2d c1 = new Conv2d(
             10,
             new int[]{1, 28, 28},
             new int[]{3, 3},
@@ -380,7 +319,7 @@ public class Main {
             "valid",
             new ReLU());
 
-        Conv2d d2 = new Conv2d(
+        Conv2d c2 = new Conv2d(
             20,
             new int[]{3, 3},
             1,
@@ -394,63 +333,29 @@ public class Main {
         //     "same",
         //     new ReLU());
 
-        Flatten d3 = new Flatten();
-        // Dense d1 = new Dense(256, new ReLU(), 784);
-        Dense d4 = new Dense(128, new ReLU());
+        Flatten f = new Flatten();
+        Dense d1 = new Dense(128, new ReLU());
 
-        Output d5 = new Output(
+        Output d2 = new Output(
             data.getClasses().size(),
             new Softmax(),
             new CatCrossEntropy());
 
+        nn.addLayer(c1);
+        nn.addLayer(c2);
+        nn.addLayer(f);
         nn.addLayer(d1);
         nn.addLayer(d2);
-        nn.addLayer(d3);
-        nn.addLayer(d4);
-        nn.addLayer(d5);
-        // nn.addLayer(d6);
-
-        // INDArray testconv = Nd4j.create(new int[][]{
-        //     {1, 2, 3, 4, 5},
-        //     {6, 7, 8, 9, 10},
-        //     {11, 12, 13, 14, 15},
-        //     {16, 17, 18, 19, 20},
-        //     {21, 22, 23, 24, 25}
-        // });
-
-        // testconv = testconv.reshape(1, 1, testconv.shape()[0], testconv.shape()[1]);
-        // System.out.println(Arrays.toString(testconv.shape()));
-
-        // INDArray testker = Nd4j.ones(1, 2, 2);
-        // // testker = testker.reshape(1, testker.shape()[0], testker.shape()[1]);
-        // INDArray testfilt = Nd4j.ones(5, 1, 2, 2);
-        // // testfilt = testfilt.reshape(5, 1, testfilt.shape()[0], testfilt.shape()[1]);
-        // int padding = 0;
-        // int stride = 1;
-
-        // Conv2d c = new Conv2d(5, new int[]{1, 1, 5, 5} , new int[]{1, 2, 2}, stride, "valid", new ReLU());
-        // c.initLayer(null, 1);
-
-        // c.convolve(testconv);
 
 
         nn.compile(new Adam(0.001), new MultiClassMetrics());
-
-        // System.out.println(d1.getBias().isAttached());
 
         long totalStart = System.nanoTime();
 
         nn.miniBatchFit(data, 16, 1);
 
-        // System.out.println(Arrays.toString(d4.getActivations().shape()));
-        // System.out.println(Arrays.toString(d5.getActivations().shape()));
-
         double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
         System.out.println("Total mini batch Time: " + totalTimeMs + " ms");
-
-        // INDArray patch = Nd4j.zeros(784, 90);
-        // INDArray filter = Nd4j.zeros(90, 20);
-        // System.out.println(Arrays.toString(patch.mmul(filter).shape()));
 
 
         // long totalStart = System.nanoTime();

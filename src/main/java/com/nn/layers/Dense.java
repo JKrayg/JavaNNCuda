@@ -193,16 +193,16 @@ public class Dense extends Layer {
 
     }
 
-    public void forwardProp(Layer prev, INDArray data) {
+    public void forwardProp(Layer prev) {
         Normalization norm = this.getNormalization();
         ActivationFunction actFunc = this.getActFunc();
         MathUtils maths = new MathUtils();
         INDArray z;
-        if (prev == null) {
-            z = maths.weightedSum(data, this);
-        } else {
-            z = maths.weightedSum(prev.getActivations(), this);
-        }
+        // if (prev == null) {
+        //     z = maths.weightedSum(data, this);
+        // } else {
+        z = maths.weightedSum(prev.getActivations(), this);
+        // }
 
         this.setPreActivations(z);
 
@@ -255,61 +255,64 @@ public class Dense extends Layer {
     //     }
     // }
 
-    // public void getGradients(Layer prevLayer, Layer currLayer, INDArray gradient, INDArray data) {
-    //     Layer curr = currLayer;
-    //     INDArray gradientWrtWeights;
-    //     INDArray gradientWrtBias;
+    public void getGradients(Layer prev, INDArray gradient, INDArray data) {
+        INDArray gradientWrtWeights;
+        INDArray gradientWrtBias;
 
-    //     // batch normalization gradients
-    //     Normalization norm = currLayer.getNormalization();
-    //     INDArray grad;
-    //     if (norm instanceof BatchNormalization) {
-    //         BatchNormalization batchNorm = (BatchNormalization) norm;
-    //         grad = batchNorm.gradientPreBNSimple(gradient);
-    //         batchNorm.setGradientShift(batchNorm.gradientShift(gradient));
-    //         batchNorm.setGradientScale(batchNorm.gradientScale(gradient));
-    //     } else {
-    //         grad = gradient;
-    //     }
+        // batch normalization gradients
+        Normalization norm = this.getNormalization();
+        INDArray grad;
+        if (norm instanceof BatchNormalization) {
+            BatchNormalization batchNorm = (BatchNormalization) norm;
+            grad = batchNorm.gradientPreBNSimple(gradient);
+            batchNorm.setGradientShift(batchNorm.gradientShift(gradient));
+            batchNorm.setGradientScale(batchNorm.gradientScale(gradient));
+        } else {
+            grad = gradient;
+        }
 
-    //     // weights/bias gradients
-    //     if (currLayer instanceof Output) {
-    //         Layer prev = layers.get(layers.indexOf(currLayer) - 1);
-    //         gradientWrtWeights = ((Output) currLayer).gradientWeights(prev, gradient);
-    //         gradientWrtBias = ((Output) currLayer).gradientBias(gradient);
-    //     } else {
-    //         Layer prev;
-    //         if (layers.indexOf(curr) > 0) {
-    //             prev = layers.get(layers.indexOf(curr) - 1);
-    //         } else {
-    //             prev = new Layer();
-    //             prev.setActivations(data);
-    //         }
+        // weights/bias gradients
+        if (this instanceof Output) {
+            // Layer prev = layers.get(layers.indexOf(currLayer) - 1);
+            gradientWrtWeights = this.gradientWeights(prev, gradient);
+            gradientWrtBias = this.gradientBias(gradient);
+        } else {
+            Layer p;
+            if (this.getPrev() != null) {
+                p = this.getPrev();
+            } else {
+                p = new Layer();
+                p.setActivations(data);
+            }
 
-    //         gradientWrtWeights = ((Dense)currLayer).gradientWeights(prev, grad);
-    //         gradientWrtBias = currLayer.gradientBias(grad);
-            
-    //     }
+            gradientWrtWeights = this.gradientWeights(p, grad);
+            gradientWrtBias = this.gradientBias(grad);
 
-    //     // regularization (L1/L2) [find a better way to do this]
-    //     if (curr.getRegularizers() != null) {
-    //         for (Regularizer r : curr.getRegularizers()) {
-    //             if (r instanceof L1 || r instanceof L2) {
-    //                 gradientWrtWeights = gradientWrtWeights.add(r.regularize(((Dense)currLayer).getWeights()));
-    //             }
-    //             break;
-    //         }
-    //     }
+        }
 
+        // regularization (L1/L2) [find a better way to do this]
+        if (this.getRegularizers() != null) {
+            for (Regularizer r : this.getRegularizers()) {
+                if (r instanceof L1 || r instanceof L2) {
+                    gradientWrtWeights = gradientWrtWeights.add(r.regularize(((Dense) this).getWeights()));
+                }
+                break;
+            }
+        }
 
-    //     ((Dense)currLayer).setGradientWeights(gradientWrtWeights);
-    //     curr.setGradientBiases(gradientWrtBias);
+        this.setGradientWeights(gradientWrtWeights);
+        this.setGradientBiases(gradientWrtBias);
 
-    //     if (layers.indexOf(curr) > 0) {
-    //         Layer prev = layers.get(layers.indexOf(curr) - 1);
-    //         INDArray next = prev.getActFunc().gradient(prev, grad.mmul(((Dense)currLayer).getWeights().transpose()));
-    //         getGradients(prev, next, data);
-    //     }
-    // }
+        if (this.getPrev() != null) {
+            // fix
+            if (prev instanceof Flatten) {
+                prev.getPrev().getGradients(prev.getPrev().getPrev(), grad, data);
+            } else {
+                INDArray next = prev.getActFunc().gradient(prev, grad.mmul(((Dense) this).getWeights().transpose()));
+                prev.getGradients(prev.getPrev(), next, data);
+            }
+            // prev.getGradients(prev.getPrev(), next, data);
+        }
+    }
     
 }
