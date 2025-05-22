@@ -352,7 +352,16 @@ public class Main {
 
         long totalStart = System.nanoTime();
 
-        nn.miniBatchFit(data, 16, 1);
+        nn.miniBatchFit(data, 1, 1);
+
+        System.out.println("d1 act: " + Arrays.toString(d1.getActivations().shape()));
+        System.out.println("d1 grad: " + Arrays.toString(d1.getGradient().shape()));
+        System.out.println("d1 grad weights: " + Arrays.toString(d1.getGradientWeights().shape()));
+        System.out.println("d1 grad bias: " + Arrays.toString(d1.getGradientBias().shape()));
+        System.out.println("d2 act: " + Arrays.toString(d2.getActivations().shape()));
+        System.out.println("d2 grad: " + Arrays.toString(d2.getGradient().shape()));
+        System.out.println("d2 grad weights: " + Arrays.toString(d2.getGradientWeights().shape()));
+        System.out.println("d2 grad bias: " + Arrays.toString(d2.getGradientBias().shape()));
 
         double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
         System.out.println("Total mini batch Time: " + totalTimeMs + " ms");

@@ -149,11 +149,11 @@ public class NeuralNet {
             }
 
             // print loss
-            int numL = lossHistory.columns();
-            this.loss = lossHistory.sumNumber().floatValue() / numL;
+            // int numL = lossHistory.columns();
+            // this.loss = lossHistory.sumNumber().floatValue() / numL;
             // this.valLoss = loss(valData, valLabels);
 
-            System.out.println("loss: " + this.loss);// + " - val loss: " + this.valLoss);
+            // System.out.println("loss: " + this.loss);// + " - val loss: " + this.valLoss);
         }
 
         // System.out.println("train metrics: ");
@@ -173,7 +173,7 @@ public class NeuralNet {
             INDArray labels = train.get(NDArrayIndex.all(), NDArrayIndex.interval(cols -
                     numClasses, cols));
             forwardPass(dater, labels);
-            backprop(dater, labels);
+            // backprop(dater, labels);
 
             if (optimizer instanceof Adam) {
                 ((Adam) optimizer).updateCount();

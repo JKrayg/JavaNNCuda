@@ -306,7 +306,9 @@ public class Dense extends Layer {
         if (this.getPrev() != null) {
             // fix
             if (prev instanceof Flatten) {
-                prev.getPrev().getGradients(prev.getPrev().getPrev(), grad, data);
+                INDArray next = ((Flatten)prev).reshapeGradient(grad.mmul(((Dense) this).getWeights().transpose()));
+                // System.out.println(this.getClass().getSimpleName() + " next: " + Arrays.toString(next.shape()));
+                prev.getPrev().getGradients(prev.getPrev().getPrev(), next, data);
             } else {
                 INDArray next = prev.getActFunc().gradient(prev, grad.mmul(((Dense) this).getWeights().transpose()));
                 prev.getGradients(prev.getPrev(), next, data);

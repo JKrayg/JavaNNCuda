@@ -1,6 +1,7 @@
 package com.nn.components;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.BinaryOperator;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -201,6 +202,8 @@ public class Layer {
     }
 
     public INDArray gradientWeights(Layer prevLayer, INDArray gradient) {
+        System.out.println(Arrays.toString(gradient.shape()));
+        System.out.println("prev act: " + Arrays.toString(prevLayer.getActivations().shape()));
         INDArray gWrtW = prevLayer.getActivations().transpose().mmul(gradient).div(prevLayer.getActivations().rows());
         return gWrtW;
     }
@@ -224,5 +227,7 @@ public class Layer {
 
     public void forwardProp(Layer prev) {}
 
-    public void getGradients(Layer prev, INDArray gradient, INDArray data) {}
+    public void getGradients(Layer prev, INDArray gradient, INDArray data) {
+        System.out.println("this is called");
+    }
 }
