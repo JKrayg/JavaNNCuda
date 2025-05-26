@@ -26,7 +26,7 @@ public class Sigmoid extends ActivationFunction {
         return z;
     }
 
-    public INDArray gradient(Layer curr, INDArray gradientWrtPreAct) {
-        return gradientWrtPreAct.mul(derivative(curr.getPreActivation()));
+    public INDArray gradient(INDArray preactivation, INDArray gradientWrtPreAct) {
+        return gradientWrtPreAct.mul(derivative(preactivation));
     }
 }

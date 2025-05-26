@@ -17,7 +17,7 @@ public class ReLU extends ActivationFunction {
         return dz;
     }
 
-    public INDArray gradient(Layer prev, INDArray gradientWrtPreAct) {
-        return derivative(prev.getPreActivation()).mul(gradientWrtPreAct);
+    public INDArray gradient(INDArray preactivation, INDArray gradientWrtPreAct) {
+        return derivative(preactivation).mul(gradientWrtPreAct);
     }
 }

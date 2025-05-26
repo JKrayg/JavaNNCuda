@@ -308,7 +308,7 @@ public class Main {
         Data data = new Data(data_, labels);
         data.minMaxNormalization();
 
-        data.split(0.47, 0.47);
+        data.split(0.2, 0.2);
 
         NeuralNet nn = new NeuralNet();
         Conv2d c1 = new Conv2d(
@@ -354,14 +354,19 @@ public class Main {
 
         nn.miniBatchFit(data, 1, 1);
 
-        System.out.println("d1 act: " + Arrays.toString(d1.getActivations().shape()));
-        System.out.println("d1 grad: " + Arrays.toString(d1.getGradient().shape()));
-        System.out.println("d1 grad weights: " + Arrays.toString(d1.getGradientWeights().shape()));
-        System.out.println("d1 grad bias: " + Arrays.toString(d1.getGradientBias().shape()));
-        System.out.println("d2 act: " + Arrays.toString(d2.getActivations().shape()));
-        System.out.println("d2 grad: " + Arrays.toString(d2.getGradient().shape()));
-        System.out.println("d2 grad weights: " + Arrays.toString(d2.getGradientWeights().shape()));
-        System.out.println("d2 grad bias: " + Arrays.toString(d2.getGradientBias().shape()));
+        for (Layer l : nn.getLayers()) {
+            System.out.println(l.toString());
+            System.out.println();
+        }
+
+        // System.out.println("d1 act: " + Arrays.toString(d1.getActivations().shape()));
+        // System.out.println("d1 grad: " + Arrays.toString(d1.getGradient().shape()));
+        // System.out.println("d1 grad weights: " + Arrays.toString(d1.getGradientWeights().shape()));
+        // System.out.println("d1 grad bias: " + Arrays.toString(d1.getGradientBias().shape()));
+        // System.out.println("d2 act: " + Arrays.toString(d2.getActivations().shape()));
+        // System.out.println("d2 grad: " + Arrays.toString(d2.getGradient().shape()));
+        // System.out.println("d2 grad weights: " + Arrays.toString(d2.getGradientWeights().shape()));
+        // System.out.println("d2 grad bias: " + Arrays.toString(d2.getGradientBias().shape()));
 
         double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
         System.out.println("Total mini batch Time: " + totalTimeMs + " ms");

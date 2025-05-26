@@ -6,5 +6,5 @@ import com.nn.components.Layer;
 public abstract class ActivationFunction {
     public abstract INDArray execute(INDArray z);
     public abstract INDArray derivative(INDArray z);
-    public abstract INDArray gradient(Layer curr, INDArray gradientWrtPreAct);
+    public abstract INDArray gradient(INDArray preactivation, INDArray gradientWrtPreAct);
 }

@@ -126,7 +126,7 @@ public class Dense extends Layer {
         if (this instanceof Output) {
             gradient = ((Output) this).getLoss().gradient(this, ((Output) this).getLabels());
         } else {
-            gradient = super.getActFunc().gradient(this, super.getPreActivation());
+            gradient = super.getActFunc().gradient(this.getPreActivation(), super.getPreActivation());
         }
 
         return gradient;
@@ -226,35 +226,6 @@ public class Dense extends Layer {
         this.setActivations(activated);
     }
 
-    // public void backprop(Layer prev, Layer curr, INDArray gradient, INDArray data) {
-    //     // Output outLayer = (Output) layers.get(layers.size() - 1);
-    //     // Loss lossFunc = outLayer.getLoss();
-    //     // INDArray loss = Nd4j.create(new float[]{lossFunc.execute(outLayer.getActivations(), outLayer.getLabels())});
-    //     // if (this.lossHistory == null) {
-    //     //     this.lossHistory = loss;
-    //     // } else {
-    //     //     this.lossHistory = Nd4j.hstack(this.lossHistory, loss);
-    //     // }
-
-    //     // INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getLabels());
-
-    //     // recursively get gradients
-    //     this.getGradients(prev, this, gradient, data);
-
-    //     // update weights/biases
-    //     for (Layer l : layers) {
-    //         ((Dense)l).updateWeights(optimizer);
-    //         l.updateBiases(optimizer);
-
-    //         // update beta/gamma if batch normalzation
-    //         if (l.getNormalization() instanceof BatchNormalization) {
-    //             Normalization norm = l.getNormalization();
-    //             ((BatchNormalization) norm).updateShift(optimizer);
-    //             ((BatchNormalization) norm).updateScale(optimizer);
-    //         }
-    //     }
-    // }
-
     public void getGradients(Layer prev, INDArray gradient, INDArray data) {
         INDArray gradientWrtWeights;
         INDArray gradientWrtBias;
@@ -305,15 +276,13 @@ public class Dense extends Layer {
 
         if (this.getPrev() != null) {
             // fix
-            if (prev instanceof Flatten) {
-                INDArray next = ((Flatten)prev).reshapeGradient(grad.mmul(((Dense) this).getWeights().transpose()));
-                // System.out.println(this.getClass().getSimpleName() + " next: " + Arrays.toString(next.shape()));
-                prev.getPrev().getGradients(prev.getPrev().getPrev(), next, data);
+            INDArray next;
+            if ( !(prev instanceof Flatten)) {
+                next = prev.getActFunc().gradient(prev.getPreActivation(), grad.mmul(((Dense) this).getWeights().transpose()));
             } else {
-                INDArray next = prev.getActFunc().gradient(prev, grad.mmul(((Dense) this).getWeights().transpose()));
-                prev.getGradients(prev.getPrev(), next, data);
+                next = ((Flatten) prev).reshapeGradient(grad.mmul(((Dense) this).getWeights().transpose()));
             }
-            // prev.getGradients(prev.getPrev(), next, data);
+            prev.getGradients(prev.getPrev(), next, data);
         }
     }
     

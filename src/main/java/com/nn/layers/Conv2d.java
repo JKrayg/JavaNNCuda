@@ -3,6 +3,7 @@ package com.nn.layers;
 import java.util.Arrays;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.api.ops.impl.layers.convolution.Col2Im;
 import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.pad;
 import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.pointwise_conv2d;
 import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.shape_of;
@@ -51,7 +52,7 @@ public class Conv2d extends Layer {
 
         this.inputSize = inputSize;
         this.setActivationFunction(actFunc);
-        this.setBiases(Nd4j.create(numFilters));
+        this.setBiases(Nd4j.create(numFilters, 1));
 
     }
 
@@ -69,7 +70,7 @@ public class Conv2d extends Layer {
         }
 
         this.setActivationFunction(actFunc);
-        this.setBiases(Nd4j.create(numFilters));
+        this.setBiases(Nd4j.create(numFilters, 1));
 
     }
 
@@ -107,6 +108,7 @@ public class Conv2d extends Layer {
 
     public void initForAdam() {
         INDArray weightsO = Nd4j.create(filters.reshape(filters.shape()[0], -1).shape());
+        // System.out.println("Weights O: " + Arrays.toString(weightsO.shape()));
         INDArray biasO = Nd4j.create(this.getBias().shape());
 
         this.setWeightsMomentum(weightsO);
@@ -180,30 +182,19 @@ public class Conv2d extends Layer {
 
     public INDArray im2col(INDArray data) {
         long[] dataShape = data.shape();
-        // // INDArray d = data.dup();
 
         // // add padding
-        // System.out.println("b4 padding: " + Arrays.toString(dataShape));
 
         if (padding != 0) {
             data = padData(data);
         }
 
-        // System.out.println("after padding: " + Arrays.toString(data.shape()));
-
-        long[] paddedShape = data.shape();
-        // System.out.println("input shape: " + Arrays.toString(data.shape()));
-        // System.out.println("kernel shape: " + Arrays.toString(kernelSize));
-        // System.out.println("num filters: " + numFilters);
-        // System.out.println("padding: " + padding);
-        // System.out.println("stride: " + stride);
         int batchSize = (int) dataShape[0];
         int outShapeH = (int) Math.floor(((dataShape[2] + (2 * padding) - kernelSize[1]) / stride) + 1);
         int outShapeW = (int) Math.floor(((dataShape[3] + (2 * padding) - kernelSize[2]) / stride) + 1);
         int patchLen = (int) (kernelSize[0] * kernelSize[1] * kernelSize[2]);
         int imgLen = (int) (outShapeH * outShapeW);
         INDArray patches = Nd4j.create(batchSize, kernelSize[0], kernelSize[1], kernelSize[2], imgLen);
-        // System.out.println("patches shape: " + Arrays.toString(patches.shape()));
         
 
 
@@ -230,13 +221,15 @@ public class Conv2d extends Layer {
             }
         }
 
-        // System.out.println("output shape b4 reshape: " + Arrays.toString(patches.shape()));
-        // System.out.println("imglength: " + imgLen);
         INDArray reshPatches = patches.reshape(imgLen * batchSize, patchLen);
-        // System.out.println("output shape: " + Arrays.toString(reshPatches.shape()));
-        // System.out.println();
 
         return reshPatches;
+    }
+
+
+    public INDArray col2im(INDArray data) {
+        System.out.println("col2im: " + Arrays.toString(data.shape()));
+        return Nd4j.createUninitialized(0);
     }
 
 
@@ -247,7 +240,6 @@ public class Conv2d extends Layer {
         // }
         int outShapeH = (int) Math.floor(((dataShape[2] + (2 * padding) - kernelSize[1]) / stride) + 1);
         int outShapeW = (int) Math.floor(((dataShape[3] + (2 * padding) - kernelSize[2]) / stride) + 1);
-        // System.out.println("in forward pass convolve-----");
         INDArray patches = im2col(data);
         long[] fShape = filters.shape();
         INDArray out = patches.mmul(filters.reshape(-1, fShape[0])).reshape(data.shape()[0], numFilters, outShapeH, outShapeW);
@@ -261,42 +253,30 @@ public class Conv2d extends Layer {
         this.setActivations(z);
     }
 
-    public INDArray gradientFilters(Layer prevLayer, INDArray gradient) {
-        // System.out.println("prev class: " + prevLayer.getClass().getSimpleName());
-        // System.out.println("gradient: " + Arrays.toString(gradient.shape()));
-        this.padding = 0;
-        // System.out.println("prev act: " + Arrays.toString(prevLayer.getActivations().shape()));
-        // System.out.println("After im2col: " + Arrays.toString(im2col(prevLayer.getActivations()).shape()));
-        INDArray gWrtW = gradient.transpose().mmul(im2col(prevLayer.getActivations())).div(im2col(prevLayer.getActivations()).rows());
-        // System.out.println("gwrtw: " + Arrays.toString(gWrtW.shape()));
+    public INDArray gradientFilters(INDArray activations, INDArray gradient) {
+        System.out.println(Arrays.toString(activations.shape()));
+        System.out.println(Arrays.toString(gradient.shape()));
+        INDArray gWrtW = activations.mmul(gradient.transpose()).div(activations.rows());
         return gWrtW;
     }
 
     public void getGradients(Layer prev, INDArray gradient, INDArray data) {
-        // System.out.println(Arrays.toString(gradient.shape()));
-        // if (!(this.getNext() instanceof Conv2d)) {
-        //     this.setGradientWeights(this.gradientWeights(prev, gradient));
-        // } else {
-        // System.out.println("in backprop get gradients----");
         
-
-        
-
-        if (prev != null) {
+        if (this.getPrev() != null) {
+            // fix
+            INDArray act = this.getActivations();
+            INDArray i2cAct = im2col(act);
             this.padding = 1;
-            // System.out.println("this");
-            this.setGradientWeights(this.gradientFilters(prev, im2col(gradient)));
-            this.setGradientBiases(this.gradientBias(im2col(gradient)));
-            prev.getGradients(prev.getPrev(), gradient, data);
-        } else {
-            // System.out.println("this 2");
-            this.padding = 2;
-            Layer p = new Layer();
-            p.setActivations(data);
-            this.setGradientWeights(this.gradientFilters(p, im2col(gradient)));
-            this.setGradientBiases(this.gradientBias(im2col(gradient)));
-            
+            INDArray i2cGrad = im2col(gradient);
+            this.padding = 0;
+            this.setGradientWeights(this.gradientFilters(i2cAct, i2cGrad));
+            this.setGradientBiases(this.gradientBias(i2cGrad));
+            INDArray next = prev.getActFunc().gradient(im2col(prev.getPreActivation()), i2cGrad.mmul(this.getWeights().transpose()));
+
+            prev.getGradients(prev.getPrev(), next, data);
         }
+        
+
     }
     
 }

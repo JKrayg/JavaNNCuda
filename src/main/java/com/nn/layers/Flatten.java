@@ -31,6 +31,16 @@ public class Flatten extends Dense {
         return gradient.reshape(prevShape);
     }
 
+    public void getGradients(Layer prev, INDArray gradient, INDArray data) {
+        prev.getGradients(prev.getPrev(), gradient, data);
+    }
+
     public void initForAdam() {}
+
+    public String toString() {
+        return "class: " + this.getClass().getSimpleName() + "\n" +
+               "prev activations: " + Arrays.toString(this.prevShape) + "\n" +
+               "activations: " + Arrays.toString(this.getActivations().shape());
+    }
     
 }

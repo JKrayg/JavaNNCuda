@@ -195,7 +195,7 @@ public class Layer {
         if (this instanceof Output) {
             gradient = ((Output)this).getLoss().gradient(this, ((Output) this).getLabels());
         } else {
-            gradient = func.gradient(this, preActivation);
+            gradient = func.gradient(this.getPreActivation(), preActivation);
         }
 
         return gradient;
@@ -230,4 +230,21 @@ public class Layer {
     public void getGradients(Layer prev, INDArray gradient, INDArray data) {
         System.out.println("this is called");
     }
+
+    public String toString() {
+        String s = "";
+        s += "class: " + this.getClass().getSimpleName() + "\n";
+        s += "activations: " + Arrays.toString(this.getActivations().shape()) + "\n";
+        s += "weights: " + Arrays.toString(this.getWeights().shape()) + "\n";
+        s += "bias: " + Arrays.toString(this.getBias().shape()) + "\n";
+        s += "weights momentum: " + Arrays.toString(this.getWeightsMomentum().shape()) + "\n";
+        s += "weights variance: " + Arrays.toString(this.getWeightsVariance().shape()) + "\n";
+        s += "bias momentum: " + Arrays.toString(this.getBiasMomentum().shape()) + "\n";
+        s += "bias variance: " + Arrays.toString(this.getBiasVariance().shape()) + "\n";
+        // s += "gradient wrt weights: " + Arrays.toString(this.getGradientWeights().shape()) + "\n";
+        // s += "gradient wrt bias: " + Arrays.toString(this.getGradientBias().shape());
+
+        return s;
+    }
+
 }

@@ -21,7 +21,7 @@ public class Softmax extends ActivationFunction {
         return z;
     }
 
-    public INDArray gradient(Layer curr, INDArray gradientWrtPreAct) {
+    public INDArray gradient(INDArray preactivation, INDArray gradientWrtPreAct) {
         return gradientWrtPreAct;
         // return gradientWrtPreAct.elementMult(derivative(curr.getPreActivation()));
     }

@@ -14,7 +14,7 @@ public class Linear extends ActivationFunction {
         return z;
     }
 
-    public INDArray gradient(Layer curr, INDArray gradientWrtPreAct) {
+    public INDArray gradient(INDArray preactivations, INDArray gradientWrtPreAct) {
         return gradientWrtPreAct;
     }
 }

@@ -22,7 +22,7 @@ public class Tanh extends ActivationFunction {
         return z;
     }
 
-    public INDArray gradient(Layer curr, INDArray gradientWrtPreAct) {
-        return gradientWrtPreAct.mmul(derivative(curr.getPreActivation()));
+    public INDArray gradient(INDArray preactivation, INDArray gradientWrtPreAct) {
+        return gradientWrtPreAct.mmul(derivative(preactivation));
     }
 }

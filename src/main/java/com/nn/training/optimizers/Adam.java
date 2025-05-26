@@ -43,8 +43,8 @@ public class Adam extends Optimizer {
 
         // System.out.println("================");
         // System.out.println(lyr.getClass().getSimpleName());
-        System.out.println("mom: " + Arrays.toString(lyr.getWeightsMomentum().shape()));
-        System.out.println("weights: " + Arrays.toString(lyr.getGradientWeights().shape()));
+        // System.out.println("mom: " + Arrays.toString(lyr.getWeightsMomentum().shape()));
+        // System.out.println("weights grad: " + Arrays.toString(lyr.getGradientWeights().shape()));
         // System.out.println();
 
         

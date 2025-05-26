@@ -13,6 +13,7 @@ import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.random.custom.RandomShuffle;
 import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.flatten;
+import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.shape_of;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
@@ -226,7 +227,7 @@ public class NeuralNet {
         INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getLabels());
         // recursively get gradients
         // getGradients(outLayer, gradientWrtOutput, data);
-        Layer prev = layers.get(layers.indexOf(outLayer) - 1); 
+        Layer prev = layers.get(layers.indexOf(outLayer) - 1);
         outLayer.getGradients(prev, gradientWrtOutput, data);
 
         // update weights/biases
@@ -242,6 +243,7 @@ public class NeuralNet {
             }
         }
     }
+
 
 
     // public void backPass(INDArray data, INDArray labels) {
