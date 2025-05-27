@@ -14,6 +14,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.random.custom.RandomShuffle;
 import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.flatten;
 import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.shape_of;
+import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.test_scalar;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
@@ -65,10 +66,10 @@ public class NeuralNet {
     public void miniBatchFit(Data data, int batchSize, int epochs) {
         INDArray trainData = data.getTrainData();
         INDArray trainLabels = data.getTrainLabels();
-        // INDArray testData = data.getTestData();
-        // INDArray testLabels = data.getTestLabels();
-        // INDArray valData = data.getValData();
-        // INDArray valLabels = data.getValLabels();
+        INDArray testData = data.getTestData();
+        INDArray testLabels = data.getTestLabels();
+        INDArray valData = data.getValData();
+        INDArray valLabels = data.getValLabels();
 
         for (int i = 0; i < layers.size(); i++) {
             Layer prev = null;
@@ -105,6 +106,8 @@ public class NeuralNet {
         if (shape.length == 2) {
             if (trainLabels.shape().length == 1) {
                 trainLabels = trainLabels.reshape(trainData.shape()[0], 1);
+                valLabels = valLabels.reshape(valLabels.shape()[0], 1);
+                testLabels = testLabels.reshape(testLabels.shape()[0], 1);
             }
             arraysToShuffle = Arrays.asList(trainData, trainLabels);
         } else {
@@ -150,17 +153,19 @@ public class NeuralNet {
             }
 
             // print loss
-            // int numL = lossHistory.columns();
-            // this.loss = lossHistory.sumNumber().floatValue() / numL;
-            // this.valLoss = loss(valData, valLabels);
+            int numL = lossHistory.columns();
+            this.loss = lossHistory.sumNumber().floatValue() / numL;
+            this.valLoss = loss(valData, valLabels);
 
-            // System.out.println("loss: " + this.loss);// + " - val loss: " + this.valLoss);
+            System.out.println("loss: " + this.loss + " - val loss: " + this.valLoss);
         }
 
-        // System.out.println("train metrics: ");
-        // metrics(trainData, trainLabels);
-        // System.out.println("test metrics: ");
-        // metrics(testData, testLabels);
+        System.out.println("train metrics: ");
+        metrics(trainData, trainLabels);
+        System.out.println("val metrics: ");
+        metrics(testData, testLabels);
+        System.out.println("test metrics: ");
+        metrics(valData, valLabels);
 
     }
 
@@ -188,7 +193,7 @@ public class NeuralNet {
         // System.out.println("train metrics: ");
         // metrics(train);
         // System.out.println("test metrics: ");
-        // metrics(test);
+        // metrics(testData, testLabels);
     }
 
     public void forwardPass(INDArray data, INDArray labels) {
@@ -244,101 +249,7 @@ public class NeuralNet {
         }
     }
 
-
-
-    // public void backPass(INDArray data, INDArray labels) {
-    //     Output outLayer = (Output) layers.get(layers.size() - 1);
-    //     Loss lossFunc = outLayer.getLoss();
-    //     INDArray loss = Nd4j.create(new float[] { lossFunc.execute(outLayer.getActivations(), outLayer.getLabels()) });
-    //     if (this.lossHistory == null) {
-    //         this.lossHistory = loss;
-    //     } else {
-    //         this.lossHistory = Nd4j.hstack(this.lossHistory, loss);
-    //     }
-
-    //     INDArray gradientWrtOutput = lossFunc.gradient(outLayer,
-    //             outLayer.getLabels());
-    //     for (int i = 0; i < layers.size(); i++) {
-    //         layers.get(i).updateWeights(optimizer);
-    //         layers.get(i).updateBiases(optimizer);
-    //     }
-
-    //     // recursively get gradients
-    //     // getGradients(outLayer, gradientWrtOutput, data);
-
-    //     // // update weights/biases
-    //     // for (Layer l : layers) {
-    //     // ((Dense)l).updateWeights(optimizer);
-    //     // l.updateBiases(optimizer);
-
-    //     // // update beta/gamma if batch normalzation
-    //     // if (l.getNormalization() instanceof BatchNormalization) {
-    //     // Normalization norm = l.getNormalization();
-    //     // ((BatchNormalization) norm).updateShift(optimizer);
-    //     // ((BatchNormalization) norm).updateScale(optimizer);
-    //     // }
-    //     // }
-    // }
-
-    // public void getGradients(Layer currLayer, INDArray gradient, INDArray data) {
-    //     Layer curr = currLayer;
-    //     INDArray gradientWrtWeights;
-    //     INDArray gradientWrtBias;
-
-    //     // batch normalization gradients
-    //     Normalization norm = currLayer.getNormalization();
-    //     INDArray grad;
-    //     if (norm instanceof BatchNormalization) {
-    //         BatchNormalization batchNorm = (BatchNormalization) norm;
-    //         grad = batchNorm.gradientPreBNSimple(gradient);
-    //         batchNorm.setGradientShift(batchNorm.gradientShift(gradient));
-    //         batchNorm.setGradientScale(batchNorm.gradientScale(gradient));
-    //     } else {
-    //         grad = gradient;
-    //     }
-
-    //     // weights/bias gradients
-    //     if (currLayer instanceof Output) {
-    //         Layer prev = layers.get(layers.indexOf(currLayer) - 1);
-    //         gradientWrtWeights = ((Output) currLayer).gradientWeights(prev, gradient);
-    //         gradientWrtBias = ((Output) currLayer).gradientBias(gradient);
-    //     } else {
-    //         Layer prev;
-    //         if (layers.indexOf(curr) > 0) {
-    //             prev = layers.get(layers.indexOf(curr) - 1);
-    //         } else {
-    //             prev = new Layer();
-    //             prev.setActivations(data);
-    //         }
-
-    //         gradientWrtWeights = ((Dense) currLayer).gradientWeights(prev, grad);
-    //         gradientWrtBias = currLayer.gradientBias(grad);
-
-    //     }
-
-    //     // regularization (L1/L2) [find a better way to do this]
-    //     if (curr.getRegularizers() != null) {
-    //         for (Regularizer r : curr.getRegularizers()) {
-    //             if (r instanceof L1 || r instanceof L2) {
-    //                 gradientWrtWeights = gradientWrtWeights.add(r.regularize(((Dense) currLayer).getWeights()));
-    //             }
-    //             break;
-    //         }
-    //     }
-
-    //     ((Dense) currLayer).setGradientWeights(gradientWrtWeights);
-    //     curr.setGradientBiases(gradientWrtBias);
-
-    //     if (layers.indexOf(curr) > 0) {
-    //         Layer prev = layers.get(layers.indexOf(curr) - 1);
-    //         INDArray next = prev.getActFunc().gradient(prev, grad.mmul(((Dense) currLayer).getWeights().transpose()));
-    //         getGradients(prev, next, data);
-    //     }
-    // }
-
     public void metrics(INDArray d, INDArray l) {
-        System.out.println(Arrays.toString(d.shape()));
-        System.out.println(Arrays.toString(l.shape()));
         forwardPass(d, l);
         Output outLayer = (Output) layers.get(layers.size() - 1);
         metrics.getMetrics(outLayer.getActivations(), l);

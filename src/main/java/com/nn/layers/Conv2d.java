@@ -271,7 +271,10 @@ public class Conv2d extends Layer {
             this.padding = 0;
             this.setGradientWeights(this.gradientFilters(i2cAct, i2cGrad));
             this.setGradientBiases(this.gradientBias(i2cGrad));
-            INDArray next = prev.getActFunc().gradient(im2col(prev.getPreActivation()), i2cGrad.mmul(this.getWeights().transpose()));
+            System.out.println("filters: " + Arrays.toString(this.getWeights().shape()));
+            INDArray weights = this.getWeights();
+            weights = weights.reshape(weights.shape()[0], -1);
+            INDArray next = prev.getActFunc().gradient(im2col(prev.getPreActivation()), i2cGrad.mmul(weights.transpose()));
 
             prev.getGradients(prev.getPrev(), next, data);
         }

@@ -1,25 +1,18 @@
-package com.nn;
+package com.nn.examples;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Scanner;
-
-import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.softplus;
-
+import com.nn.Data;
 import com.nn.activation.ReLU;
-import com.nn.activation.Sigmoid;
 import com.nn.activation.Softmax;
-import com.nn.components.Layer;
 import com.nn.components.NeuralNet;
 import com.nn.layers.Dense;
 import com.nn.layers.Output;
-import com.nn.training.loss.BinCrossEntropy;
 import com.nn.training.loss.CatCrossEntropy;
 import com.nn.training.metrics.BinaryMetrics;
 import com.nn.training.optimizers.Adam;
-import com.nn.training.regularizers.L2;
 
 public class MultiClassification {
     // ** iris data ** --------------------------------------------------
@@ -64,9 +57,7 @@ public class MultiClassification {
 
         NeuralNet nn = new NeuralNet();
         Dense dense1 = new Dense(16, new ReLU(), 4);
-        // dense1.addRegularizer(new L2());
         Dense dense2 = new Dense(8, new ReLU());
-        // dense2.addRegularizer(new L2());
         Output out = new Output(data.getClasses().size(), new Softmax(), new CatCrossEntropy());
 
         nn.addLayer(dense1);

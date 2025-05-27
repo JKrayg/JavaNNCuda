@@ -1,11 +1,11 @@
-package com.nn;
+package com.nn.examples;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Scanner;
 
+import com.nn.Data;
 import com.nn.activation.ReLU;
 import com.nn.activation.Sigmoid;
 import com.nn.components.NeuralNet;
@@ -57,18 +57,16 @@ public class BinClassification {
 
         NeuralNet nn = new NeuralNet();
         Dense dense1 = new Dense(16, new ReLU(), 30);
-        // dense1.addRegularizer(new L2());
         Dense dense2 = new Dense(8, new ReLU());
-        // dense2.addRegularizer(new L2());
         Output out = new Output(1, new Sigmoid(), new BinCrossEntropy());
 
         nn.addLayer(dense1);
         nn.addLayer(dense2);
         nn.addLayer(out);
 
-        nn.compile(new Adam(0.01), new BinaryMetrics());
+        nn.compile(new Adam(0.001), new BinaryMetrics());
 
-        nn.miniBatchFit(data, 16, 10);
+        nn.miniBatchFit(data, 16, 20);
     }
 
 }

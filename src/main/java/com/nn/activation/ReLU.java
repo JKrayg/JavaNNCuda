@@ -1,6 +1,8 @@
 package com.nn.activation;
 
 
+import java.util.Arrays;
+
 import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 

@@ -1,4 +1,4 @@
-package com.nn;
+package com.nn.examples;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -17,6 +17,7 @@ import com.nn.training.metrics.MeanAbsoluteError;
 import com.nn.training.normalization.BatchNormalization;
 import com.nn.training.optimizers.Adam;
 import com.nn.training.optimizers.SGD;
+import com.nn.training.regularizers.Dropout;
 import com.nn.training.regularizers.L2;
 
 public class Regression {
@@ -61,13 +62,15 @@ public class Regression {
 
         Data data_ = new Data(data, labels);
         data_.zScoreNormalization();
-        data_.split(0.1, 0.1);
+        data_.split(0.2, 0.2);
 
         NeuralNet nn = new NeuralNet();
-        Dense dense1 = new Dense(32, new ReLU(), 13);
-        dense1.addRegularizer(new L2(0.01));
-        Dense dense2 = new Dense(16, new ReLU());
-        dense2.addRegularizer(new L2(0.01));
+        Dense dense1 = new Dense(64, new ReLU(), 13);
+        dense1.addRegularizer(new L2());
+        dense1.addRegularizer(new Dropout(0.2));
+        Dense dense2 = new Dense(32, new ReLU());
+        dense2.addRegularizer(new L2());
+        dense2.addRegularizer(new Dropout(0.2));
         Output out = new Output(1, new Linear(), new MSE());
 
         nn.addLayer(dense1);

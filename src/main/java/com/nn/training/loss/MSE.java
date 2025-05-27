@@ -9,8 +9,6 @@ import com.nn.components.Layer;
 public class MSE extends Loss {
     int count = 0;
     public float execute(INDArray activations, INDArray labels) {
-        // System.out.println("---: " + Arrays.toString(activations.shape()));
-        // System.out.println("^^^: " + Arrays.toString(labels.shape()));
         INDArray dif = activations.sub(labels);
         count += 1;
         // System.out.println(count);
