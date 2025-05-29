@@ -10,8 +10,11 @@ import com.nn.activation.Softmax;
 import com.nn.components.NeuralNet;
 import com.nn.layers.Dense;
 import com.nn.layers.Output;
+import com.nn.training.callbacks.Callback;
+import com.nn.training.callbacks.StepDecay;
 import com.nn.training.loss.CatCrossEntropy;
 import com.nn.training.metrics.BinaryMetrics;
+import com.nn.training.metrics.MultiClassMetrics;
 import com.nn.training.optimizers.Adam;
 
 public class MultiClassification {
@@ -64,7 +67,10 @@ public class MultiClassification {
         nn.addLayer(dense2);
         nn.addLayer(out);
 
-        nn.compile(new Adam(0.01), new BinaryMetrics());
+        // nn.compile(new Adam(0.01), new BinaryMetrics());
+        nn.optimizer(new Adam(0.01));
+        nn.metrics(new MultiClassMetrics());
+        nn.callbacks(new Callback[]{new StepDecay(0.05, 10)});
 
         nn.miniBatchFit(data, 16, 50);
     }

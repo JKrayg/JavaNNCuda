@@ -1,6 +1,6 @@
 package com.nn.training.callbacks;
 
-public class EarlyStopping extends Callback{
+public class EarlyStopping extends Callback {
     private String monitor;
     private float minChange = 0;
     private int patience = 0;

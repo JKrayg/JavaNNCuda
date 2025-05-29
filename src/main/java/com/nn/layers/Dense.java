@@ -132,10 +132,10 @@ public class Dense extends Layer {
         return gradient;
     }
 
-    public INDArray gradientWeights(Layer prevLayer, INDArray gradient) {
-        INDArray gWrtW = prevLayer.getActivations().transpose().mmul(gradient).div(prevLayer.getActivations().rows());
-        return gWrtW;
-    }
+    // public INDArray gradientWeights(Layer prevLayer, INDArray gradient) {
+    //     INDArray gWrtW = prevLayer.getActivations().transpose().mmul(gradient).div(prevLayer.getActivations().rows());
+    //     return gWrtW;
+    // }
 
     public void updateWeights(Optimizer o) {
         this.weights = o.executeWeightsUpdate(this);
@@ -245,7 +245,7 @@ public class Dense extends Layer {
         // weights/bias gradients
         if (this instanceof Output) {
             // Layer prev = layers.get(layers.indexOf(currLayer) - 1);
-            gradientWrtWeights = this.gradientWeights(prev, gradient);
+            gradientWrtWeights = this.gradientWeights(prev.getActivations(), gradient);
             gradientWrtBias = this.gradientBias(gradient);
         } else {
             Layer p;
@@ -256,7 +256,7 @@ public class Dense extends Layer {
                 p.setActivations(data);
             }
 
-            gradientWrtWeights = this.gradientWeights(p, grad);
+            gradientWrtWeights = this.gradientWeights(p.getActivations(), grad);
             gradientWrtBias = this.gradientBias(grad);
 
         }
@@ -278,10 +278,25 @@ public class Dense extends Layer {
             // fix
             INDArray next;
             if ( !(prev instanceof Flatten)) {
-                next = prev.getActFunc().gradient(prev.getPreActivation(), grad.mmul(((Dense) this).getWeights().transpose()));
+                next = prev.getActFunc().gradient(
+                    prev.getPreActivation(),
+                    Nd4j.matmul(
+                        grad,
+                        this.getWeights(),
+                        false,
+                        true,
+                        false));
             } else {
-                next = ((Flatten) prev).reshapeGradient(grad.mmul(((Dense) this).getWeights().transpose()));
+                next = ((Flatten) prev).reshapeGradient(
+                    Nd4j.matmul(
+                        grad,
+                        this.getWeights(),
+                        false,
+                        true,
+                        false));
             }
+
+            // System.out.println("gradient passed to next layer d: " + Arrays.toString(next.shape()));
             prev.getGradients(prev.getPrev(), next, data);
         }
     }

@@ -20,6 +20,8 @@ public class ReLU extends ActivationFunction {
     }
 
     public INDArray gradient(INDArray preactivation, INDArray gradientWrtPreAct) {
+        // System.out.println("preact: " + Arrays.toString(preactivation.shape()));
+        // System.out.println("grad: " + Arrays.toString(gradientWrtPreAct.shape()));
         return derivative(preactivation).mul(gradientWrtPreAct);
     }
 }

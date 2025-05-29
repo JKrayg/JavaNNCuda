@@ -12,8 +12,11 @@ import com.nn.activation.ReLU;
 import com.nn.components.NeuralNet;
 import com.nn.layers.Dense;
 import com.nn.layers.Output;
+import com.nn.training.callbacks.Callback;
+import com.nn.training.callbacks.StepDecay;
 import com.nn.training.loss.MSE;
 import com.nn.training.metrics.MeanAbsoluteError;
+import com.nn.training.metrics.MultiClassMetrics;
 import com.nn.training.normalization.BatchNormalization;
 import com.nn.training.optimizers.Adam;
 import com.nn.training.optimizers.SGD;
@@ -77,7 +80,10 @@ public class Regression {
         nn.addLayer(dense2);
         nn.addLayer(out);
 
-        nn.compile(new Adam(0.001), new MeanAbsoluteError());
+        // nn.compile(new Adam(0.001), new MeanAbsoluteError());
+        nn.optimizer(new Adam(0.001));
+        nn.metrics(new MeanAbsoluteError());
+        nn.callbacks(new Callback[]{new StepDecay(0.05, 10)});
 
         nn.miniBatchFit(data_, 16, 100);
 

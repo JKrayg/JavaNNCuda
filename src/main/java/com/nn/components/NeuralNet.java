@@ -33,6 +33,7 @@ import com.nn.utils.MathUtils;
 
 public class NeuralNet {
     private ArrayList<Layer> layers;
+    // private CompileBuilder cb;
     private Optimizer optimizer;
     private Metrics metrics;
     private float loss;
@@ -40,11 +41,60 @@ public class NeuralNet {
     private int numClasses;
     private MathUtils maths = new MathUtils();
     private INDArray lossHistory;
-    private ArrayList<Callback> callbacks;
+    private Callback[] callbacks;
+
+    // public NeuralNet() {
+    //     cb = new CompileBuilder(this, new SGD(0.01));
+    // }
+
+    // public static class CompileBuilder {
+    //     private Optimizer optimizer;
+    //     private Metrics metrics;
+    //     private Callback[] callbacks;
+    //     private NeuralNet net;
+
+    //     public CompileBuilder(NeuralNet nn, Optimizer o) {
+    //         this.net = nn;
+    //         this.optimizer = o;
+    //     }
+
+    //     public void optimizer(Optimizer o) {
+    //         this.optimizer = o;
+    //     }
+
+    //     public void metrics(Metrics m) {
+    //         this.metrics = m;
+    //     }
+
+    //     public void callbacks(Callback[] c) {
+    //         this.callbacks = c;
+    //     }
+
+    //     public void build() {
+    //         net.optimizer = this.optimizer;
+    //         net.metrics = this.metrics;
+    //         net.callbacks = this.callbacks;
+    //     }
+    // }
+    public void optimizer(Optimizer o) {
+        this.optimizer = o;
+    }
+
+    public void metrics(Metrics m) {
+        this.metrics = m;
+    }
+
+    public void callbacks(Callback[] c) {
+        this.callbacks = c;
+    }
 
     public ArrayList<Layer> getLayers() {
         return layers;
     }
+
+    // public CompileBuilder getCompileBuilder() {
+    //     return cb;
+    // }
 
     public void addLayer(Layer l) {
         if (layers == null) {
@@ -88,15 +138,14 @@ public class NeuralNet {
         }
 
         // callbacks [find a better way to do this]
-        // if (callbacks != null) {
-        //     for (Callback c : callbacks) {
-        //         if (c instanceof EarlyStopping) {
-        //             EarlyStopping es = (EarlyStopping) c;
-        //             lossHistory = Nd4j.createUninitialized();
-        //         }
-        //         break;
-        //     }
-        // }
+        if (callbacks != null) {
+            for (Callback c : callbacks) {
+                if (c instanceof StepDecay) {
+                    ((StepDecay)c).execute(optimizer.getLearningRate(), 10);
+                }
+                
+            }
+        }
 
         boolean reshape = false;
         long[] shape = trainData.shape();
@@ -160,12 +209,12 @@ public class NeuralNet {
             System.out.println("loss: " + this.loss + " - val loss: " + this.valLoss);
         }
 
-        System.out.println("train metrics: ");
-        metrics(trainData, trainLabels);
-        System.out.println("val metrics: ");
-        metrics(testData, testLabels);
-        System.out.println("test metrics: ");
-        metrics(valData, valLabels);
+        // System.out.println("train metrics: ");
+        // metrics(trainData, trainLabels);
+        // System.out.println("val metrics: ");
+        // metrics(testData, testLabels);
+        // System.out.println("test metrics: ");
+        // metrics(valData, valLabels);
 
     }
 
@@ -234,6 +283,12 @@ public class NeuralNet {
         // getGradients(outLayer, gradientWrtOutput, data);
         Layer prev = layers.get(layers.indexOf(outLayer) - 1);
         outLayer.getGradients(prev, gradientWrtOutput, data);
+
+        // System.out.println("\n\n");
+        // for (Layer l : layers) {
+        //     System.out.println(l.toString());
+        //     System.out.println();
+        // }
 
         // update weights/biases
         for (Layer l : layers) {

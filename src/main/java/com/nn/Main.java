@@ -30,6 +30,8 @@ import org.nd4j.linalg.indexing.NDArrayIndex;
 import com.nn.activation.*;
 import com.nn.components.*;
 import com.nn.layers.*;
+import com.nn.training.callbacks.Callback;
+import com.nn.training.callbacks.StepDecay;
 import com.nn.training.loss.*;
 import com.nn.training.metrics.*;
 import com.nn.training.normalization.BatchNormalization;
@@ -326,13 +328,6 @@ public class Main {
             "valid",
             new ReLU());
 
-        // Conv2d d3 = new Conv2d(
-        //     40,
-        //     new int[]{3, 3},
-        //     1,
-        //     "same",
-        //     new ReLU());
-
         Flatten f = new Flatten();
         Dense d1 = new Dense(128, new ReLU());
 
@@ -348,7 +343,12 @@ public class Main {
         nn.addLayer(d2);
 
 
-        nn.compile(new Adam(0.001), new MultiClassMetrics());
+        // nn.compile(new Adam(0.001), new MultiClassMetrics());
+        // CompileBuilder cb = nn.getCompileBuilder();
+        // cb.optimizer(new Adam(0.001));
+        // cb.metrics(new MultiClassMetrics());
+        // cb.callbacks(new Callback[]{new StepDecay(0.05, 10)});
+        // cb.build();
 
         long totalStart = System.nanoTime();
 

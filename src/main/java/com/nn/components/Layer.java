@@ -201,10 +201,8 @@ public class Layer {
         return gradient;
     }
 
-    public INDArray gradientWeights(Layer prevLayer, INDArray gradient) {
-        System.out.println(Arrays.toString(gradient.shape()));
-        System.out.println("prev act: " + Arrays.toString(prevLayer.getActivations().shape()));
-        INDArray gWrtW = prevLayer.getActivations().transpose().mmul(gradient).div(prevLayer.getActivations().rows());
+    public INDArray gradientWeights(INDArray activation, INDArray gradient) {
+        INDArray gWrtW = activation.transpose().mmul(gradient).div(activation.rows());
         return gWrtW;
     }
 
@@ -234,6 +232,7 @@ public class Layer {
     public String toString() {
         String s = "";
         s += "class: " + this.getClass().getSimpleName() + "\n";
+        s += "preactivation: " + Arrays.toString(this.getPreActivation().shape()) + "\n";
         s += "activations: " + Arrays.toString(this.getActivations().shape()) + "\n";
         s += "weights: " + Arrays.toString(this.getWeights().shape()) + "\n";
         s += "bias: " + Arrays.toString(this.getBias().shape()) + "\n";
@@ -241,8 +240,8 @@ public class Layer {
         s += "weights variance: " + Arrays.toString(this.getWeightsVariance().shape()) + "\n";
         s += "bias momentum: " + Arrays.toString(this.getBiasMomentum().shape()) + "\n";
         s += "bias variance: " + Arrays.toString(this.getBiasVariance().shape()) + "\n";
-        // s += "gradient wrt weights: " + Arrays.toString(this.getGradientWeights().shape()) + "\n";
-        // s += "gradient wrt bias: " + Arrays.toString(this.getGradientBias().shape());
+        s += "gradient wrt weights: " + Arrays.toString(this.getGradientWeights().shape()) + "\n";
+        s += "gradient wrt bias: " + Arrays.toString(this.getGradientBias().shape());
 
         return s;
     }
