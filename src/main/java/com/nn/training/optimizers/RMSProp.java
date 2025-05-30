@@ -32,6 +32,10 @@ public class RMSProp extends Optimizer {
         return Nd4j.create(0, 0);
     }
 
+    public void setLearningRate(float learningRate) {
+        this.learningRate = learningRate;
+    }
+
     public float getLearningRate() {
         return learningRate;
     }

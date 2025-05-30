@@ -29,6 +29,10 @@ public class SGD extends Optimizer {
         return n.getScale().sub(n.getGradientScale().mul(learningRate));
     }
 
+    public void setLearningRate(float learningRate) {
+        this.learningRate = learningRate;
+    }
+
     public float getLearningRate() {
         return learningRate;
     }

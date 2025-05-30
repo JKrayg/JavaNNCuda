@@ -22,6 +22,10 @@ public class Adam extends Optimizer {
     public Adam(double learningRate) {
         this.learningRate = (float) learningRate;
     }
+
+    public void setLearningRate(float learningRate) {
+        this.learningRate = learningRate;
+    }
     
     public void setMomentumDecay(double md) {
         this.momentumDecay = (float) md;

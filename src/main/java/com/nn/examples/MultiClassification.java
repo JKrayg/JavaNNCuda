@@ -70,7 +70,7 @@ public class MultiClassification {
         // nn.compile(new Adam(0.01), new BinaryMetrics());
         nn.optimizer(new Adam(0.01));
         nn.metrics(new MultiClassMetrics());
-        nn.callbacks(new Callback[]{new StepDecay(0.05, 10)});
+        nn.callbacks(new Callback[]{new StepDecay(0.01, 0.05, 10)});
 
         nn.miniBatchFit(data, 16, 50);
     }

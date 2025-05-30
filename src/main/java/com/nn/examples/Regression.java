@@ -83,7 +83,7 @@ public class Regression {
         // nn.compile(new Adam(0.001), new MeanAbsoluteError());
         nn.optimizer(new Adam(0.001));
         nn.metrics(new MeanAbsoluteError());
-        nn.callbacks(new Callback[]{new StepDecay(0.05, 10)});
+        nn.callbacks(new Callback[]{new StepDecay(0.001, 0.05, 10)});
 
         nn.miniBatchFit(data_, 16, 100);
 

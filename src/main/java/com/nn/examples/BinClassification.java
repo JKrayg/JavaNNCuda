@@ -12,6 +12,7 @@ import com.nn.components.NeuralNet;
 import com.nn.layers.Dense;
 import com.nn.layers.Output;
 import com.nn.training.callbacks.Callback;
+import com.nn.training.callbacks.ExponentialDecay;
 import com.nn.training.callbacks.StepDecay;
 import com.nn.training.loss.BinCrossEntropy;
 import com.nn.training.metrics.BinaryMetrics;
@@ -67,13 +68,10 @@ public class BinClassification {
         nn.addLayer(dense2);
         nn.addLayer(out);
 
-        // nn.compile(new Adam(0.001), new BinaryMetrics());
 
-        // CompileBuilder cb = nn.getCompileBuilder();
         nn.optimizer(new Adam(0.001));
         nn.metrics(new BinaryMetrics());
-        // cb.callbacks(new Callback[]{new StepDecay(0.05, 10)});
-        // cb.build();
+        nn.callbacks(new Callback[]{new ExponentialDecay(0.01)});
 
         nn.miniBatchFit(data, 16, 20);
     }

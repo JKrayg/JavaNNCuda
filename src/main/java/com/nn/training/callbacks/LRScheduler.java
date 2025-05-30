@@ -1,5 +1,5 @@
 package com.nn.training.callbacks;
 
-public class LRScheduler extends Callback {
-    
+public abstract class LRScheduler extends Callback{
+    public abstract float drop(float learningRate, int epoch);
 }

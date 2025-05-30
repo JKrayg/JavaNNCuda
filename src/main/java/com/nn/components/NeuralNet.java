@@ -120,6 +120,7 @@ public class NeuralNet {
         INDArray testLabels = data.getTestLabels();
         INDArray valData = data.getValData();
         INDArray valLabels = data.getValLabels();
+        float lr = optimizer.getLearningRate();
 
         for (int i = 0; i < layers.size(); i++) {
             Layer prev = null;
@@ -137,15 +138,6 @@ public class NeuralNet {
 
         }
 
-        // callbacks [find a better way to do this]
-        if (callbacks != null) {
-            for (Callback c : callbacks) {
-                if (c instanceof StepDecay) {
-                    ((StepDecay)c).execute(optimizer.getLearningRate(), 10);
-                }
-                
-            }
-        }
 
         boolean reshape = false;
         long[] shape = trainData.shape();
@@ -166,6 +158,18 @@ public class NeuralNet {
 
         // forward/backprop batches per epoch
         for (int i = 0; i < epochs; i++) {
+            // callbacks [find a better way to do this]
+            if (callbacks != null) {
+                for (Callback c : callbacks) {
+                    if (c instanceof LRScheduler) {
+                        optimizer.setLearningRate(((LRScheduler) c).drop(lr, i));
+                    }
+                    
+                }
+            }
+
+            System.out.println("lr: " + optimizer.getLearningRate());
+
             this.lossHistory = null;
             Nd4j.shuffle(arraysToShuffle, new Random(), 1);
 

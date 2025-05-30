@@ -236,22 +236,6 @@ public class Main {
         frame.setVisible(true);
     }
 
-    // public static INDArray padImages(INDArray images) {
-    //     INDArray padded = Nd4j.zeros(images.size(0),
-    //                                 images.size(1) + 1 * 2,
-    //                                 images.size(2) + 1 * 2,
-    //                                 images.size(3));
-    //     padded.get(
-    //         NDArrayIndex.all(),
-    //         NDArrayIndex.interval(1, 29),
-    //         NDArrayIndex.interval(1, 29),
-    //         NDArrayIndex.all()
-    //     ).assign(images);
-
-    //     return padded;
-    
-    // }
-
     public static void main(String[] args) throws IOException {
         // mnist -----------------------------------------------------------
         // private static String mnistFolder = "src\\resources\\datasets\\mnist\\";
@@ -343,12 +327,9 @@ public class Main {
         nn.addLayer(d2);
 
 
-        // nn.compile(new Adam(0.001), new MultiClassMetrics());
-        // CompileBuilder cb = nn.getCompileBuilder();
-        // cb.optimizer(new Adam(0.001));
-        // cb.metrics(new MultiClassMetrics());
-        // cb.callbacks(new Callback[]{new StepDecay(0.05, 10)});
-        // cb.build();
+        nn.optimizer(new Adam(0.001));
+        nn.metrics(new MultiClassMetrics());
+        nn.callbacks(new Callback[]{new StepDecay(0.001, 0.05, 10)});
 
         long totalStart = System.nanoTime();
 
