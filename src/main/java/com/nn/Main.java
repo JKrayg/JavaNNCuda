@@ -31,6 +31,7 @@ import com.nn.activation.*;
 import com.nn.components.*;
 import com.nn.layers.*;
 import com.nn.training.callbacks.Callback;
+import com.nn.training.callbacks.EarlyStopping;
 import com.nn.training.callbacks.StepDecay;
 import com.nn.training.loss.*;
 import com.nn.training.metrics.*;
@@ -329,7 +330,7 @@ public class Main {
 
         nn.optimizer(new Adam(0.001));
         nn.metrics(new MultiClassMetrics());
-        nn.callbacks(new Callback[]{new StepDecay(0.001, 0.05, 10)});
+        nn.callbacks(new Callback[]{new StepDecay(0.001, 0.05, 10), new EarlyStopping("val_loss", 0.5, 4)});
 
         long totalStart = System.nanoTime();
 

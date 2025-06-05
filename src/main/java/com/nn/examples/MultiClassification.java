@@ -11,6 +11,7 @@ import com.nn.components.NeuralNet;
 import com.nn.layers.Dense;
 import com.nn.layers.Output;
 import com.nn.training.callbacks.Callback;
+import com.nn.training.callbacks.EarlyStopping;
 import com.nn.training.callbacks.StepDecay;
 import com.nn.training.loss.CatCrossEntropy;
 import com.nn.training.metrics.BinaryMetrics;
@@ -70,7 +71,7 @@ public class MultiClassification {
         // nn.compile(new Adam(0.01), new BinaryMetrics());
         nn.optimizer(new Adam(0.01));
         nn.metrics(new MultiClassMetrics());
-        nn.callbacks(new Callback[]{new StepDecay(0.01, 0.05, 10)});
+        nn.callbacks(new Callback[]{new EarlyStopping("val_loss", 0.05, 5)});
 
         nn.miniBatchFit(data, 16, 50);
     }

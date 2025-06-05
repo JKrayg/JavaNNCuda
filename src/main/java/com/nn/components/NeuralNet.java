@@ -42,40 +42,8 @@ public class NeuralNet {
     private MathUtils maths = new MathUtils();
     private INDArray lossHistory;
     private Callback[] callbacks;
+    private INDArray stopHistory;
 
-    // public NeuralNet() {
-    //     cb = new CompileBuilder(this, new SGD(0.01));
-    // }
-
-    // public static class CompileBuilder {
-    //     private Optimizer optimizer;
-    //     private Metrics metrics;
-    //     private Callback[] callbacks;
-    //     private NeuralNet net;
-
-    //     public CompileBuilder(NeuralNet nn, Optimizer o) {
-    //         this.net = nn;
-    //         this.optimizer = o;
-    //     }
-
-    //     public void optimizer(Optimizer o) {
-    //         this.optimizer = o;
-    //     }
-
-    //     public void metrics(Metrics m) {
-    //         this.metrics = m;
-    //     }
-
-    //     public void callbacks(Callback[] c) {
-    //         this.callbacks = c;
-    //     }
-
-    //     public void build() {
-    //         net.optimizer = this.optimizer;
-    //         net.metrics = this.metrics;
-    //         net.callbacks = this.callbacks;
-    //     }
-    // }
     public void optimizer(Optimizer o) {
         this.optimizer = o;
     }
@@ -91,10 +59,6 @@ public class NeuralNet {
     public ArrayList<Layer> getLayers() {
         return layers;
     }
-
-    // public CompileBuilder getCompileBuilder() {
-    //     return cb;
-    // }
 
     public void addLayer(Layer l) {
         if (layers == null) {
@@ -121,6 +85,7 @@ public class NeuralNet {
         INDArray valData = data.getValData();
         INDArray valLabels = data.getValLabels();
         float lr = optimizer.getLearningRate();
+        INDArray history;
 
         for (int i = 0; i < layers.size(); i++) {
             Layer prev = null;
@@ -137,7 +102,6 @@ public class NeuralNet {
             }
 
         }
-
 
         boolean reshape = false;
         long[] shape = trainData.shape();
@@ -156,20 +120,28 @@ public class NeuralNet {
             reshape = true;
         }
 
+        String monitor;
+        EarlyStopping erly = null;
+        INDArray his = null;
+        int patCount = 0;
+        float lowVal = 100;
+        int hisIdx = 0;
+        LRScheduler lrSch = null;
+
+        if (callbacks != null) {
+            for (Callback c : callbacks) {
+                if (c instanceof LRScheduler) {
+                    lrSch = (LRScheduler) c;
+                } else if (c instanceof EarlyStopping) {
+                    erly = (EarlyStopping) c;
+                    his = Nd4j.create(erly.getPatience());
+                }
+
+            }
+        }
+
         // forward/backprop batches per epoch
         for (int i = 0; i < epochs; i++) {
-            // callbacks [find a better way to do this]
-            if (callbacks != null) {
-                for (Callback c : callbacks) {
-                    if (c instanceof LRScheduler) {
-                        optimizer.setLearningRate(((LRScheduler) c).drop(lr, i));
-                    }
-                    
-                }
-            }
-
-            System.out.println("lr: " + optimizer.getLearningRate());
-
             this.lossHistory = null;
             Nd4j.shuffle(arraysToShuffle, new Random(), 1);
 
@@ -211,6 +183,18 @@ public class NeuralNet {
             this.valLoss = loss(valData, valLabels);
 
             System.out.println("loss: " + this.loss + " - val loss: " + this.valLoss);
+
+            // callbacks [find a better way to do this]
+            if (erly != null) {
+                if (erly.checkStop(this.valLoss)) {
+                    break;
+                }
+            }
+
+            if (lrSch != null) {
+                optimizer.setLearningRate(lrSch.drop(lr, i));
+            }
+
         }
 
         // System.out.println("train metrics: ");
@@ -258,7 +242,7 @@ public class NeuralNet {
             Layer prev = layers.get(q - 1);
             // Layer prev = null;
             // if (q > 0) {
-            //     prev = layers.get(q - 1);
+            // prev = layers.get(q - 1);
             // }
 
             curr.forwardProp(prev);
@@ -273,7 +257,7 @@ public class NeuralNet {
         Output outLayer = (Output) layers.get(layers.size() - 1);
         Loss lossFunc = outLayer.getLoss();
         INDArray loss = Nd4j.create(new float[] {
-            lossFunc.execute(outLayer.getActivations(), outLayer.getLabels())
+                lossFunc.execute(outLayer.getActivations(), outLayer.getLabels())
         });
 
         if (this.lossHistory == null) {
@@ -290,8 +274,8 @@ public class NeuralNet {
 
         // System.out.println("\n\n");
         // for (Layer l : layers) {
-        //     System.out.println(l.toString());
-        //     System.out.println();
+        // System.out.println(l.toString());
+        // System.out.println();
         // }
 
         // update weights/biases
@@ -317,10 +301,6 @@ public class NeuralNet {
     public float loss(INDArray d, INDArray l) {
         forwardPass(d, l);
         Output outLayer = (Output) layers.get(layers.size() - 1);
-        // System.out.println(Arrays.toString(outLayer.getActivations().shape()));
-        // System.out.println(Arrays.toString(outLayer.getLabels().shape()));
-        // System.out.println(outLayer.getActivations().data());
-        // System.out.println(outLayer.getLabels().data());
 
         return outLayer.getLoss().execute(outLayer.getActivations(), l);
     }
