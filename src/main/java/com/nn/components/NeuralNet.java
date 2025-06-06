@@ -174,40 +174,41 @@ public class NeuralNet {
             // print loss
             int numL = lossHistory.columns();
             this.loss = lossHistory.sumNumber().floatValue() / numL;
-            float acc = accuracy(trainData, trainLabels);
-            this.valLoss = loss(valData, valLabels);
-            float valAcc = accuracy(valData, valLabels);
+            // float acc = accuracy(trainData, trainLabels);
+            // this.valLoss = loss(valData, valLabels);
+            // float valAcc = accuracy(valData, valLabels);
 
-            System.out.println("loss: " + this.loss +
-                            " ~ accuracy: " + acc +
-                            " ~ val loss: " + this.valLoss +
-                            " ~ val accuracy: " + valAcc);
+            System.out.println("loss: " + this.loss);
+            //+
+                            // " ~ accuracy: " + acc +
+                            // " ~ val loss: " + this.valLoss +
+                            // " ~ val accuracy: " + valAcc);
                             
                                                                                                                           //
             System.out.println("_________________________________________________________________________________________");
 
 
             // callbacks [find a better way to do this]
-            if (erly != null) {
-                if (erly.getMetric().equals("val_loss")) {
-                    if (erly.checkStop(this.valLoss)) {
-                        break;
-                    }
-                } else if (erly.getMetric().equals("val_accuracy")) {
-                    if (erly.checkStop(valAcc)) {
-                        break;
-                    }
-                } else if (erly.getMetric().equals("accuracy")) {
-                    if (erly.checkStop(acc)) {
-                        break;
-                    }
-                } else if (erly.getMetric().equals("loss")) {
-                    if (erly.checkStop(this.loss)) {
-                        break;
-                    }
-                }
+            // if (erly != null) {
+            //     if (erly.getMetric().equals("val_loss")) {
+            //         if (erly.checkStop(this.valLoss)) {
+            //             break;
+            //         }
+            //     } else if (erly.getMetric().equals("val_accuracy")) {
+            //         if (erly.checkStop(valAcc)) {
+            //             break;
+            //         }
+            //     } else if (erly.getMetric().equals("accuracy")) {
+            //         if (erly.checkStop(acc)) {
+            //             break;
+            //         }
+            //     } else if (erly.getMetric().equals("loss")) {
+            //         if (erly.checkStop(this.loss)) {
+            //             break;
+            //         }
+            //     }
 
-            }
+            // }
             // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
             // lr scheduler

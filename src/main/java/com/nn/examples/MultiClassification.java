@@ -89,6 +89,28 @@ public class MultiClassification {
 
             }
             scan.close();
+
+            Scanner scan2 = new Scanner(fw);
+
+            scan2.nextLine();
+            while (scan2.hasNextLine()) {
+
+                String line = scan2.nextLine();
+                String values = line.substring(0, line.lastIndexOf(";"));
+                float[] toDub;
+                String[] splitValues = values.split(";");
+                toDub = new float[splitValues.length];
+
+                for (int i = 0; i < splitValues.length; i++) {
+                    toDub[i] = Float.parseFloat(splitValues[i]);
+                }
+
+                dataArrayList.add(toDub);
+                String label = line.substring(line.lastIndexOf(";") + 1);
+                labelsArrayList.add(label);
+
+            }
+            scan2.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -96,6 +118,9 @@ public class MultiClassification {
         float[][] data_ = dataArrayList.toArray(new float[0][]);
         // Integer[] labels = labelsArrayList.toArray(new Integer[0]);
         String[] labels = labelsArrayList.toArray(new String[0]);
+
+        System.out.println(data_.length);
+        System.out.println(labels.length);
 
 
         Data data = new Data(data_, labels);
@@ -105,15 +130,10 @@ public class MultiClassification {
         
 
         NeuralNet nn = new NeuralNet();
-        Dense dense1 = new Dense(128, new ReLU(), 11);
-        dense1.addRegularizer(new L2());
-        // dense1.addRegularizer(new Dropout(0.5));
-        Dense dense2 = new Dense(64, new ReLU());
-        dense2.addRegularizer(new L2());
-        // dense2.addRegularizer(new Dropout(0.5));
-        Dense dense3 = new Dense(32, new ReLU());
-        dense3.addRegularizer(new L2());
-        // dense3.addRegularizer(new Dropout(0.5));
+        Dense dense1 = new Dense(64, new ReLU(), 11);
+        dense1.addNormalization(new BatchNormalization());
+        Dense dense2 = new Dense(32, new ReLU());
+        Dense dense3 = new Dense(16, new ReLU());
         Output out = new Output(data.getClasses().size(), new Softmax(), new CatCrossEntropy());
 
         nn.addLayer(dense1);
@@ -125,7 +145,7 @@ public class MultiClassification {
         nn.metrics(new MultiClassMetrics());
         nn.callbacks(new Callback[]{new EarlyStopping("val_loss", 0.001, 10)});
 
-        nn.miniBatchFit(data, 64, 50);
+        nn.miniBatchFit(data, 32, 2);
     }
 
 }

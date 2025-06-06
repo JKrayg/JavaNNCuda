@@ -1,5 +1,7 @@
 package com.nn.training.normalization;
 
+import java.util.Arrays;
+
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.ops.transforms.Transforms;
@@ -164,27 +166,39 @@ public class BatchNormalization extends Normalization {
 
     public INDArray gradientShift(INDArray gradient) {
         // System.out.println("dL/dzHat sum: " + gradient.elementSum());
-        int cols = gradient.columns();
-        int rows = gradient.rows();
-        INDArray gWrtSh = Nd4j.create(cols, 1);
 
-        for (int i = 0; i < cols; i++) {
-            gWrtSh.put(i, 0, gradient.getColumn(i).sumNumber().floatValue());
-        }
+        INDArray r = gradient.sum(0).reshape(-1, 1);
 
-        return gWrtSh;
+        return r;
+
+
+
+
+
+        // int cols = gradient.columns();
+        // int rows = gradient.rows();
+        // INDArray gWrtSh = Nd4j.create(cols, 1);
+
+        // for (int i = 0; i < cols; i++) {
+        //     gWrtSh.put(i, 0, gradient.getColumn(i).sumNumber().floatValue());
+        // }
+
+        // return gWrtSh;
     }
 
     public INDArray gradientScale(INDArray gradient) {
         // System.out.println("sumsc: " + gradient.elementSum());
-        int cols = gradient.columns();
-        int rows = gradient.rows();
-        INDArray gWrtSc = Nd4j.create(cols, 1);
 
-        for (int i = 0; i < cols; i++) {
-            gWrtSc.put(i, 0, gradient.getColumn(i).mul(preScaleShiftZ.getColumn(i)).sumNumber().floatValue());
-        }
-        return gWrtSc;
+        INDArray r = gradient.mul(preScaleShiftZ).sum(0).reshape(-1, 1);
+        return r;
+        // int cols = gradient.columns();
+        // int rows = gradient.rows();
+        // INDArray gWrtSc = Nd4j.create(cols, 1);
+
+        // for (int i = 0; i < cols; i++) {
+        //     gWrtSc.put(i, 0, gradient.getColumn(i).mul(preScaleShiftZ.getColumn(i)).sumNumber().floatValue());
+        // }
+        // return gWrtSc;
     }
 
     public void updateScale(Optimizer o) {
@@ -196,54 +210,83 @@ public class BatchNormalization extends Normalization {
     }
 
     public INDArray means(INDArray z) {
-        int rows = z.rows();
-        int cols = z.columns();
-        INDArray means = Nd4j.create(cols, 1);
 
-        for (int i = 0; i < cols; i++) {
-            means.putScalar(i, z.getColumn(i).sumNumber().floatValue() / rows);
-        }
+        INDArray r = z.sum(0).divi(z.rows()).reshape(z.columns(), 1);
+        return r;
 
-        return means;
+        // int rows = z.rows();
+        // int cols = z.columns();
+        // INDArray means = Nd4j.create(cols, 1);
+
+        // for (int i = 0; i < cols; i++) {
+        //     means.putScalar(i, z.getColumn(i).sumNumber().floatValue() / rows);
+        // }
+
+        // return means;
     }
 
     public INDArray variances(INDArray z) {
-        int rows = z.rows();
-        int cols = z.columns();
-        INDArray variances = Nd4j.create(cols, 1);
-        INDArray means = means(z);
+        INDArray subMeans = z.sub(means.transpose());
+        INDArray r = subMeans.mul(subMeans).sum(0).divi(z.rows()).reshape(z.columns(), 1);
+        return r;
+        // int rows = z.rows();
+        // int cols = z.columns();
+        // INDArray variances = Nd4j.create(cols, 1);
+        // INDArray means = means(z);
 
-        for (int i = 0; i < cols; i++) {
-            INDArray a = z.getColumn(i).sub(means.getFloat(i));
-            variances.putScalar(i, a.mul(a).sumNumber().floatValue() / rows);
-        }
+        // for (int i = 0; i < cols; i++) {
+        //     INDArray a = z.getColumn(i).sub(means.getFloat(i));
+        //     variances.putScalar(i, a.mul(a).sumNumber().floatValue() / rows);
+        // }
 
-        return variances;
+        // return variances;
     }
 
     public INDArray normalize(INDArray z) {
-        int rows = z.rows();
-        int cols = z.columns();
         INDArray means = means(z);
         INDArray variances = variances(z);
-        INDArray preSclShft = Nd4j.create(rows, cols);
-        INDArray norm = Nd4j.create(rows, cols);
-
-        for (int i = 0; i < cols; i++) {
-            INDArray currCol = z.getColumn(i);
-            INDArray normalizedCol = currCol.sub(means.getFloat(i)).div(Math.sqrt(variances.getFloat(i) + epsilon));
-            preSclShft.putColumn(i, normalizedCol);
-            norm.putColumn(i, normalizedCol.mul(scale.getFloat(i)).add(shift.getFloat(i)));
-        }
+        INDArray pscsh = z.sub(means.transpose()).divi(Transforms.sqrt(variances.add(epsilon).transpose()));
+        INDArray norm = pscsh.mul(scale.transpose()).add(shift.transpose());
 
         this.means = means;
         this.variances = variances;
         this.runningMeans = runningMeans.mul(momentum).add(means.mul((1 - momentum)));
         this.runningVariances = runningVariances.mul(momentum).add(variances.mul((1 - momentum)));
         this.preNormZ = z;
-        this.preScaleShiftZ = preSclShft;
+        this.preScaleShiftZ = pscsh;
 
         return norm;
+
+
+
+
+
+
+
+
+
+        // int rows = z.rows();
+        // int cols = z.columns();
+        // INDArray means = means(z);
+        // INDArray variances = variances(z);
+        // INDArray preSclShft = Nd4j.create(rows, cols);
+        // INDArray norm = Nd4j.create(rows, cols);
+
+        // for (int i = 0; i < cols; i++) {
+        //     INDArray currCol = z.getColumn(i);
+        //     INDArray normalizedCol = currCol.sub(means.getFloat(i)).div(Math.sqrt(variances.getFloat(i) + epsilon));
+        //     preSclShft.putColumn(i, normalizedCol);
+        //     norm.putColumn(i, normalizedCol.mul(scale.getFloat(i)).add(shift.getFloat(i)));
+        // }
+
+        // this.means = means;
+        // this.variances = variances;
+        // this.runningMeans = runningMeans.mul(momentum).add(means.mul((1 - momentum)));
+        // this.runningVariances = runningVariances.mul(momentum).add(variances.mul((1 - momentum)));
+        // this.preNormZ = z;
+        // this.preScaleShiftZ = preSclShft;
+
+        // return norm;
     }
 
     public void setPreNormZ(INDArray z) {
@@ -254,36 +297,55 @@ public class BatchNormalization extends Normalization {
     public INDArray gradientPreBN(INDArray dLdzHat) {
         int rows = dLdzHat.rows();
         int cols = dLdzHat.columns();
-        INDArray dLdz = Nd4j.create(rows, cols);
+        // INDArray dLdz = Nd4j.create(rows, cols);
         INDArray std = Transforms.pow(variances.add(epsilon), 0.5);
         INDArray scalingFactor = scale.div(std);
 
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                float gradientElement = dLdzHat.getFloat(i, j);
-                float normElement = preScaleShiftZ.getFloat(i, j);
-                dLdz.put(i, j,
-                    scalingFactor.getFloat(i) * (gradientElement - 
-                    ((gradientElement - normElement) / rows) * 
-                    ((gradientElement * normElement) / rows)));
-            }
-            
-        }
+        INDArray dup = dLdzHat;
+        INDArray a = dup.sub(preScaleShiftZ).divi(rows);
+        INDArray b = dup.mul(preScaleShiftZ).divi(rows);
+        INDArray c = dup.sub(a).muli(b);
 
-        return dLdz;
+        return scalingFactor.muli(c);
+
+        // for (int i = 0; i < rows; i++) {
+        //     for (int j = 0; j < cols; j++) {
+        //         float gradientElement = dLdzHat.getFloat(i, j);
+        //         float normElement = preScaleShiftZ.getFloat(i, j);
+        //         dLdz.put(i, j,
+        //             scalingFactor.getFloat(i) * (gradientElement - 
+        //             ((gradientElement - normElement) / rows) * 
+        //             ((gradientElement * normElement) / rows)));
+        //     }
+            
+        // }
+
+        // return dLdz;
     }
 
     public INDArray gradientPreBNSimple(INDArray dLdzHat) {
-        int rows = dLdzHat.rows();
-        int cols = dLdzHat.columns();
-        INDArray dLdz = Nd4j.create(rows, cols);
         INDArray std = Transforms.pow(variances.add(epsilon), 0.5);
-        INDArray scalingFactor = scale.div(std);
+        INDArray scalingFactor = scale.div(std).transpose();
+        return dLdzHat.mul(scalingFactor);
 
-        for (int i = 0; i < rows; i++) {
-            dLdz.putRow(i, dLdzHat.getRow(i).reshape(dLdzHat.columns(), 1).mul(scalingFactor));
-        }
 
-        return dLdz;
+
+
+
+
+
+
+
+        // int rows = dLdzHat.rows();
+        // int cols = dLdzHat.columns();
+        // INDArray dLdz = Nd4j.create(rows, cols);
+        // INDArray std = Transforms.pow(variances.add(epsilon), 0.5);
+        // INDArray scalingFactor = scale.div(std);
+
+        // for (int i = 0; i < rows; i++) {
+        //     dLdz.putRow(i, dLdzHat.getRow(i).reshape(dLdzHat.columns(), 1).mul(scalingFactor));
+        // }
+
+        // return dLdz;
     }
 }
