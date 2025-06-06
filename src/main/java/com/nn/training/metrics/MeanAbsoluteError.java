@@ -11,4 +11,10 @@ public class MeanAbsoluteError extends Metrics {
         System.out.println("MAE: " + mae);
         // return dif.mul(dif).sumNumber().floatValue() / labels.length();
     }
+
+    @Override
+    public float accuracy(INDArray pred, INDArray trueVals) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'accuracy'");
+    }
 }

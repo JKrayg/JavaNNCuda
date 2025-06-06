@@ -7,6 +7,7 @@ import org.nd4j.linalg.factory.Nd4j;
 public class MultiClassMetrics extends Metrics{
     private float threshold;
     private INDArray confusionMatrix;
+    private float accuracy;
 
     public MultiClassMetrics() {
         this.threshold = 0.5f;
@@ -17,7 +18,7 @@ public class MultiClassMetrics extends Metrics{
     }
 
     public void getMetrics(INDArray pred, INDArray trueVals) {
-        String dis = "Accuracy: " + accuracy(pred, trueVals) + "\n";
+        String dis = "Accuracy: " + accuracy + "\n";
         dis += "Precision: ";
         for (float d: precision(pred, trueVals)) {
             dis += Float.toString(d) + ", ";

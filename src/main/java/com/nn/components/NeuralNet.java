@@ -85,7 +85,6 @@ public class NeuralNet {
         INDArray valData = data.getValData();
         INDArray valLabels = data.getValLabels();
         float lr = optimizer.getLearningRate();
-        INDArray history;
 
         for (int i = 0; i < layers.size(); i++) {
             Layer prev = null;
@@ -120,12 +119,7 @@ public class NeuralNet {
             reshape = true;
         }
 
-        String monitor;
         EarlyStopping erly = null;
-        INDArray his = null;
-        int patCount = 0;
-        float lowVal = 100;
-        int hisIdx = 0;
         LRScheduler lrSch = null;
 
         if (callbacks != null) {
@@ -134,7 +128,6 @@ public class NeuralNet {
                     lrSch = (LRScheduler) c;
                 } else if (c instanceof EarlyStopping) {
                     erly = (EarlyStopping) c;
-                    his = Nd4j.create(erly.getPatience());
                 }
 
             }
@@ -142,6 +135,7 @@ public class NeuralNet {
 
         // forward/backprop batches per epoch
         for (int i = 0; i < epochs; i++) {
+            System.out.println("epoch " + (i + 1) + "/" + epochs);
             this.lossHistory = null;
             Nd4j.shuffle(arraysToShuffle, new Random(), 1);
 
@@ -165,7 +159,7 @@ public class NeuralNet {
                 }
             }
 
-            // last batch
+            // last batch - fix
             if (rows % batchSize != 0) {
                 dataBatch = trainData.get(NDArrayIndex.interval(batchSize - (rows % batchSize), batchSize));
                 labelsBatch = trainLabels.get(NDArrayIndex.interval(batchSize - (rows % batchSize), batchSize));
@@ -180,17 +174,43 @@ public class NeuralNet {
             // print loss
             int numL = lossHistory.columns();
             this.loss = lossHistory.sumNumber().floatValue() / numL;
+            float acc = accuracy(trainData, trainLabels);
             this.valLoss = loss(valData, valLabels);
+            float valAcc = accuracy(valData, valLabels);
 
-            System.out.println("loss: " + this.loss + " - val loss: " + this.valLoss);
+            System.out.println("loss: " + this.loss +
+                            " ~ accuracy: " + acc +
+                            " ~ val loss: " + this.valLoss +
+                            " ~ val accuracy: " + valAcc);
+                            
+                                                                                                                          //
+            System.out.println("_________________________________________________________________________________________");
+
 
             // callbacks [find a better way to do this]
             if (erly != null) {
-                if (erly.checkStop(this.valLoss)) {
-                    break;
+                if (erly.getMetric().equals("val_loss")) {
+                    if (erly.checkStop(this.valLoss)) {
+                        break;
+                    }
+                } else if (erly.getMetric().equals("val_accuracy")) {
+                    if (erly.checkStop(valAcc)) {
+                        break;
+                    }
+                } else if (erly.getMetric().equals("accuracy")) {
+                    if (erly.checkStop(acc)) {
+                        break;
+                    }
+                } else if (erly.getMetric().equals("loss")) {
+                    if (erly.checkStop(this.loss)) {
+                        break;
+                    }
                 }
-            }
 
+            }
+            // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+            // lr scheduler
             if (lrSch != null) {
                 optimizer.setLearningRate(lrSch.drop(lr, i));
             }
@@ -296,6 +316,12 @@ public class NeuralNet {
         forwardPass(d, l);
         Output outLayer = (Output) layers.get(layers.size() - 1);
         metrics.getMetrics(outLayer.getActivations(), l);
+    }
+
+    public float accuracy(INDArray d, INDArray l) {
+        forwardPass(d, l);
+        Output outLayer = (Output) layers.get(layers.size() - 1);
+        return metrics.accuracy(outLayer.getActivations(), l);
     }
 
     public float loss(INDArray d, INDArray l) {

@@ -28,26 +28,39 @@ public class EarlyStopping extends Callback {
         return patience;
     }
 
-    public boolean checkStop(float valLoss) {
+    // fix this
+    public boolean checkStop(float d) {
         if (low == 0.0f) {
-            low = valLoss;
+            low = d;
         } else {
-            if (valLoss > low - minChange) {
-                patidx++;
-                if (patidx == patience - 1) {
-                    return true;
+            if (monitor.equals("accuracy") || monitor.equals("val_accuracy")) {
+                if (d < low + minChange) {
+                    patidx++;
+                    if (patidx == patience - 1) {
+                        return true;
+                    }
+                } else {
+                    low = d;
+                    patidx = 0;
                 }
-            } else {
-                low = valLoss;
-                patidx = 0;
+
+            } else if (monitor.equals("val_loss") || monitor.equals("loss")) {
+                if (d > low - minChange) {
+                    patidx++;
+                    if (patidx == patience - 1) {
+                        return true;
+                    }
+                } else {
+                    low = d;
+                    patidx = 0;
+                }
             }
+
         }
 
-        System.out.println(low);
-        
+        // System.out.println("new low: " + low + "\n");
+
         return false;
     }
 
-
-    
 }

@@ -25,7 +25,8 @@ public class Data {
     private HashMap<String, Integer> classes;
     // private HashMap<String, Float> classes2;
 
-    public Data() {}
+    public Data() {
+    }
 
     public Data(float[][] data) {
         this.data = Nd4j.create(data);
@@ -34,18 +35,18 @@ public class Data {
     public Data(float[][] data, String[] labels) {
         this.data = Nd4j.create(data);
 
-        // create a hashtable of distinct labels mapped to an integer
+        // create a hashtable of labels mapped to an integer
         HashMap<String, Integer> h = new HashMap<>();
         Set<String> c = new HashSet<>(List.of(labels));
         int count = 0;
-        for (String s: c) {
+        for (String s : c) {
             h.put(s, count);
             count++;
         }
 
         this.classes = h;
 
-        // create list of a label values
+        // create list of label values
         float[] ls = new float[labels.length];
         for (int i = 0; i < labels.length; i++) {
             ls[i] = classes.get(labels[i]);
@@ -57,7 +58,6 @@ public class Data {
             this.labels = Nd4j.create(ls);
         }
 
-        
     }
 
     public Data(float[][] data, float[] targetVals) {
@@ -69,15 +69,17 @@ public class Data {
         // System.out.println(labels.length);
         this.data = Nd4j.create(data);
 
-        // create a hashtable of distinct labels mapped to an integer
+        // create a hashtable of labels mapped to an integer
         HashMap<String, Integer> h = new HashMap<>();
-        for (int i: labels) {
-            h.put(Integer.toString(i), i);
+        int idx = 0;
+        for (int i : labels) {
+            h.put(Integer.toString(i), idx);
+            idx++;
         }
 
         this.classes = h;
 
-        // create list of a label values
+        // create list of label values
         float[] ls = new float[labels.length];
         for (int i = 0; i < labels.length; i++) {
             ls[i] = classes.get(Integer.toString(labels[i]));
@@ -91,29 +93,30 @@ public class Data {
             this.labels = Nd4j.create(ls);
         }
 
-        
     }
 
     public Data(INDArray data, INDArray labels) {
         // long[] dataShape = data.shape();
         // if (dataShape[1] == 1) {
-        //     data = data.reshape(dataShape[0], dataShape[2], dataShape[3]);
+        // data = data.reshape(dataShape[0], dataShape[2], dataShape[3]);
         // }
 
         this.data = data;
 
-        // create a hashtable of distinct labels mapped to an integer
+        // create a hashtable of labels mapped to an integer
         HashMap<String, Integer> h = new HashMap<>();
-        for (int i: labels.toIntVector()) {
+        for (int i : labels.toIntVector()) {
             h.put(Integer.toString(i), i);
         }
 
         this.classes = h;
 
+        System.out.println(this.classes);
+
         // create list of a label values
         // float[] ls = new float[labels.length];
         // for (int i = 0; i < labels.length; i++) {
-        //     ls[i] = classes.get(Integer.toString(labels[i]));
+        // ls[i] = classes.get(Integer.toString(labels[i]));
         // }
 
         // System.out.println(ls.length);
@@ -124,7 +127,6 @@ public class Data {
             this.labels = labels;
         }
 
-        
     }
 
     public void flatten() {
@@ -205,21 +207,21 @@ public class Data {
 
     // only works for <= 3D
     public void shuffle() {
-         List<INDArray> arraysToShuffle;
-         boolean reshape = false;
-         long[] shape = data.shape();
- 
-         if (data.shape().length == labels.shape().length) {
-             arraysToShuffle = Arrays.asList(data, labels);
-         } else {
-             arraysToShuffle = Arrays.asList(data.reshape(shape[0], shape[1]*shape[2]), labels);
-             reshape = true;
-         }
- 
-         Nd4j.shuffle(arraysToShuffle, 1);
-         if (reshape) {
-             data = data.reshape(shape[0], shape[1], shape[2]);
-         }
+        List<INDArray> arraysToShuffle;
+        boolean reshape = false;
+        long[] shape = data.shape();
+
+        if (data.shape().length == labels.shape().length) {
+            arraysToShuffle = Arrays.asList(data, labels);
+        } else {
+            arraysToShuffle = Arrays.asList(data.reshape(shape[0], shape[1] * shape[2]), labels);
+            reshape = true;
+        }
+
+        Nd4j.shuffle(arraysToShuffle, 1);
+        if (reshape) {
+            data = data.reshape(shape[0], shape[1], shape[2]);
+        }
     }
 
     public void split(double testSize, double valSize) {
@@ -229,18 +231,17 @@ public class Data {
         int trainSetSize = rows - (testSetSize + valSetSize);
 
         this.trainData = data
-            .get(NDArrayIndex.interval(0, trainSetSize));
+                .get(NDArrayIndex.interval(0, trainSetSize));
         this.testData = data
-            .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize));
+                .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize));
         this.valData = data
-            .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows));
+                .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows));
         this.trainLabels = labels
-            .get(NDArrayIndex.interval(0, trainSetSize));
+                .get(NDArrayIndex.interval(0, trainSetSize));
         this.testLabels = labels
-            .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize));
+                .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize));
         this.valLabels = labels
-            .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows));
-
+                .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows));
 
     }
 }
