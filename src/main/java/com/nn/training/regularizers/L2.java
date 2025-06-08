@@ -14,8 +14,7 @@ public class L2 extends Regularizer {
     }
 
     public INDArray regularize(INDArray weights) {
-        INDArray w = weights.mul(lambda);
-        return w;
+        return weights.mul(lambda);
     }
     
 }

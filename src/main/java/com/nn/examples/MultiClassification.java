@@ -24,6 +24,7 @@ import com.nn.training.metrics.MultiClassMetrics;
 import com.nn.training.normalization.BatchNormalization;
 import com.nn.training.optimizers.Adam;
 import com.nn.training.regularizers.Dropout;
+import com.nn.training.regularizers.L1;
 import com.nn.training.regularizers.L2;
 
 public class MultiClassification {
@@ -90,27 +91,27 @@ public class MultiClassification {
             }
             scan.close();
 
-            Scanner scan2 = new Scanner(fw);
+            // Scanner scan2 = new Scanner(fw);
 
-            scan2.nextLine();
-            while (scan2.hasNextLine()) {
+            // scan2.nextLine();
+            // while (scan2.hasNextLine()) {
 
-                String line = scan2.nextLine();
-                String values = line.substring(0, line.lastIndexOf(";"));
-                float[] toDub;
-                String[] splitValues = values.split(";");
-                toDub = new float[splitValues.length];
+            //     String line = scan2.nextLine();
+            //     String values = line.substring(0, line.lastIndexOf(";"));
+            //     float[] toDub;
+            //     String[] splitValues = values.split(";");
+            //     toDub = new float[splitValues.length];
 
-                for (int i = 0; i < splitValues.length; i++) {
-                    toDub[i] = Float.parseFloat(splitValues[i]);
-                }
+            //     for (int i = 0; i < splitValues.length; i++) {
+            //         toDub[i] = Float.parseFloat(splitValues[i]);
+            //     }
 
-                dataArrayList.add(toDub);
-                String label = line.substring(line.lastIndexOf(";") + 1);
-                labelsArrayList.add(label);
+            //     dataArrayList.add(toDub);
+            //     String label = line.substring(line.lastIndexOf(";") + 1);
+            //     labelsArrayList.add(label);
 
-            }
-            scan2.close();
+            // }
+            // scan2.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -131,9 +132,14 @@ public class MultiClassification {
 
         NeuralNet nn = new NeuralNet();
         Dense dense1 = new Dense(64, new ReLU(), 11);
-        dense1.addNormalization(new BatchNormalization());
+        // dense1.addRegularizer(new L2());
+        // dense1.addNormalization(new BatchNormalization());
         Dense dense2 = new Dense(32, new ReLU());
+        // dense2.addRegularizer(new L2());
+        // dense2.addNormalization(new BatchNormalization());
         Dense dense3 = new Dense(16, new ReLU());
+        // dense3.addRegularizer(new L2());
+        // dense3.addNormalization(new BatchNormalization());
         Output out = new Output(data.getClasses().size(), new Softmax(), new CatCrossEntropy());
 
         nn.addLayer(dense1);
@@ -145,7 +151,12 @@ public class MultiClassification {
         nn.metrics(new MultiClassMetrics());
         nn.callbacks(new Callback[]{new EarlyStopping("val_loss", 0.001, 10)});
 
-        nn.miniBatchFit(data, 32, 2);
+        long totalStart = System.nanoTime();
+
+        nn.miniBatchFit(data, 32, 20);
+
+        double totalTimeMs = (System.nanoTime() - totalStart) / 1e6;
+        System.out.println("Total main Time: " + totalTimeMs + " ms");
     }
 
 }

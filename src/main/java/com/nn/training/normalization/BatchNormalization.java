@@ -306,7 +306,7 @@ public class BatchNormalization extends Normalization {
         INDArray b = dup.mul(preScaleShiftZ).divi(rows);
         INDArray c = dup.sub(a).muli(b);
 
-        return scalingFactor.muli(c);
+        return c.muli(scalingFactor.transpose());
 
         // for (int i = 0; i < rows; i++) {
         //     for (int j = 0; j < cols; j++) {

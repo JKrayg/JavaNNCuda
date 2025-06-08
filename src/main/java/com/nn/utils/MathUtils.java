@@ -3,6 +3,9 @@ package com.nn.utils;
 import java.util.Arrays;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.ops.transforms.Transforms;
+
 import com.nn.components.Layer;
 import com.nn.layers.Dense;
 

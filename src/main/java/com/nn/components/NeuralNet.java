@@ -174,15 +174,14 @@ public class NeuralNet {
             // print loss
             int numL = lossHistory.columns();
             this.loss = lossHistory.sumNumber().floatValue() / numL;
-            // float acc = accuracy(trainData, trainLabels);
-            // this.valLoss = loss(valData, valLabels);
-            // float valAcc = accuracy(valData, valLabels);
+            float acc = accuracy(trainData, trainLabels);
+            this.valLoss = loss(valData, valLabels);
+            float valAcc = accuracy(valData, valLabels);
 
-            System.out.println("loss: " + this.loss);
-            //+
-                            // " ~ accuracy: " + acc +
-                            // " ~ val loss: " + this.valLoss +
-                            // " ~ val accuracy: " + valAcc);
+            System.out.println("loss: " + this.loss +
+                            " ~ accuracy: " + acc +
+                            " ~ val loss: " + this.valLoss +
+                            " ~ val accuracy: " + valAcc);
                             
                                                                                                                           //
             System.out.println("_________________________________________________________________________________________");

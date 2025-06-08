@@ -38,7 +38,26 @@ public class Adam extends Optimizer {
     public void setEpsilon(float epsilon) {
         this.epsilon = epsilon;
     }
-    
+
+    public float getLearningRate() {
+        return learningRate;
+    }
+
+    public float getMomentumDecay() {
+        return momentumDecay;
+    }
+
+    public float getVarianceDecay() {
+        return varianceDecay;
+    }
+
+    public float getEpsilon() {
+        return epsilon;
+    }
+
+    public void updateCount() {
+        this.updateCount += 1;
+    }
     
     public INDArray executeWeightsUpdate(Layer l) {
         float momBiasCor = 1 - (float) Math.pow(momentumDecay, updateCount);
@@ -141,23 +160,4 @@ public class Adam extends Optimizer {
         return updatedScale;
     }
 
-    public float getLearningRate() {
-        return learningRate;
-    }
-
-    public float getMomentumDecay() {
-        return momentumDecay;
-    }
-
-    public float getVarianceDecay() {
-        return varianceDecay;
-    }
-
-    public float getEpsilon() {
-        return epsilon;
-    }
-
-    public void updateCount() {
-        this.updateCount += 1;
-    }
 }
