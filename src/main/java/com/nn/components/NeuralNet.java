@@ -253,6 +253,22 @@ public class NeuralNet {
         // metrics(testData, testLabels);
     }
 
+    public void forwardPass(INDArray data) {
+        Layer dummy = new Layer();
+        dummy.setActivations(data);
+        layers.get(0).forwardProp(dummy);
+        for (int q = 1; q < layers.size(); q++) {
+            Layer curr = layers.get(q);
+            Layer prev = layers.get(q - 1);
+            // Layer prev = null;
+            // if (q > 0) {
+            // prev = layers.get(q - 1);
+            // }
+
+            curr.forwardProp(prev);
+        }
+    }
+
     public void forwardPass(INDArray data, INDArray labels) {
         Layer dummy = new Layer();
         dummy.setActivations(data);

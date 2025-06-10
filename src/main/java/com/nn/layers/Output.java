@@ -13,6 +13,14 @@ public class Output extends Dense {
     private INDArray labels;
     private Loss loss;
 
+    public Output(int numNeurons) {
+        super(numNeurons);
+    }
+
+    public Output(int numNeurons, ActivationFunction actFunc) {
+        super(numNeurons, actFunc);
+    }
+
     public Output(int numNeurons, ActivationFunction actFunc, Loss loss) {
         super(numNeurons, actFunc);
         this.loss = loss;

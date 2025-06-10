@@ -211,8 +211,12 @@ public class Dense extends Layer {
             z = norm.normalize(z);
         }
 
-        INDArray activated = actFunc.execute(z);
-
+        INDArray activated;
+        if (actFunc != null) {
+            activated = actFunc.execute(z);
+        } else {
+            activated = z;
+        }
         // dropout [find a better way to do this]
         if (this.getRegularizers() != null) {
             for (Regularizer r : this.getRegularizers()) {
