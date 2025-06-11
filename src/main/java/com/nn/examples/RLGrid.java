@@ -20,7 +20,7 @@ public class RLGrid {
     private static INDArray currentState;
     private static INDArray oldStates;
     private static INDArray actions = Nd4j.createUninitialized();
-    private static INDArray rewards = Nd4j.createUninitialized();
+    private static INDArray rewards;
     private static INDArray oldPolicyProbs = Nd4j.createUninitialized();
     private static INDArray valueEstimates = Nd4j.createUninitialized();
     private static int[] posAgent;
@@ -38,12 +38,12 @@ public class RLGrid {
 
     public static INDArray initializeEnvironment(int r, int c, int numAgents, int numObst) {
         numObstacles = numObst;
-        maxSteps = c;
+        maxSteps = c * 2;
         posAgent = new int[]{r / 2, 0};
         posGoal = new int[]{r / 2, c - 1};
         posObstacles = new int[][]{{r/2, c/2}, {r/2+1, c/2}, {r/2-1, c/2}};
         oldStates = Nd4j.create(0, 3, r, c);
-        // rewards = Nd4j.createUninitialized();
+        rewards = Nd4j.create(maxSteps);
         INDArray grid = Nd4j.create(3, r, c);
 
         grid.putScalar(new int[]{0, posAgent[0], posAgent[1]}, 1);
@@ -84,11 +84,14 @@ public class RLGrid {
     }
 
     public static float euc(int[] a, int[] b) {
+        System.out.println(Arrays.toString(a));
+        System.out.println(Arrays.toString(b));
         return (float) Math.sqrt(Math.pow((b[0] - a[0]), 2) + Math.pow((b[1] - a[1]), 2));
     }
 
 
     public static float reward(int[] currPos) {
+        System.out.println("curr: " + Arrays.toString(currPos));
         float reward = 0;
 
         float currDist = euc(currPos, posGoal);
@@ -123,18 +126,19 @@ public class RLGrid {
                 }
             }
         }
-        if (currPos[0] < 0 || currPos[1] < 0) {
-            reward += -1.0f;
-            done = true;
+        if (currPos[0] < 0 || currPos[1] < 0 || currPos[0] > oldStates.shape()[2] - 1 || currPos[1] > oldStates.shape()[3] - 1) {
+            reward += -0.1f;
+            posAgent = prevPos;
         }
-
-        Nd4j.concat(0, rewards, Nd4j.create(new float[]{reward}));
-        prevPos = currPos;
 
 
         if (step == maxSteps - 1) {
+            reward += -0.1f;
             done = true;
         }
+
+        rewards.putScalar(step, reward);
+        prevPos = currPos.clone();
 
         return reward;
     }
@@ -178,7 +182,7 @@ public class RLGrid {
     }
 
     public static boolean isInBounds(int[] nextPos, long[] envShape) {
-        if (nextPos[0] >= 0 && nextPos[1] >= 0 && nextPos[0] <= envShape[1] && nextPos[1] <= envShape[2]) {
+        if (nextPos[0] >= 0 && nextPos[1] >= 0 && nextPos[0] <= envShape[1] - 1 && nextPos[1] <= envShape[2] - 1) {
             return true;
         }
 
@@ -238,13 +242,15 @@ public class RLGrid {
         }
 
 
-        observation.putScalar(new int[]{0, currPos[0], currPos[1]}, 0);
+
         if (isInBounds(nextPos, observation.shape())) {
+            observation.putScalar(new int[]{0, currPos[0], currPos[1]}, 0);
             observation.putScalar(new int[]{0, nextPos[0], nextPos[1]}, 1);
         }
         
         System.out.println(observation);
         posAgent = nextPos;
+        prevPos = currPos;
 
         return nextPos;
 
@@ -257,6 +263,7 @@ public class RLGrid {
                 int[] nextPos = step(observation);
                 float re = reward(nextPos);
                 System.out.println("reward: " + re);
+                System.out.println(rewards);
                 step++;
             }
         }
