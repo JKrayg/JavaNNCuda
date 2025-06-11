@@ -10,6 +10,7 @@ import org.nd4j.linalg.indexing.NDArrayIndex;
 
 import com.nn.activation.ReLU;
 import com.nn.activation.Softmax;
+import com.nn.components.Layer;
 import com.nn.components.NeuralNet;
 import com.nn.layers.Dense;
 import com.nn.layers.Output;
@@ -18,10 +19,10 @@ public class RLGrid {
     private static INDArray initialState;
     private static INDArray currentState;
     private static INDArray oldStates;
-    private static INDArray actions;
-    private static INDArray rewards;
-    private static INDArray oldPolicyProbs;
-    private static INDArray valueEstimates;
+    private static INDArray actions = Nd4j.createUninitialized();
+    private static INDArray rewards = Nd4j.createUninitialized();
+    private static INDArray oldPolicyProbs = Nd4j.createUninitialized();
+    private static INDArray valueEstimates = Nd4j.createUninitialized();
     private static int[] posAgent;
     private static int[] posGoal;
     private static int[] prevPos;
@@ -37,10 +38,12 @@ public class RLGrid {
 
     public static INDArray initializeEnvironment(int r, int c, int numAgents, int numObst) {
         numObstacles = numObst;
+        maxSteps = c;
         posAgent = new int[]{r / 2, 0};
         posGoal = new int[]{r / 2, c - 1};
         posObstacles = new int[][]{{r/2, c/2}, {r/2+1, c/2}, {r/2-1, c/2}};
-        rewards = Nd4j.create(maxSteps);
+        oldStates = Nd4j.create(0, 3, r, c);
+        // rewards = Nd4j.createUninitialized();
         INDArray grid = Nd4j.create(3, r, c);
 
         grid.putScalar(new int[]{0, posAgent[0], posAgent[1]}, 1);
@@ -87,38 +90,50 @@ public class RLGrid {
 
     public static float reward(int[] currPos) {
         float reward = 0;
+
+        float currDist = euc(currPos, posGoal);
+        float prevDist;
+        if (prevPos == null) {
+            prevDist = euc(posAgent, posGoal);
+        } else {
+            prevDist = euc(prevPos, posGoal);
+        }
+
+        System.out.println("prev dist: " + prevDist);
+        System.out.println("curr dist: " + currDist);
+
+        if (currDist < prevDist) {
+            reward += 0.1f;
+        } else if (currDist > prevDist) {
+            reward += -0.05f;
+        } else {
+            reward += 0;
+        }
+
         if (Arrays.equals(currPos, posGoal)) {
-            reward = 1.0f;
-        } else if (posObstacles != null) {
+            reward += 1.0f;
+            done = true;
+        } 
+        
+        if (posObstacles != null) {
             for (int i = 0; i < posObstacles.length; i++) {
                 if (Arrays.equals(currPos, posObstacles[i])) {
-                    reward = -0.75f;
+                    reward += -0.75f;
                     done = true;
                 }
             }
-        } else if (currPos[0] < 0 || currPos[1] < 0) {
-            reward = -1.0f;
+        }
+        if (currPos[0] < 0 || currPos[1] < 0) {
+            reward += -1.0f;
             done = true;
-        } else {
-            float currDist = euc(currPos, posGoal);
-            float prevDist;
-            if (prevPos == null) {
-                prevDist = euc(posAgent, posGoal);
-            } else {
-                prevDist = euc(prevPos, posGoal);
-            }
+        }
 
-            if (currDist > prevDist) {
-                reward = 0.1f;
-            } else if (currDist < prevDist) {
-                reward = -0.05f;
-                done = true;
-            } else {
-                reward = 0;
-            }
+        Nd4j.concat(0, rewards, Nd4j.create(new float[]{reward}));
+        prevPos = currPos;
 
-            rewards.putScalar(step, reward);
-            prevPos = currPos;
+
+        if (step == maxSteps - 1) {
+            done = true;
         }
 
         return reward;
@@ -136,41 +151,57 @@ public class RLGrid {
 
 
     public static int[] up(int[] pos) {
+        System.out.println("up");
         pos[0] -= 1;
         return pos;
     }
 
 
     public static int[] down(int[] pos) {
+        System.out.println("down");
         pos[0] += 1;
         return pos;
     }
 
 
     public static int[] left(int[] pos) {
+        System.out.println("left");
         pos[1] -= 1;
         return pos;
     }
 
 
     public static int[] right(int[] pos) {
+        System.out.println("right");
         pos[1] += 1;
         return pos;
     }
 
+    public static boolean isInBounds(int[] nextPos, long[] envShape) {
+        if (nextPos[0] >= 0 && nextPos[1] >= 0 && nextPos[0] <= envShape[1] && nextPos[1] <= envShape[2]) {
+            return true;
+        }
+
+        return false;
+    }
+
 
     public static int[] step(INDArray observation) {
-        int[] currPos = observation.get(NDArrayIndex.point(0)).argMax().toIntVector();
+        System.out.println(observation);
+        // System.out.println(Arrays.toString(observation.get(NDArrayIndex.point(0)).argMax().shape()));
+        // int[] currPos = Where(observation.get(NDArrayIndex.point(0)).eq(1));
+        // System.out.println("curr position: " + Arrays.toString(posAgent));
+        int[] currPos = posAgent.clone();
 
         // policy network - forward pass only
-        policyNetwork.forwardPass(observation.reshape(-1));
+        policyNetwork.forwardPass(observation.reshape(1, -1));
         Output pprobs = (Output) policyNetwork.getLayers().get(policyNetwork.getLayers().size() - 1);
         double[] probs = pprobs.getActivations().toDoubleVector();
 
         // value
-        valueNetwork.forwardPass(observation.reshape(-1));
+        valueNetwork.forwardPass(observation.reshape(1, -1));
         Output value = (Output) valueNetwork.getLayers().get(valueNetwork.getLayers().size() - 1);
-        float v = pprobs.getActivations().getFloat();
+        float v = value.getActivations().getFloat();
 
         Random rand = new Random();
         double r = rand.nextDouble();
@@ -187,32 +218,33 @@ public class RLGrid {
         }
 
         Nd4j.concat(0, actions, Nd4j.create(new int[]{selectedMove}));
-        Nd4j.concat(0, oldPolicyProbs, Nd4j.create(new double[]{Math.log(selectedMove)}));
-        Nd4j.concat(0, oldStates, observation);
-
+        Nd4j.concat(0, oldPolicyProbs, Nd4j.create(new float[]{(float)Math.log(probs[selectedMove])}));
+        Nd4j.concat(0, valueEstimates, Nd4j.create(new float[]{v}));
+        Nd4j.concat(0, oldStates, observation.reshape(1, observation.shape()[0], observation.shape()[1], observation.shape()[2]));
 
 
         int[] nextPos;
 
         if (selectedMove == 0) {
-            nextPos = up(currPos);
+            nextPos = up(posAgent);
         } else if (selectedMove == 1) {
-            nextPos = down(currPos);
+            nextPos = down(posAgent);
         } else if (selectedMove == 2) {
-            nextPos = left(currPos);
+            nextPos = left(posAgent);
         } else if (selectedMove == 3) {
-            nextPos = right(currPos);
+            nextPos = right(posAgent);
         } else {
-            nextPos = currPos;
+            nextPos = posAgent;
         }
 
-        observation.putScalar(new int[]{0, currPos[0], currPos[1]}, 0);
-        observation.putScalar(new int[]{0, nextPos[0], nextPos[1]}, 1);
-        System.out.println(observation);
 
+        observation.putScalar(new int[]{0, currPos[0], currPos[1]}, 0);
+        if (isInBounds(nextPos, observation.shape())) {
+            observation.putScalar(new int[]{0, nextPos[0], nextPos[1]}, 1);
+        }
         
-        
-        step++;
+        System.out.println(observation);
+        posAgent = nextPos;
 
         return nextPos;
 
@@ -220,16 +252,23 @@ public class RLGrid {
 
 
     public static void run(int numEpisodes, INDArray observation) {
-        while (done == false) {
-            int[] nextPos = step(observation);
-            rewards.putScalar(step, reward(nextPos));
+        for (int i = 0; i < numEpisodes; i++) {
+            while (done == false) {
+                int[] nextPos = step(observation);
+                float re = reward(nextPos);
+                System.out.println("reward: " + re);
+                step++;
+            }
         }
+
+        System.out.println(Arrays.toString(oldStates.shape()));
+        
     }
 
 
     public static void main(String[] args) {
 
-        System.out.println(initializeEnvironment(5, 5, 1, -1));
+        INDArray grid = initializeEnvironment(5, 5, 1, -1);
 
         NeuralNet policy = new NeuralNet();
         Dense d1 = new Dense(64, new ReLU(), (int)initialState.reshape(-1).length());
@@ -239,6 +278,10 @@ public class RLGrid {
         policy.addLayer(d1);
         policy.addLayer(d2);
         policy.addLayer(out);
+
+        for (Layer l: policy.getLayers()) {
+                l.initLayer(l.getPrev(), 1);
+        }
 
         policyNetwork = policy;
 
@@ -251,7 +294,13 @@ public class RLGrid {
         value.addLayer(dv2);
         value.addLayer(outv);
 
+        for (Layer l: value.getLayers()) {
+                l.initLayer(l.getPrev(), 1);
+        }
+
         valueNetwork = value;
+
+        run(1, grid);
         
     }
 }
