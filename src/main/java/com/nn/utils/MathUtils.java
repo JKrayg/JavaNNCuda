@@ -15,10 +15,6 @@ public class MathUtils {
         return getWeightedSum(prevAct, currLayer);
     }
 
-    // public INDArray weightedSum(INDArray inputData, Layer currLayer) {
-    //     return getWeightedSum(inputData, currLayer);
-    // }
-
     private static INDArray getWeightedSum(INDArray prev, Layer curr) {
         INDArray weights = ((Dense)curr).getWeights();
         INDArray biasT = curr.getBias().transpose();
