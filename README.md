@@ -8,3 +8,5 @@
 * ### Normalization: Batch Normalization
 * ### Training Utilities: Early stopping, learning rate scheduling (step decay & exponential decay)
 * ### Evaluation Metrics: Binary accuracy, multiclass accuracy, mean absolute error
+
+[Demos](./src/main/java/com/nn/examples)

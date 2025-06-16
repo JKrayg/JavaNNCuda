@@ -328,6 +328,41 @@ public class NeuralNet {
         }
     }
 
+    // public void backprop(INDArray loss) {
+    //     Output outLayer = (Output) layers.get(layers.size() - 1);
+
+    //     if (this.lossHistory == null) {
+    //         this.lossHistory = loss;
+    //     } else {
+    //         this.lossHistory = Nd4j.hstack(this.lossHistory, loss);
+    //     }
+
+    //     INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getLabels());
+    //     // recursively get gradients
+    //     // getGradients(outLayer, gradientWrtOutput, data);
+    //     Layer prev = layers.get(layers.indexOf(outLayer) - 1);
+    //     outLayer.getGradients(prev, gradientWrtOutput, data);
+
+    //     // System.out.println("\n\n");
+    //     // for (Layer l : layers) {
+    //     // System.out.println(l.toString());
+    //     // System.out.println();
+    //     // }
+
+    //     // update weights/biases
+    //     for (Layer l : layers) {
+    //         l.updateWeights(optimizer);
+    //         l.updateBiases(optimizer);
+
+    //         // update beta/gamma if batch normalzation
+    //         if (l.getNormalization() instanceof BatchNormalization) {
+    //             Normalization norm = l.getNormalization();
+    //             ((BatchNormalization) norm).updateShift(optimizer);
+    //             ((BatchNormalization) norm).updateScale(optimizer);
+    //         }
+    //     }
+    // }
+
     public void metrics(INDArray d, INDArray l) {
         forwardPass(d, l);
         Output outLayer = (Output) layers.get(layers.size() - 1);

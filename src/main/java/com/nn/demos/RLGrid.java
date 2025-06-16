@@ -1,4 +1,4 @@
-package com.nn.examples;
+package com.nn.demos;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.Set;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.api.ops.TransformOp;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.nd4j.linalg.ops.transforms.Transforms;
@@ -19,6 +20,8 @@ import com.nn.components.Layer;
 import com.nn.components.NeuralNet;
 import com.nn.layers.Dense;
 import com.nn.layers.Output;
+import com.nn.training.loss.MSE;
+import com.nn.training.optimizers.Adam;
 import com.nn.utils.MathUtils;
 
 public class RLGrid {
@@ -279,16 +282,6 @@ public class RLGrid {
         long numAdv = advantages.length();
         float mean = (advantages.sumNumber().floatValue() / numAdv);
         advantages.subi(mean).divi(maths.std(advantages) + e);
-        // int cols = advantages.columns();
-        // int rows = advantages.rows();
-        // for (int i = 0; i < cols; i++) {
-        //     INDArray col = advantages.getColumn(i);
-        //     float mean = (col.sumNumber().floatValue() / rows);
-        //     float std = maths.std(col);
-        //     for (int j = 0; j < rows; j++) {
-        //         advantages.putScalar(j, i, (advantages.getFloat(j, i) - mean) / std);
-        //     }
-        // }
 
         return advantages;
     }
@@ -311,19 +304,26 @@ public class RLGrid {
 
     // }
 
+    public static INDArray clip(INDArray r, float e) {
+        INDArray clipped = Transforms.max(r, 1 - e);
+        return Transforms.min(clipped, 1 + e);
+    }
+
 
     public static void run(int numEpisodes, int ms, INDArray observation) {
         maxSteps = ms;
+        // episodes
         for (int i = 0; i < numEpisodes; i++) {
+            // steps
             while (done == false) {
                 int[] nextPos = step(observation);
                 reward(nextPos);
                 if (done == false) {
                     step++;
                 }
-
             }
 
+            // get tdErrors, Qvals, advantage
             INDArray tdErrors = Nd4j.create(step);
             INDArray qVals = Nd4j.create(step);
             INDArray adv = Nd4j.create(step);
@@ -339,49 +339,32 @@ public class RLGrid {
 
             adv.put(step - 1, tdErrors.get(NDArrayIndex.point(step - 1)));
             for (int k = step - 2; k >= 0; k--) {
-                System.out.print(tdErrors.getFloat(k));
-                System.out.print(" + " + (gaeDecay*discountFactor));
-                System.out.print(" * " + adv.getScalar(k + 1));
-                System.out.println(" = " + (tdErrors.getFloat(k) + (gaeDecay*discountFactor) * adv.getFloat(k + 1)));
                 adv.put(k, tdErrors.get(NDArrayIndex.point(k)).add(adv.getScalar(k + 1).mul(gaeDecay*discountFactor)));
             }
 
+            // pass old states through policy network
             policyNetwork.forwardPass(oldStates.reshape(step + 1, -1));
             INDArray polProbs = policyNetwork.getLayers().get(policyNetwork.getLayers().size() - 1).getActivations();
             Softmax softmax = new Softmax();
             INDArray probDist = softmax.execute(polProbs);
-
+            
             INDArray logProb = Nd4j.create(actions.shape());
 
             for (int h = 0; h < logProb.length(); h++) {
                 logProb.put(h, probDist.get(NDArrayIndex.point(h), NDArrayIndex.point(actions.getInt(h))));
             }
 
+            logProb = Transforms.log(logProb);
+            INDArray rat = Transforms.exp(logProb.subi(oldPolicyProbs)).get(NDArrayIndex.interval(0, step));
+            float epsilon = 0.2f;
+            INDArray policyLoss = Transforms.min(rat.mul(normalize(adv)), clip(rat, epsilon).mul(normalize(adv)));
 
-            System.out.println(Arrays.toString(actions.shape()));
-            System.out.println("actions: " + actions);
-            // System.out.println(Arrays.toString(oldPolicyProbs.shape()));
-            // System.out.println("policy probs: " + oldPolicyProbs);
-            // System.out.println("policy probs exp: " + Transforms.exp(oldPolicyProbs));
-            // System.out.println(Arrays.toString(valueEstimates.shape()));
-            // System.out.println("value estimates: " + valueEstimates);
-            // System.out.println(Arrays.toString(rewards.shape()));
-            // System.out.println("rewards: " + rewards);
-            // System.out.println(Arrays.toString(tdErrors.shape()));
-            // System.out.println("tderror: " + tdErrors);
-            // System.out.println(Arrays.toString(qVals.shape()));
-            // System.out.println("qVals: " + qVals);
-            // System.out.println(Arrays.toString(adv.shape()));
-            // System.out.println("advantage: " + adv);
-            // System.out.println(Arrays.toString(normalize(adv).shape()));
-            // System.out.println("normalized advantage: " + normalize(adv));
-            // System.out.println("old states shape: " + Arrays.toString(oldStates.shape()));
-            // System.out.println(Arrays.toString(polProbs.shape()));
-            // System.out.println("old states policy probs: " + polProbs);
-            // System.out.println(Arrays.toString(probDist.shape()));
-            System.out.println("probability dist (after softmax): " + probDist);
-            System.out.println(Arrays.toString(logProb.shape()));
-            System.out.println("logProb: " + logProb);
+            // pass old states through value network
+            valueNetwork.forwardPass(oldStates.reshape(step + 1, -1));
+            INDArray valPreds = valueNetwork.getLayers().get(valueNetwork.getLayers().size() - 1).getActivations();
+            MSE mse = new MSE();
+            INDArray gradientWrtValueLoss = valPreds.sub(qVals).mul(2).div(valPreds.length());
+            float valueLoss = mse.execute(valPreds, qVals);
 
             if (goal == true) {
                 done = true;
@@ -411,6 +394,8 @@ public class RLGrid {
                 l.initLayer(l.getPrev(), 1);
         }
 
+        policy.optimizer(new Adam(0.001));
+
         policyNetwork = policy;
 
         NeuralNet value = new NeuralNet();
@@ -425,6 +410,8 @@ public class RLGrid {
         for (Layer l: value.getLayers()) {
                 l.initLayer(l.getPrev(), 1);
         }
+
+        value.optimizer(new Adam(0.001));
 
         valueNetwork = value;
 

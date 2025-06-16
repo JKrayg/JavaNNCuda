@@ -8,7 +8,7 @@ import com.nn.components.Layer;
 import com.nn.layers.Conv2d;
 import com.nn.layers.Dense;
 
-public class HeInit extends InitWeights {
+public class HeInit{
     public INDArray initWeight(Layer prev, Layer curr) {
         // if (prev instanceof Dense) {
         //     return Nd4j.create(setWeights(((Dense)prev).getNumNeurons(), ((Dense)curr).getNumNeurons()));

@@ -9,7 +9,7 @@ import org.nd4j.linalg.indexing.NDArrayIndex;
 import com.nn.components.*;
 import com.nn.layers.Dense;
 
-public class GlorotInit extends InitWeights {
+public class GlorotInit{
     public INDArray initWeight(Layer prev, Layer curr) {
         return Nd4j.create(setWeights(((Dense)prev).getNumNeurons(), ((Dense)curr).getNumNeurons()));
     }

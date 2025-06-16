@@ -1,4 +1,4 @@
-package com.nn.examples;
+package com.nn.demos;
 
 import java.io.File;
 import java.io.FileNotFoundException;
