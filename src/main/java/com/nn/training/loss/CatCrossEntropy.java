@@ -8,16 +8,16 @@ import org.nd4j.linalg.ops.transforms.Transforms;
 import com.nn.components.Layer;
 
 public class CatCrossEntropy extends Loss {
-    public float execute(INDArray activations, INDArray labels) {
+    public float execute(INDArray activations, INDArray preds) {
         int rows = activations.rows();
-        INDArray error = labels.mul(Transforms.log(activations));
+        INDArray error = preds.mul(Transforms.log(activations));
         
         return -(error.sumNumber().floatValue() / rows);
     }
     
     // check
-    public INDArray gradient(Layer out, INDArray labels) {
-        return out.getActivations().sub(labels);
+    public INDArray gradient(Layer out, INDArray preds) {
+        return out.getActivations().sub(preds);
     }
     
 }

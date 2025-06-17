@@ -9,7 +9,7 @@ public class MeanAbsoluteError extends Metrics {
         INDArray dif = pred.sub(trueVals);
         float mae = Transforms.abs(dif).sumNumber().floatValue() / trueVals.length();
         System.out.println("MAE: " + mae);
-        // return dif.mul(dif).sumNumber().floatValue() / labels.length();
+        // return dif.mul(dif).sumNumber().floatValue() / preds.length();
     }
 
     @Override

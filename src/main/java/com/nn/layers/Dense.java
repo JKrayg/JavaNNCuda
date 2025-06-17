@@ -124,7 +124,7 @@ public class Dense extends Layer {
     public INDArray getGradient() {
         INDArray gradient = null;
         if (this instanceof Output) {
-            gradient = ((Output) this).getLoss().gradient(this, ((Output) this).getLabels());
+            gradient = ((Output) this).getLoss().gradient(this, ((Output) this).getPreds());
         } else {
             gradient = super.getActFunc().gradient(this.getPreActivation(), super.getPreActivation());
         }

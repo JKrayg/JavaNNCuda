@@ -7,22 +7,19 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import com.nn.components.Layer;
 
 public class MSE extends Loss {
-    int count = 0;
-    public float execute(INDArray activations, INDArray labels) {
-        INDArray dif = activations.sub(labels);
-        count += 1;
-        // System.out.println(count);
-        return dif.mul(dif).sumNumber().floatValue() / labels.length();
+    public float execute(INDArray activations, INDArray pred) {
+        INDArray dif = activations.sub(pred);
+        return dif.mul(dif).sumNumber().floatValue() / pred.length();
     }
 
-    // public INDArray outputGradientWeights(Layer out, Layer prev, float[] labels) {
+    // public INDArray outputGradientWeights(Layer out, Layer prev, float[] preds) {
     //     return new INDArray(0, 0);
     // }
 
-    public INDArray gradient(Layer out, INDArray labels) {
+    public INDArray gradient(Layer out, INDArray pred) {
         // ***
-        INDArray dif = out.getActivations().sub(labels);
-        return dif.div(labels.length());
+        INDArray dif = out.getActivations().sub(pred);
+        return dif.div(pred.length());
     }
     
 }

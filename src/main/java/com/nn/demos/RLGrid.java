@@ -134,7 +134,10 @@ public class RLGrid {
             }
         }
 
-        if (currPos[0] < 0 || currPos[1] < 0 || currPos[0] > oldStates.shape()[2] - 1 || currPos[1] > oldStates.shape()[3] - 1) {
+        if (currPos[0] < 0 || currPos[1] < 0 ||
+            currPos[0] > oldStates.shape()[2] - 1 ||
+            currPos[1] > oldStates.shape()[3] - 1) {
+                
             reward += -0.1f;
             posAgent = prevPos;
         }
@@ -323,7 +326,7 @@ public class RLGrid {
                 }
             }
 
-            // get tdErrors, Qvals, advantage
+            // get tdErrors, Qvals, advantage ------
             INDArray tdErrors = Nd4j.create(step);
             INDArray qVals = Nd4j.create(step);
             INDArray adv = Nd4j.create(step);
@@ -342,7 +345,7 @@ public class RLGrid {
                 adv.put(k, tdErrors.get(NDArrayIndex.point(k)).add(adv.getScalar(k + 1).mul(gaeDecay*discountFactor)));
             }
 
-            // pass old states through policy network
+            // pass old states through policy network ------
             policyNetwork.forwardPass(oldStates.reshape(step + 1, -1));
             INDArray polProbs = policyNetwork.getLayers().get(policyNetwork.getLayers().size() - 1).getActivations();
             Softmax softmax = new Softmax();
@@ -359,11 +362,12 @@ public class RLGrid {
             float epsilon = 0.2f;
             INDArray policyLoss = Transforms.min(rat.mul(normalize(adv)), clip(rat, epsilon).mul(normalize(adv)));
 
-            // pass old states through value network
+            // pass old states through value network ------
             valueNetwork.forwardPass(oldStates.reshape(step + 1, -1));
             INDArray valPreds = valueNetwork.getLayers().get(valueNetwork.getLayers().size() - 1).getActivations();
             MSE mse = new MSE();
-            INDArray gradientWrtValueLoss = valPreds.sub(qVals).mul(2).div(valPreds.length());
+            System.out.println(valPreds.length());
+            INDArray gradientWrtValueLoss = valPreds.sub(qVals).mul(2);//.div(valPreds.length());
             float valueLoss = mse.execute(valPreds, qVals);
 
             if (goal == true) {
@@ -415,7 +419,7 @@ public class RLGrid {
 
         valueNetwork = value;
 
-        run(1, 20, grid);
+        run(10, 20, grid);
         
     }
 }

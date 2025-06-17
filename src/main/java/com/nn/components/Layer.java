@@ -193,7 +193,7 @@ public class Layer {
     public INDArray getGradient() {
         INDArray gradient = null;
         if (this instanceof Output) {
-            gradient = ((Output)this).getLoss().gradient(this, ((Output) this).getLabels());
+            gradient = ((Output)this).getLoss().gradient(this, ((Output) this).getPreds());
         } else {
             gradient = func.gradient(this.getPreActivation(), preActivation);
         }

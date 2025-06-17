@@ -10,7 +10,7 @@ import com.nn.training.loss.Loss;
 import com.nn.training.regularizers.Regularizer;
 
 public class Output extends Dense {
-    private INDArray labels;
+    private INDArray preds;
     private Loss loss;
 
     public Output(int numNeurons) {
@@ -30,18 +30,18 @@ public class Output extends Dense {
         return loss;
     }
 
-    public void setLabels(INDArray labels) {
-        this.labels = labels;
+    public void setPreds(INDArray preds) {
+        this.preds = preds;
     }
 
-    public INDArray getLabels() {
-        return labels;
+    public INDArray getPreds() {
+        return preds;
     }
 
     // check
     public INDArray gradientWeights(Layer prevLayer, INDArray gradientWrtOutput) {
         return prevLayer.getActivations().transpose()
-                .mmul(gradientWrtOutput).div(labels.length());
+                .mmul(gradientWrtOutput).div(preds.length());
     }
 
     // check
@@ -49,6 +49,6 @@ public class Output extends Dense {
         INDArray sums = gradientWrtOutput.sum(0)
                 .reshape(gradientWrtOutput.columns(), 1);
                 
-        return sums.div(labels.length());
+        return sums.div(preds.length());
     }
 }
