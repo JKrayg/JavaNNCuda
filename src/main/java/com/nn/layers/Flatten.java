@@ -32,7 +32,7 @@ public class Flatten extends Dense {
     }
 
     public void getGradients(Layer prev, INDArray gradient, INDArray data) {
-        System.out.println("gradient passed to next layer f: " + Arrays.toString(gradient.shape()));
+        System.out.println("incoming gradient from flatten: " + Arrays.toString(gradient.shape()));
         prev.getGradients(prev.getPrev(), gradient, data);
     }
 

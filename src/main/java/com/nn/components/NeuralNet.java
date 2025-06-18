@@ -1,39 +1,24 @@
 package com.nn.components;
 
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.IntStream;
-
-import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.api.ops.random.custom.RandomShuffle;
-import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.flatten;
-import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.shape_of;
-import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.test_scalar;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 
 import com.nn.Data;
-import com.nn.activation.*;
-import com.nn.initialize.*;
 import com.nn.layers.*;
 import com.nn.training.loss.*;
 import com.nn.training.metrics.Metrics;
 import com.nn.training.normalization.*;
 import com.nn.training.optimizers.*;
-import com.nn.training.regularizers.*;
 import com.nn.training.callbacks.*;
 import com.nn.utils.MathUtils;
 
 public class NeuralNet {
     private ArrayList<Layer> layers;
-    // private CompileBuilder cb;
     private Optimizer optimizer;
     private Metrics metrics;
     private float loss;

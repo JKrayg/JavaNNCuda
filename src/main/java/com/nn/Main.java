@@ -294,7 +294,6 @@ public class Main {
 
         Data data = new Data(data_, labels);
         data.minMaxNormalization();
-
         data.split(0.2, 0.2);
 
         NeuralNet nn = new NeuralNet();

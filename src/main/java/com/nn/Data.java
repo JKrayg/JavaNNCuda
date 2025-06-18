@@ -111,8 +111,6 @@ public class Data {
 
         this.classes = h;
 
-        System.out.println(this.classes);
-
         // create list of a pred values
         // float[] ls = new float[preds.length];
         // for (int i = 0; i < preds.length; i++) {
