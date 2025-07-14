@@ -8,7 +8,9 @@ import com.nn.components.Layer;
 
 public class MSE extends Loss {
     public float execute(INDArray activations, INDArray pred) {
-        INDArray dif = activations.sub(pred);
+        System.out.println(Arrays.toString(activations.shape()));
+        System.out.println(Arrays.toString(pred.shape()));
+        INDArray dif = activations.sub(pred.reshape(pred.shape()[0], 1));
         return dif.mul(dif).sumNumber().floatValue() / pred.length();
     }
 

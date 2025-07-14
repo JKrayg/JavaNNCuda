@@ -128,7 +128,9 @@ public class Data {
     }
 
     public void flatten() {
-        this.data = data.reshape(data.size(0), data.size(1) * data.size(2));
+        this.data = data.reshape(
+            data.size(0),
+            data.size(1) * data.size(2));
     }
 
     public INDArray oneHot(INDArray preds) {

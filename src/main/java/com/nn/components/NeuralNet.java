@@ -19,6 +19,7 @@ import com.nn.utils.MathUtils;
 
 public class NeuralNet {
     private ArrayList<Layer> layers;
+    private Layer outputLayer;
     private Optimizer optimizer;
     private Metrics metrics;
     private float loss;
@@ -28,6 +29,7 @@ public class NeuralNet {
     private INDArray lossHistory;
     private Callback[] callbacks;
     private INDArray stopHistory;
+    private String[] stoppingMetrics = {"loss", "accuracy", "val_loss", "val_accuracy"};
 
     public void optimizer(Optimizer o) {
         this.optimizer = o;
@@ -46,6 +48,9 @@ public class NeuralNet {
     }
 
     public void addLayer(Layer l) {
+        if (l instanceof Output) {
+            this.outputLayer = (Output) l;
+        }
         if (layers == null) {
             layers = new ArrayList<>();
             // l.setPrev(null);
@@ -174,6 +179,7 @@ public class NeuralNet {
 
             // callbacks [find a better way to do this]
             // if (erly != null) {
+            //      erly.checkStop(erly.getMetric())
             //     if (erly.getMetric().equals("val_loss")) {
             //         if (erly.checkStop(this.valLoss)) {
             //             break;

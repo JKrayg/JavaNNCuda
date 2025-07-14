@@ -14,6 +14,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.nd4j.linalg.ops.transforms.Transforms;
 
+import com.nn.activation.Linear;
 import com.nn.activation.ReLU;
 import com.nn.activation.Softmax;
 import com.nn.components.Layer;
@@ -21,6 +22,7 @@ import com.nn.components.NeuralNet;
 import com.nn.layers.Dense;
 import com.nn.layers.Output;
 import com.nn.training.loss.MSE;
+import com.nn.training.loss.PPO;
 import com.nn.training.optimizers.Adam;
 import com.nn.utils.MathUtils;
 
@@ -333,6 +335,7 @@ public class RLGrid {
         maxSteps = ms;
         // episodes
         for (int i = 0; i < numEpisodes; i++) {
+            System.out.println("EPISODE: " + i);
             // steps
             while (done == false) {
                 int[] nextPos = step(observation);
@@ -344,7 +347,7 @@ public class RLGrid {
                     dones = Nd4j.concat(0, dones, Nd4j.create(new float[]{d}));
                 }
 
-                System.out.println(dones);
+                // System.out.println(dones);
 
                 if (done == false) {
                     step++;
@@ -360,41 +363,72 @@ public class RLGrid {
 
             for (int j = 0; j < step; j++) {
                 tdErrors.put(j, rewards.get(NDArrayIndex.point(j))
-                    .add(valueEstimates.get(NDArrayIndex.point(j + 1)).mul(discountFactor))
+                    .add(valueEstimates.get(NDArrayIndex.point(j + 1))
+                    .mul(discountFactor))
                     .sub(valueEstimates.get(NDArrayIndex.point(j))));
 
                 qVals.put(j, rewards.get(NDArrayIndex.point(j))
-                    .add(valueEstimates.get(NDArrayIndex.point(j + 1)).mul(discountFactor)));
+                    .add(valueEstimates.get(NDArrayIndex.point(j + 1))
+                    .mul(discountFactor)));
             }
 
             adv.put(step - 1, tdErrors.get(NDArrayIndex.point(step - 1)));
             for (int k = step - 2; k >= 0; k--) {
-                adv.put(k, tdErrors.get(NDArrayIndex.point(k)).add(adv.getScalar(k + 1).mul(gaeDecay*discountFactor)));
+                adv.put(k,
+                    tdErrors.get(NDArrayIndex.point(k))
+                        .add(adv.getScalar(k + 1)
+                        .mul(gaeDecay*discountFactor)));
             }
 
             // pass old states through policy network ------
             policyNetwork.forwardPass(oldStates.reshape(step + 1, -1));
-            INDArray polProbs = policyNetwork.getLayers().get(policyNetwork.getLayers().size() - 1).getActivations();
+            INDArray polProbs = policyNetwork.getLayers()
+                .get(policyNetwork.getLayers().size() - 1).getActivations();
             Softmax softmax = new Softmax();
             INDArray probDist = softmax.execute(polProbs);
             
             INDArray logProb = Nd4j.create(actions.shape());
 
             for (int h = 0; h < logProb.length(); h++) {
-                logProb.put(h, probDist.get(NDArrayIndex.point(h), NDArrayIndex.point(actions.getInt(h))));
+                logProb.put(h, probDist.get(
+                        NDArrayIndex.point(h),
+                        NDArrayIndex.point(actions.getInt(h))));
             }
 
             logProb = Transforms.log(logProb);
-            INDArray rat = Transforms.exp(logProb.subi(oldPolicyProbs)).get(NDArrayIndex.interval(0, step));
+            INDArray rat = Transforms.exp(logProb.subi(oldPolicyProbs))
+                .get(NDArrayIndex.interval(0, step));
             float epsilon = 0.2f;
-            INDArray policyLoss = Transforms.min(rat.mul(normalize(adv)), clip(rat, epsilon).mul(normalize(adv)));
+            INDArray surrogate = Transforms.min(
+                rat.mul(normalize(adv)),
+                clip(rat, epsilon).mul(normalize(adv)));
+            float policyLoss = surrogate.meanNumber().floatValue();
+            // policyNetwork.backprop(oldStates.reshape(step + 1, -1), probDist);
+
+            System.out.println("policyloss: " + policyLoss);
 
             // pass old states through value network ------
-            valueNetwork.forwardPass(oldStates.reshape(step + 1, -1));
-            INDArray valPreds = valueNetwork.getLayers().get(valueNetwork.getLayers().size() - 1).getActivations();
-            MSE mse = new MSE();
-            // INDArray gradientWrtValueLoss = valPreds.sub(qVals).mul(2);//.div(valPreds.length());
-            // float valueLoss = mse.execute(valPreds, qVals);
+            valueNetwork.forwardPass(oldStates.reshape(step + 1, -1), qVals);
+            INDArray valPreds = valueNetwork.getLayers()
+                .get(valueNetwork.getLayers().size() - 1)
+                .getActivations();
+
+            
+
+            // MSE mse = new MSE();
+            INDArray trimmedVal = valPreds.get(NDArrayIndex.interval(0, valPreds.shape()[0] - 1));
+            valueNetwork.backprop(oldStates.reshape(step + 1, -1).get(NDArrayIndex.interval(0, qVals.length() - 1)), qVals);
+
+            // float valueLoss = mse.execute(trimmedValPreds, qVals.reshape(qVals.shape()[0], 1));
+            // System.out.println("valueloss: " + valueLoss);
+             
+            // INDArray gradientWrtValueLoss = trimmedValPreds.sub(qVals.reshape(qVals.shape()[0], 1)).mul(2);//.div(valPreds.length());
+            // System.out.println("!!!!!!!!!!!!: " + trimmedVal.shape()[0] + ", " + qVals.shape()[0]);
+            // System.out.println("43" + tdErrors.shape()[0]);
+            // System.out.println("policy net: " + policyNetwork.getLayers().size());
+
+            
+            // System.out.println(gradientWrtValueLoss.data());
 
             if (goal == true) {
                 done = true;
@@ -414,7 +448,8 @@ public class RLGrid {
         NeuralNet policy = new NeuralNet();
         Dense d1 = new Dense(64, new ReLU(), (int)initialState.reshape(-1).length());
         Dense d2 = new Dense(64, new ReLU());
-        Output out = new Output(4, new Softmax());
+        Output out = new Output(4, new Softmax(), new PPO());
+        System.out.println("---------" + out.getLoss());
 
         policy.addLayer(d1);
         policy.addLayer(d2);
@@ -431,7 +466,7 @@ public class RLGrid {
         NeuralNet value = new NeuralNet();
         Dense dv1 = new Dense(64, new ReLU(), (int)initialState.reshape(-1).length());
         Dense dv2 = new Dense(64, new ReLU());
-        Output outv = new Output(1);
+        Output outv = new Output(1, new Linear(), new MSE());
 
         value.addLayer(dv1);
         value.addLayer(dv2);
