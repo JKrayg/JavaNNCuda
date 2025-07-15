@@ -18,9 +18,11 @@ public class MSE extends Loss {
     //     return new INDArray(0, 0);
     // }
 
-    public INDArray gradient(Layer out, INDArray pred) {
+    public INDArray gradient(INDArray activation, INDArray pred) {
         // ***
-        INDArray dif = out.getActivations().sub(pred);
+        System.out.println("&&&&: " + Arrays.toString(activation.shape()));
+        System.out.println("!!!!: " + Arrays.toString(pred.shape()));
+        INDArray dif = activation.sub(pred.reshape(pred.shape()[0], 1));
         return dif.div(pred.length());
     }
     

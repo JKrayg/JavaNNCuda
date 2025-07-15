@@ -246,4 +246,9 @@ public class Layer {
         return s;
     }
 
+    public Object getLoss() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getLoss'");
+    }
+
 }

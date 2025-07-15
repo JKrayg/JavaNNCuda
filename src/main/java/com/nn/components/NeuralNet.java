@@ -19,7 +19,7 @@ import com.nn.utils.MathUtils;
 
 public class NeuralNet {
     private ArrayList<Layer> layers;
-    private Layer outputLayer;
+    private Output outputLayer;
     private Optimizer optimizer;
     private Metrics metrics;
     private float loss;
@@ -45,6 +45,10 @@ public class NeuralNet {
 
     public ArrayList<Layer> getLayers() {
         return layers;
+    }
+
+    public Output getOutLayer() {
+        return this.outputLayer;
     }
 
     public void addLayer(Layer l) {
@@ -283,10 +287,49 @@ public class NeuralNet {
     public void backprop(INDArray data, INDArray pred) {
         Output outLayer = (Output) layers.get(layers.size() - 1);
         Loss lossFunc = outLayer.getLoss();
+        System.out.println("^^^^: " + outLayer.getPreds().data());
         INDArray loss = Nd4j.create(new float[] {
-                lossFunc.execute(outLayer.getActivations(), outLayer.getPreds())
-        });
+                lossFunc.execute(outLayer.getActivations(), outLayer.getPreds())});
+        
+        if (this.lossHistory == null) {
+            this.lossHistory = loss;
+        } else {
+            this.lossHistory = Nd4j.hstack(this.lossHistory, loss);
+        }
 
+        INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getPreds());
+        // recursively get gradients
+        // getGradients(outLayer, gradientWrtOutput, data);
+        Layer prev = layers.get(layers.indexOf(outLayer) - 1);
+        outLayer.getGradients(prev, gradientWrtOutput, data);
+
+        // System.out.println("\n\n");
+        // for (Layer l : layers) {
+        // System.out.println(l.toString());
+        // System.out.println();
+        // }
+
+        // update weights/biases
+        for (Layer l : layers) {
+            l.updateWeights(optimizer);
+            l.updateBiases(optimizer);
+
+            // update beta/gamma if batch normalzation
+            if (l.getNormalization() instanceof BatchNormalization) {
+                Normalization norm = l.getNormalization();
+                ((BatchNormalization) norm).updateShift(optimizer);
+                ((BatchNormalization) norm).updateScale(optimizer);
+            }
+        }
+    }
+
+    public void ppoBackprop(INDArray data, INDArray pred) {
+        Output outLayer = (Output) layers.get(layers.size() - 1);
+        Loss lossFunc = outLayer.getLoss();
+        System.out.println("^^^^: " + outLayer.getPreds().data());
+        INDArray loss = Nd4j.create(new float[] {
+                lossFunc.execute(outLayer.getActivations(), outLayer.getPreds())});
+        
         if (this.lossHistory == null) {
             this.lossHistory = loss;
         } else {

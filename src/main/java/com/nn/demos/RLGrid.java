@@ -417,7 +417,11 @@ public class RLGrid {
 
             // MSE mse = new MSE();
             INDArray trimmedVal = valPreds.get(NDArrayIndex.interval(0, valPreds.shape()[0] - 1));
-            valueNetwork.backprop(oldStates.reshape(step + 1, -1).get(NDArrayIndex.interval(0, qVals.length() - 1)), qVals);
+            // System.out.println("os shape: " + Arrays.toString(oldStates.reshape(step, -1).get(NDArrayIndex.interval(0, qVals.length())).shape()));
+            System.out.println("qvals shape: " + qVals.data());
+            System.out.println("act shape: " + Arrays.toString(valueNetwork.getOutLayer().getActivations().get(NDArrayIndex.interval(0, step)).shape()));
+            valueNetwork.getOutLayer().setActivations(valueNetwork.getOutLayer().getActivations().get(NDArrayIndex.interval(0, step)));
+            valueNetwork.backprop(oldStates.reshape(step + 1, -1), qVals);
 
             // float valueLoss = mse.execute(trimmedValPreds, qVals.reshape(qVals.shape()[0], 1));
             // System.out.println("valueloss: " + valueLoss);
