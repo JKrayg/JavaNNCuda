@@ -405,26 +405,31 @@ public class RLGrid {
             float policyLoss = surrogate.meanNumber().floatValue();
             // policyNetwork.backprop(oldStates.reshape(step + 1, -1), probDist);
 
-            System.out.println("policyloss: " + policyLoss);
+            // System.out.println("policyloss: " + policyLoss);
 
             // pass old states through value network ------
-            valueNetwork.forwardPass(oldStates.reshape(step + 1, -1), qVals);
+            // System.out.println("kkkk: " + Arrays.toString(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1).shape()));
+            // System.out.println("qVals: " + Arrays.toString(qVals.shape()));
+            valueNetwork.forwardPass(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1), qVals);
             INDArray valPreds = valueNetwork.getLayers()
                 .get(valueNetwork.getLayers().size() - 1)
                 .getActivations();
 
             
 
-            // MSE mse = new MSE();
-            INDArray trimmedVal = valPreds.get(NDArrayIndex.interval(0, valPreds.shape()[0] - 1));
+            MSE mse = new MSE();
+            INDArray trimmedVal = valPreds.get(NDArrayIndex.interval(0, step));
             // System.out.println("os shape: " + Arrays.toString(oldStates.reshape(step, -1).get(NDArrayIndex.interval(0, qVals.length())).shape()));
-            System.out.println("qvals shape: " + qVals.data());
-            System.out.println("act shape: " + Arrays.toString(valueNetwork.getOutLayer().getActivations().get(NDArrayIndex.interval(0, step)).shape()));
+            // System.out.println("qvals shape: " + qVals.data());
+            // System.out.println("act shape: " + Arrays.toString(valueNetwork.getOutLayer().getActivations().get(NDArrayIndex.interval(0, step)).shape()));
             valueNetwork.getOutLayer().setActivations(valueNetwork.getOutLayer().getActivations().get(NDArrayIndex.interval(0, step)));
-            valueNetwork.backprop(oldStates.reshape(step + 1, -1), qVals);
+            // for (Layer l: valueNetwork.getLayers()) {
+            //     System.out.println("###########: " + Arrays.toString(l.getActivations().shape()));
+            // }
+            valueNetwork.backprop(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1), qVals);
 
-            // float valueLoss = mse.execute(trimmedValPreds, qVals.reshape(qVals.shape()[0], 1));
-            // System.out.println("valueloss: " + valueLoss);
+            float valueLoss = mse.execute(trimmedVal, qVals.reshape(qVals.shape()[0], 1));
+            System.out.println("valueloss: " + valueLoss);
              
             // INDArray gradientWrtValueLoss = trimmedValPreds.sub(qVals.reshape(qVals.shape()[0], 1)).mul(2);//.div(valPreds.length());
             // System.out.println("!!!!!!!!!!!!: " + trimmedVal.shape()[0] + ", " + qVals.shape()[0]);
@@ -439,6 +444,7 @@ public class RLGrid {
                 System.out.println("GGGOOOOOOOOOOOOOOOOOOOOOOOOAAAAAAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLL!!!!!!!!!!!!!!");
                 break;
             }
+            reset();
         }
         
         
@@ -453,7 +459,6 @@ public class RLGrid {
         Dense d1 = new Dense(64, new ReLU(), (int)initialState.reshape(-1).length());
         Dense d2 = new Dense(64, new ReLU());
         Output out = new Output(4, new Softmax(), new PPO());
-        System.out.println("---------" + out.getLoss());
 
         policy.addLayer(d1);
         policy.addLayer(d2);
@@ -478,6 +483,7 @@ public class RLGrid {
 
         for (Layer l: value.getLayers()) {
                 l.initLayer(l.getPrev(), 1);
+                l.initForAdam();
         }
 
         value.optimizer(new Adam(0.001));

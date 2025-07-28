@@ -8,6 +8,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.ops.transforms.Transforms;
 
 import com.nn.components.Layer;
+import com.nn.layers.Conv2d;
 import com.nn.layers.Dense;
 import com.nn.training.normalization.BatchNormalization;
 import com.nn.training.normalization.Normalization;
@@ -64,23 +65,19 @@ public class Adam extends Optimizer {
         float varBiasCor = 1 - (float) Math.pow(varianceDecay, updateCount);
         Layer lyr = l;
 
-        // System.out.println("================");
-        // System.out.println(lyr.getClass().getSimpleName());
-        // System.out.println("mom: " + Arrays.toString(lyr.getWeightsMomentum().shape()));
-        // System.out.println("weights grad: " + Arrays.toString(lyr.getGradientWeights().shape()));
-        // System.out.println();
-
-        
-        // System.out.println(Arrays.toString(lyr.getWeightsVariance().mul(varianceDecay).shape()));
-        // System.out.println(Arrays.toString(lyr.getGradientWeights().mul(1 - momentumDecay).shape()));
-        // System.out.println();
-
         lyr.setWeightsMomentum(lyr.getWeightsMomentum().mul(momentumDecay)
                             .addi(lyr.getGradientWeights().mul(1 - momentumDecay)));
         lyr.setWeightsVariance(lyr.getWeightsVariance().mul(varianceDecay)
                             .addi(lyr.getGradientWeights().mul(lyr.getGradientWeights()).muli(1 - varianceDecay)));
 
-        return lyr.getWeights().subi(lyr.getWeightsMomentum().div(momBiasCor)
+        INDArray w = lyr.getWeights();
+        if (lyr instanceof Conv2d) {
+            w = lyr.getWeights().reshape(lyr.getWeights().shape()[0], -1);
+        }
+
+        System.out.println(l.getClass().getSimpleName());
+
+        return w.subi(lyr.getWeightsMomentum().div(momBiasCor)
                              .divi(Transforms.pow(lyr.getWeightsVariance().div(varBiasCor), 0.5).addi(epsilon))
                              .muli(learningRate));
     }
@@ -135,8 +132,6 @@ public class Adam extends Optimizer {
 
     public INDArray executeScaleUpdate(Normalization n) {
         INDArray gWrtSc = n.getGradientScale();
-        // System.out.println("scale gradient:");
-        // System.out.println(gWrtSc);
         INDArray momentumOfScale = n.getScaleMomentum()
                                          .mul(momentumDecay)
                                          .add(gWrtSc.mul(1 - momentumDecay));
