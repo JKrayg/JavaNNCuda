@@ -140,7 +140,8 @@ public class MultiClassification {
         Dense dense3 = new Dense(16, new ReLU());
         // dense3.addRegularizer(new L2());
         // dense3.addNormalization(new BatchNormalization());
-        Output out = new Output(data.getClasses().size(), new Softmax(), new CatCrossEntropy());
+        Output out = new Output(
+            data.getClasses().size(), new Softmax(), new CatCrossEntropy());
 
         nn.addLayer(dense1);
         nn.addLayer(dense2);
@@ -149,7 +150,9 @@ public class MultiClassification {
 
         nn.optimizer(new Adam(0.001));
         nn.metrics(new MultiClassMetrics());
-        nn.callbacks(new Callback[]{new EarlyStopping("val_loss", 0.001, 10)});
+        nn.callbacks(new Callback[]{
+            new EarlyStopping("val_loss",
+            0.001, 10)});
 
         long totalStart = System.nanoTime();
 

@@ -249,6 +249,7 @@ public class Dense extends Layer {
         // weights/bias gradients
         if (this instanceof Output) {
             // Layer prev = layers.get(layers.indexOf(currLayer) - 1);
+            // System.out.println(gradient);
             gradientWrtWeights = this.gradientWeights(prev.getActivations(), gradient);
             gradientWrtBias = this.gradientBias(gradient);
         } else {

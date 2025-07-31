@@ -49,12 +49,16 @@ public class RLGrid {
     private static float gaeDecay = 0.95f;
     private static int step = 0;
     private static int maxSteps;
+    private static int rows;
+    private static int cols;
 
 
     public static INDArray initializeEnvironment(int r, int c, int numAgents, int numObst) {
+        rows = r;
+        cols = c;
         numObstacles = numObst;
         // maxSteps = c * 2;
-        posAgent = new int[]{r / 2, 0};
+        posAgent = new int[]{(int)(r / 2.0), 0};
         posGoal = new int[]{r / 2, c - 1};
         posObstacles = new int[][]{{r/2, c/2}, {r/2+1, c/2}, {r/2-1, c/2}};
         // oldStates = Nd4j.create(0, 3, r, c);
@@ -165,10 +169,15 @@ public class RLGrid {
     public static void reset() {
         step = 0;
         done = false;
+        goal = false;
         actions = null;
         oldPolicyProbs = null;
         valueEstimates = null;
         oldStates = null;
+        rewards = null;
+        dones = null;
+        posAgent = new int[]{(int)(rows / 2.0), 0};
+        prevPos = null;
     }
 
 
@@ -216,6 +225,7 @@ public class RLGrid {
 
 
     public static int[] step(INDArray observation) {
+        // System.out.println(observation);
         int[] currPos = posAgent.clone();
 
         // policy network - forward pass only
@@ -291,7 +301,6 @@ public class RLGrid {
             observation.putScalar(new int[]{0, nextPos[0], nextPos[1]}, 1);
         }
 
-        System.out.println(observation);
         // System.out.println(initialState);
         
         posAgent = nextPos;
@@ -336,15 +345,13 @@ public class RLGrid {
     }
 
 
-    public static void run(int numEpisodes, int ms, INDArray observation) {
+    public static void run(int numEpisodes, int ms) {
         maxSteps = ms;
         // observation = initialState.dup();
         // episodes
         for (int i = 0; i < numEpisodes; i++) {
             System.out.println("EPISODE: " + i);
-            if (numEpisodes > 0) {
-                observation = initialState.dup();
-            }
+            INDArray observation = initialState.dup();
             reset();
             // steps
             while (done == false) {
@@ -388,10 +395,13 @@ public class RLGrid {
                         .mul(gaeDecay*discountFactor)));
             }
 
+            MSE mse = new MSE();
+
             // pass old states through policy network ------
             policyNetwork.forwardPass(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1));
-            INDArray polProbs = policyNetwork.getLayers()
-                .get(policyNetwork.getLayers().size() - 1).getActivations();
+            Layer polOut = policyNetwork.getLayers()
+                .get(policyNetwork.getLayers().size() - 1);
+            INDArray polProbs = polOut.getActivations();
             Softmax softmax = new Softmax();
             INDArray probDist = softmax.execute(polProbs);
             
@@ -411,14 +421,28 @@ public class RLGrid {
             INDArray surrogate = Transforms.min(
                 rat.mul(normalize(adv)),
                 clip(rat, epsilon).mul(normalize(adv)));
+            
+            INDArray unclipped = rat.mul(adv);
+            INDArray clipped = clip(rat, epsilon).mul(adv);
+            INDArray mask = unclipped.lt(clipped);
 
-            float policyLoss = surrogate.meanNumber().floatValue();
-            // policyNetwork.backprop(oldStates.reshape(step + 1, -1), probDist);
+            INDArray surrogateGrad = clipped.dup();
+            INDArray gradLogPi = surrogateGrad.mul(rat);
+
+            System.out.println(surrogate);
+
+            INDArray actorLoss = surrogate.neg().mean();
+            // System.out.println("999: " + probDist);
+            // System.out.println("934599: " + Arrays.toString(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1).shape()));
+            policyNetwork.getOutLayer().setPreds(probDist);
+            policyNetwork.backprop(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1));
+
+
+
 
             // pass old states through value network ------
             valueNetwork.forwardPass(
-                oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1),
-                qVals);
+                oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1));
 
             INDArray valPreds = valueNetwork.getLayers()
                 .get(valueNetwork.getLayers().size() - 1)
@@ -426,13 +450,12 @@ public class RLGrid {
 
             
 
-            MSE mse = new MSE();
             INDArray trimmedVal = valPreds.get(NDArrayIndex.interval(0, step));
 
             valueNetwork.getOutLayer().setActivations(
                 valueNetwork.getOutLayer().getActivations().get(NDArrayIndex.interval(0, step)));
 
-            valueNetwork.backprop(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1), qVals);
+            valueNetwork.backprop(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1));
 
             float valueLoss = mse.execute(trimmedVal, qVals.reshape(qVals.shape()[0], 1));
             System.out.println("valueloss: " + valueLoss);
@@ -489,7 +512,7 @@ public class RLGrid {
 
         valueNetwork = value;
 
-        run(2, 20, grid);
+        run(2, 20);
         
     }
 }

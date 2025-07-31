@@ -75,7 +75,7 @@ public class Adam extends Optimizer {
             w = lyr.getWeights().reshape(lyr.getWeights().shape()[0], -1);
         }
 
-        System.out.println(l.getClass().getSimpleName());
+        // System.out.println(l.getClass().getSimpleName());
 
         return w.subi(lyr.getWeightsMomentum().div(momBiasCor)
                              .divi(Transforms.pow(lyr.getWeightsVariance().div(varBiasCor), 0.5).addi(epsilon))

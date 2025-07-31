@@ -145,8 +145,9 @@ public class NeuralNet {
             for (int k = 0; k < rows - (rows % batchSize); k += batchSize) {
                 dataBatch = trainData.get(NDArrayIndex.interval(k, (k + batchSize)));
                 predBatch = trainPreds.get(NDArrayIndex.interval(k, (k + batchSize)));
-                forwardPass(dataBatch, predBatch);
-                backprop(dataBatch, predBatch);
+                outputLayer.setPreds(predBatch);
+                forwardPass(dataBatch);
+                backprop(dataBatch);
 
                 if (optimizer instanceof Adam) {
                     ((Adam) optimizer).updateCount();
@@ -157,8 +158,9 @@ public class NeuralNet {
             if (rows % batchSize != 0) {
                 dataBatch = trainData.get(NDArrayIndex.interval(batchSize - (rows % batchSize), batchSize));
                 predBatch = trainPreds.get(NDArrayIndex.interval(batchSize - (rows % batchSize), batchSize));
-                forwardPass(dataBatch, predBatch);
-                backprop(dataBatch, predBatch);
+                outputLayer.setPreds(predBatch);
+                forwardPass(dataBatch);
+                backprop(dataBatch);
 
                 if (optimizer instanceof Adam) {
                     ((Adam) optimizer).updateCount();
@@ -230,7 +232,7 @@ public class NeuralNet {
                     - numClasses));
             INDArray pred = train.get(NDArrayIndex.all(), NDArrayIndex.interval(cols -
                     numClasses, cols));
-            forwardPass(dater, pred);
+            forwardPass(dater);
             // backprop(dater, pred);
 
             if (optimizer instanceof Adam) {
@@ -264,30 +266,30 @@ public class NeuralNet {
         }
     }
 
-    public void forwardPass(INDArray data, INDArray pred) {
-        Layer dummy = new Layer();
-        dummy.setActivations(data);
-        layers.get(0).forwardProp(dummy);
-        for (int q = 1; q < layers.size(); q++) {
-            Layer curr = layers.get(q);
-            Layer prev = layers.get(q - 1);
-            // Layer prev = null;
-            // if (q > 0) {
-            // prev = layers.get(q - 1);
-            // }
+    // public void forwardPass(INDArray data, INDArray pred) {
+    //     Layer dummy = new Layer();
+    //     dummy.setActivations(data);
+    //     layers.get(0).forwardProp(dummy);
+    //     for (int q = 1; q < layers.size(); q++) {
+    //         Layer curr = layers.get(q);
+    //         Layer prev = layers.get(q - 1);
+    //         // Layer prev = null;
+    //         // if (q > 0) {
+    //         // prev = layers.get(q - 1);
+    //         // }
 
-            curr.forwardProp(prev);
+    //         curr.forwardProp(prev);
 
-            if (curr instanceof Output) {
-                ((Output) curr).setPreds(pred);
-            }
-        }
-    }
+    //         if (curr instanceof Output) {
+    //             ((Output) curr).setPreds(pred);
+    //         }
+    //     }
+    // }
 
-    public void backprop(INDArray data, INDArray pred) {
+    public void backprop(INDArray data) {
         Output outLayer = (Output) layers.get(layers.size() - 1);
         Loss lossFunc = outLayer.getLoss();
-        System.out.println("^^^^: " + outLayer.getPreds().data());
+        // System.out.println("^^^^: " + outLayer.getPreds().data());
         INDArray loss = Nd4j.create(new float[] {
                 lossFunc.execute(outLayer.getActivations(), outLayer.getPreds())});
         
@@ -326,7 +328,7 @@ public class NeuralNet {
     public void ppoBackprop(INDArray data, INDArray pred) {
         Output outLayer = (Output) layers.get(layers.size() - 1);
         Loss lossFunc = outLayer.getLoss();
-        System.out.println("^^^^: " + outLayer.getPreds().data());
+        // System.out.println("^^^^: " + outLayer.getPreds().data());
         INDArray loss = Nd4j.create(new float[] {
                 lossFunc.execute(outLayer.getActivations(), outLayer.getPreds())});
         
@@ -398,19 +400,19 @@ public class NeuralNet {
     // }
 
     public void metrics(INDArray d, INDArray l) {
-        forwardPass(d, l);
+        forwardPass(d);
         Output outLayer = (Output) layers.get(layers.size() - 1);
         metrics.getMetrics(outLayer.getActivations(), l);
     }
 
     public float accuracy(INDArray d, INDArray l) {
-        forwardPass(d, l);
+        forwardPass(d);
         Output outLayer = (Output) layers.get(layers.size() - 1);
         return metrics.accuracy(outLayer.getActivations(), l);
     }
 
     public float loss(INDArray d, INDArray l) {
-        forwardPass(d, l);
+        forwardPass(d);
         Output outLayer = (Output) layers.get(layers.size() - 1);
 
         return outLayer.getLoss().execute(outLayer.getActivations(), l);
