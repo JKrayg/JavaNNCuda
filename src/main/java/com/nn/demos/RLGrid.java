@@ -414,10 +414,12 @@ public class RLGrid {
             }
 
             logProb = Transforms.log(logProb);
+
             INDArray rat = Transforms.exp(logProb.subi(oldPolicyProbs.get(NDArrayIndex.interval(0, step))))
                 .get(NDArrayIndex.interval(0, step));
 
             float epsilon = 0.2f;
+
             INDArray surrogate = Transforms.min(
                 rat.mul(normalize(adv)),
                 clip(rat, epsilon).mul(normalize(adv)));
@@ -435,7 +437,7 @@ public class RLGrid {
             // System.out.println("999: " + probDist);
             // System.out.println("934599: " + Arrays.toString(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1).shape()));
             policyNetwork.getOutLayer().setPreds(probDist);
-            policyNetwork.backprop(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1));
+            policyNetwork.ppoBackprop(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1), logProb, adv, rat);
 
 
 

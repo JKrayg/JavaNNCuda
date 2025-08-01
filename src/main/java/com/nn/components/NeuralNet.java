@@ -7,6 +7,7 @@ import java.util.Random;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
+import org.nd4j.linalg.ops.transforms.Transforms;
 
 import com.nn.Data;
 import com.nn.layers.*;
@@ -300,6 +301,7 @@ public class NeuralNet {
         }
 
         INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getPreds());
+        System.out.println("****** " + Arrays.toString(gradientWrtOutput.shape()));
         // recursively get gradients
         // getGradients(outLayer, gradientWrtOutput, data);
         Layer prev = layers.get(layers.indexOf(outLayer) - 1);
@@ -325,12 +327,32 @@ public class NeuralNet {
         }
     }
 
-    public void ppoBackprop(INDArray data, INDArray pred) {
-        Output outLayer = (Output) layers.get(layers.size() - 1);
-        Loss lossFunc = outLayer.getLoss();
+    public static INDArray ppoNormalize(INDArray advantages) {
+        MathUtils maths = new MathUtils();
+
+        float e = 1e-8f;
+        long numAdv = advantages.length();
+        float mean = (advantages.sumNumber().floatValue() / numAdv);
+        advantages.subi(mean).divi(maths.std(advantages) + e);
+
+        return advantages;
+    }
+
+    public static INDArray ppoClip(INDArray r, float e) {
+        INDArray clipped = Transforms.max(r, 1 - e);
+        return Transforms.min(clipped, 1 + e);
+    }
+
+    public void ppoBackprop(INDArray data, INDArray logProb, INDArray advantage, INDArray ratio) {
+        // Output outLayer = (Output) layers.get(layers.size() - 1);
+        float epsilon = 0.2f;
+        INDArray surrogate = Transforms.min(
+                ratio.mul(ppoNormalize(advantage)),
+                ppoClip(ratio, epsilon).mul(ppoNormalize(advantage)));
+
+        PPO lossFunc = (PPO) outputLayer.getLoss();
         // System.out.println("^^^^: " + outLayer.getPreds().data());
-        INDArray loss = Nd4j.create(new float[] {
-                lossFunc.execute(outLayer.getActivations(), outLayer.getPreds())});
+        INDArray loss = lossFunc.ppoExecute(surrogate);
         
         if (this.lossHistory == null) {
             this.lossHistory = loss;
@@ -338,11 +360,20 @@ public class NeuralNet {
             this.lossHistory = Nd4j.hstack(this.lossHistory, loss);
         }
 
-        INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getPreds());
+        INDArray unclipped = ratio.mul(advantage);
+        INDArray clipped = ppoClip(ratio, epsilon).mul(advantage);
+        INDArray mask = unclipped.lt(clipped);
+        INDArray surrogateGrad = clipped.dup();
+        surrogateGrad.putWhereWithMask(mask, unclipped);
+
+        INDArray gradientWrtOutput = surrogateGrad.mul(ratio);
+        long[] shp = gradientWrtOutput.shape();
+        gradientWrtOutput = gradientWrtOutput.reshape(1, shp[0]);
+        // INDArray gradientWrtOutput = lossFunc.ppoGradient(advantage, ratio);
         // recursively get gradients
         // getGradients(outLayer, gradientWrtOutput, data);
-        Layer prev = layers.get(layers.indexOf(outLayer) - 1);
-        outLayer.getGradients(prev, gradientWrtOutput, data);
+        Layer prev = layers.get(layers.indexOf(outputLayer) - 1);
+        outputLayer.getGradients(prev, gradientWrtOutput, data);
 
         // System.out.println("\n\n");
         // for (Layer l : layers) {
