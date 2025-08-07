@@ -15,13 +15,13 @@ import com.nn.utils.MathUtils;
 
 public class Data {
     private INDArray data;
-    private INDArray preds;
+    private INDArray target;
     private INDArray trainData;
-    private INDArray trainPreds;
+    private INDArray trainTarget;
     private INDArray testData;
-    private INDArray testPreds;
+    private INDArray testTarget;
     private INDArray valData;
-    private INDArray valPreds;
+    private INDArray valTarget;
     private HashMap<String, Integer> classes;
     // private HashMap<String, Float> classes2;
 
@@ -32,12 +32,12 @@ public class Data {
         this.data = Nd4j.create(data);
     }
 
-    public Data(float[][] data, String[] preds) {
+    public Data(float[][] data, String[] target) {
         this.data = Nd4j.create(data);
 
-        // create a hashtable of preds mapped to an integer
+        // create a hashtable of target mapped to an integer
         HashMap<String, Integer> h = new HashMap<>();
-        Set<String> c = new HashSet<>(List.of(preds));
+        Set<String> c = new HashSet<>(List.of(target));
         int count = 0;
         for (String s : c) {
             h.put(s, count);
@@ -46,56 +46,56 @@ public class Data {
 
         this.classes = h;
 
-        // create list of pred values
-        float[] ls = new float[preds.length];
-        for (int i = 0; i < preds.length; i++) {
-            ls[i] = classes.get(preds[i]);
+        // create list of target values
+        float[] ls = new float[target.length];
+        for (int i = 0; i < target.length; i++) {
+            ls[i] = classes.get(target[i]);
         }
 
         if (classes.size() > 2) {
-            this.preds = oneHot(Nd4j.create(ls));
+            this.target = oneHot(Nd4j.create(ls));
         } else {
-            this.preds = Nd4j.create(ls);
+            this.target = Nd4j.create(ls);
         }
 
     }
 
     public Data(float[][] data, float[] targetVals) {
         this.data = Nd4j.create(data);
-        this.preds = Nd4j.create(targetVals);
+        this.target = Nd4j.create(targetVals);
     }
 
-    public Data(float[][] data, Integer[] preds) {
-        // System.out.println(preds.length);
+    public Data(float[][] data, Integer[] target) {
+        // System.out.println(target.length);
         this.data = Nd4j.create(data);
 
-        // create a hashtable of preds mapped to an integer
+        // create a hashtable of target mapped to an integer
         HashMap<String, Integer> h = new HashMap<>();
         int idx = 0;
-        for (int i : preds) {
+        for (int i : target) {
             h.put(Integer.toString(i), idx);
             idx++;
         }
 
         this.classes = h;
 
-        // create list of pred values
-        float[] ls = new float[preds.length];
-        for (int i = 0; i < preds.length; i++) {
-            ls[i] = classes.get(Integer.toString(preds[i]));
+        // create list of target values
+        float[] ls = new float[target.length];
+        for (int i = 0; i < target.length; i++) {
+            ls[i] = classes.get(Integer.toString(target[i]));
         }
 
         // System.out.println(ls.length);
 
         if (classes.size() > 2) {
-            this.preds = oneHot(Nd4j.create(ls));
+            this.target = oneHot(Nd4j.create(ls));
         } else {
-            this.preds = Nd4j.create(ls);
+            this.target = Nd4j.create(ls);
         }
 
     }
 
-    public Data(INDArray data, INDArray preds) {
+    public Data(INDArray data, INDArray target) {
         // long[] dataShape = data.shape();
         // if (dataShape[1] == 1) {
         // data = data.reshape(dataShape[0], dataShape[2], dataShape[3]);
@@ -103,26 +103,26 @@ public class Data {
 
         this.data = data;
 
-        // create a hashtable of preds mapped to an integer
+        // create a hashtable of target mapped to an integer
         HashMap<String, Integer> h = new HashMap<>();
-        for (int i : preds.toIntVector()) {
+        for (int i : target.toIntVector()) {
             h.put(Integer.toString(i), i);
         }
 
         this.classes = h;
 
-        // create list of a pred values
-        // float[] ls = new float[preds.length];
-        // for (int i = 0; i < preds.length; i++) {
-        // ls[i] = classes.get(Integer.toString(preds[i]));
+        // create list of a target values
+        // float[] ls = new float[target.length];
+        // for (int i = 0; i < target.length; i++) {
+        // ls[i] = classes.get(Integer.toString(target[i]));
         // }
 
         // System.out.println(ls.length);
 
         if (classes.size() > 2) {
-            this.preds = oneHot(preds);
+            this.target = oneHot(target);
         } else {
-            this.preds = preds;
+            this.target = target;
         }
 
     }
@@ -133,11 +133,11 @@ public class Data {
             data.size(1) * data.size(2));
     }
 
-    public INDArray oneHot(INDArray preds) {
-        INDArray encoded = Nd4j.create(preds.length(), classes.size());
-        for (int i = 0; i < preds.length(); i++) {
+    public INDArray oneHot(INDArray target) {
+        INDArray encoded = Nd4j.create(target.length(), classes.size());
+        for (int i = 0; i < target.length(); i++) {
             INDArray curr = Nd4j.create(1, classes.size());
-            curr.putScalar((int) preds.getFloat(i), 1.0);
+            curr.putScalar((int) target.getFloat(i), 1.0);
             encoded.putRow(i, curr);
         }
 
@@ -148,32 +148,32 @@ public class Data {
         return data;
     }
 
-    public INDArray getPreds() {
-        return preds;
+    public INDArray getTarget() {
+        return target;
     }
 
     public INDArray getTestData() {
         return testData;
     }
 
-    public INDArray getTestPreds() {
-        return testPreds;
+    public INDArray getTestTarget() {
+        return testTarget;
     }
 
     public INDArray getTrainData() {
         return trainData;
     }
 
-    public INDArray getTrainPreds() {
-        return trainPreds;
+    public INDArray getTrainTarget() {
+        return trainTarget;
     }
 
     public INDArray getValData() {
         return valData;
     }
 
-    public INDArray getValPreds() {
-        return valPreds;
+    public INDArray getValTarget() {
+        return valTarget;
     }
 
     public HashMap<String, Integer> getClasses() {
@@ -211,10 +211,10 @@ public class Data {
         boolean reshape = false;
         long[] shape = data.shape();
 
-        if (data.shape().length == preds.shape().length) {
-            arraysToShuffle = Arrays.asList(data, preds);
+        if (data.shape().length == target.shape().length) {
+            arraysToShuffle = Arrays.asList(data, target);
         } else {
-            arraysToShuffle = Arrays.asList(data.reshape(shape[0], shape[1] * shape[2]), preds);
+            arraysToShuffle = Arrays.asList(data.reshape(shape[0], shape[1] * shape[2]), target);
             reshape = true;
         }
 
@@ -236,11 +236,11 @@ public class Data {
                 .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize));
         this.valData = data
                 .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows));
-        this.trainPreds = preds
+        this.trainTarget = target
                 .get(NDArrayIndex.interval(0, trainSetSize));
-        this.testPreds = preds
+        this.testTarget = target
                 .get(NDArrayIndex.interval(trainSetSize, trainSetSize + testSetSize));
-        this.valPreds = preds
+        this.valTarget = target
                 .get(NDArrayIndex.interval(trainSetSize + testSetSize, rows));
 
     }

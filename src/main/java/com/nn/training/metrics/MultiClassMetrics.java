@@ -17,19 +17,19 @@ public class MultiClassMetrics extends Metrics{
         this.threshold = threshold;
     }
 
-    public void getMetrics(INDArray pred, INDArray trueVals) {
+    public void getMetrics(INDArray pred, INDArray target) {
         String dis = "Accuracy: " + accuracy + "\n";
         dis += "Precision: ";
-        for (float d: precision(pred, trueVals)) {
+        for (float d: precision(pred, target)) {
             dis += Float.toString(d) + ", ";
         }
         dis += "\n";
-        // dis += "Precision: " + precision(pred, trueVals) + "\n";
-        // dis += "Recall: " + recall(pred, trueVals) + "\n";
+        // dis += "Precision: " + precision(pred, target) + "\n";
+        // dis += "Recall: " + recall(pred, target) + "\n";
         System.out.println(dis);
     }
 
-    public INDArray confusion(INDArray pred, INDArray trueVals) {
+    public INDArray confusion(INDArray pred, INDArray target) {
         float[][] preds = thresh(pred);
         int rows = pred.rows();
         int cols = pred.columns();
@@ -38,19 +38,19 @@ public class MultiClassMetrics extends Metrics{
         for (int i = 0; i < cols; i++) {
             INDArray currClass = Nd4j.create(1, cols);
             INDArray currClassPred = Nd4j.create(preds).getColumn(i);
-            INDArray currClassTrue = trueVals.getColumn(i);
+            INDArray currClassTrue = target.getColumn(i);
             // System.out.println(currClassPred);
             for (int j = 0; j < rows; j++) {
                 float currPred = currClassPred.getFloat(j);
                 if (currPred == 1.0) {
                     for (int k = 0; k < cols; k++) {
-                        if (trueVals.getFloat(j, k) == 1.0) {
+                        if (target.getFloat(j, k) == 1.0) {
                             cm.put(i, k, cm.getFloat(k) + 1.0);
                         }
                     }
                 }
                     // else if (currClassPred.get(j) == 0.0) {
-                    //     if (trueVals.get(j, k) == 1.0) {
+                    //     if (target.get(j, k) == 1.0) {
                     //         cm.set(i, k, cm.get(k) + 1.0);
                     //     }
                     // }
@@ -59,7 +59,7 @@ public class MultiClassMetrics extends Metrics{
         }
 
         // for (int i = 0; i < preds.length; i++) {
-        //     float label = trueVals.get(i);
+        //     float label = target.get(i);
         //     if (preds[i] == 1.0) {
         //         if (label == 1.0) {
         //             tp += 1.0;
@@ -80,13 +80,13 @@ public class MultiClassMetrics extends Metrics{
         return cm;
     }
 
-    public float accuracy(INDArray pred, INDArray trueVals) {
+    public float accuracy(INDArray pred, INDArray target) {
         int correct = 0;
         float[][] preds = thresh(pred);
 
         for (int i = 0; i < preds.length; i++) {
             for (int j = 0; j < preds[0].length; j++) {
-                if (preds[i][j] == 1.0 && trueVals.getFloat(i, j) == 1.0) {
+                if (preds[i][j] == 1.0 && target.getFloat(i, j) == 1.0) {
                     correct += 1;
                 }
             }
@@ -96,7 +96,7 @@ public class MultiClassMetrics extends Metrics{
     }
 
 
-    public float[] precision(INDArray pred, INDArray trueVals) {
+    public float[] precision(INDArray pred, INDArray target) {
         // int correct = 0;
         // int wrong = 0;
         float[][] preds = thresh(pred);
@@ -104,7 +104,7 @@ public class MultiClassMetrics extends Metrics{
 
         for (int i = 0; i < preds[0].length; i++) {
             INDArray currClassPred = Nd4j.create(preds).getColumn(i);
-            INDArray currClassTrue = trueVals.getColumn(i);
+            INDArray currClassTrue = target.getColumn(i);
             int tp = 0;
             int fp = 0;
             for (int j = 0; j < preds.length; j++) {
@@ -122,7 +122,7 @@ public class MultiClassMetrics extends Metrics{
                 classPrecisions[i] = prec;
             }
             for (int j = 0; j < preds[0].length; j++) {
-                if (trueVals.getFloat(i, j) == 1.0 && preds[i][j] == 1.0) {
+                if (target.getFloat(i, j) == 1.0 && preds[i][j] == 1.0) {
                     tp += 1;
                 } else if (preds[i][j] == 1.0) {
                     fp += 1;
@@ -133,11 +133,11 @@ public class MultiClassMetrics extends Metrics{
         return classPrecisions;
     }
 
-    public float recall(INDArray pred, INDArray trueVals) {
+    public float recall(INDArray pred, INDArray target) {
         return 0.0f;
     }
 
-    public float f1(INDArray pred, INDArray trueVals) {
+    public float f1(INDArray pred, INDArray target) {
         return 0.0f;
     }
 

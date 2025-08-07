@@ -20,17 +20,17 @@ public class BinaryMetrics extends Metrics {
         this.threshold = threshold;
     }
 
-    public void getMetrics(INDArray pred, INDArray trueVals) {
+    public void getMetrics(INDArray pred, INDArray target) {
         System.out.println("Confusion Matrix: ");
-        System.out.println(confusion(pred, trueVals));
-        String dis = "Accuracy: " + accuracy(pred, trueVals) + "\n";
-        dis += "Precision: " + precision(pred, trueVals) + "\n";
-        dis += "Recall: " + recall(pred, trueVals) + "\n";
-        dis += "F1 score: " + f1(pred, trueVals) + "\n";
+        System.out.println(confusion(pred, target));
+        String dis = "Accuracy: " + accuracy(pred, target) + "\n";
+        dis += "Precision: " + precision() + "\n";
+        dis += "Recall: " + recall() + "\n";
+        dis += "F1 score: " + f1() + "\n";
         System.out.println(dis);
     }
 
-    public INDArray confusion(INDArray pred, INDArray trueVals) {
+    public INDArray confusion(INDArray pred, INDArray target) {
         INDArray preds = thresh(pred);
         INDArray confMatrix = Nd4j.create(2, 2);
         float tp = 0.0f;
@@ -39,7 +39,7 @@ public class BinaryMetrics extends Metrics {
         float fn = 0.0f; 
 
         for (int i = 0; i < preds.rows(); i++) {
-            float label = trueVals.getFloat(i);
+            float label = target.getFloat(i);
             if (preds.getDouble(i) == 1.0) {
                 if (label == 1.0) {
                     tp += 1.0;
@@ -66,12 +66,12 @@ public class BinaryMetrics extends Metrics {
     }
 
 
-    public float accuracy(INDArray pred, INDArray trueVals) {
+    public float accuracy(INDArray pred, INDArray target) {
         return (tp + tn) / pred.rows();
     }
 
 
-    public float precision(INDArray pred, INDArray trueVals) {
+    public float precision() {
         float prec = tp / (tp + fp);
         if (Float.isNaN(prec)) {
             return 0.0f;
@@ -81,7 +81,7 @@ public class BinaryMetrics extends Metrics {
     }
 
 
-    public float recall(INDArray pred, INDArray trueVals) {
+    public float recall() {
         float rec = tp / (tp + fn);
         if (Float.isNaN(rec)) {
             return 0.0f;
@@ -91,9 +91,9 @@ public class BinaryMetrics extends Metrics {
     }
 
 
-    public float f1(INDArray pred, INDArray trueVals) {
-        float r = recall(pred, trueVals);
-        float p = precision(pred, trueVals);
+    public float f1() {
+        float r = recall();
+        float p = precision();
         if (Float.isNaN(r) || Float.isNaN(p)) {
             return 0.0f;
         } else {
@@ -104,15 +104,6 @@ public class BinaryMetrics extends Metrics {
 
     public INDArray thresh(INDArray pred) {
         INDArray t = pred.gt(threshold).castTo(DataType.FLOAT);
-        // float[] preds = new float[pred.rows()];
-        // for (int i = 0; i < preds.length; i++) {
-        //     if (pred.getFloat(i) > threshold) {
-        //         preds[i] = 1.0f;
-        //     } else {
-        //         preds[i] = 0.0f;
-        //     }
-        // }
-
         return t;
     }
 }

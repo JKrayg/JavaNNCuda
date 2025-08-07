@@ -74,11 +74,11 @@ public class NeuralNet {
 
     public void miniBatchFit(Data data, int batchSize, int epochs) {
         INDArray trainData = data.getTrainData();
-        INDArray trainPreds = data.getTrainPreds();
+        INDArray trainTarget = data.getTrainTarget();
         INDArray testData = data.getTestData();
-        INDArray testPreds = data.getTestPreds();
+        INDArray testTarget = data.getTestTarget();
         INDArray valData = data.getValData();
-        INDArray valPreds = data.getValPreds();
+        INDArray valTarget = data.getValTarget();
         float lr = optimizer.getLearningRate();
 
         for (int i = 0; i < layers.size(); i++) {
@@ -103,14 +103,14 @@ public class NeuralNet {
         // shuffle
         List<INDArray> arraysToShuffle;
         if (shape.length == 2) {
-            if (trainPreds.shape().length == 1) {
-                trainPreds = trainPreds.reshape(trainData.shape()[0], 1);
-                valPreds = valPreds.reshape(valPreds.shape()[0], 1);
-                testPreds = testPreds.reshape(testPreds.shape()[0], 1);
+            if (trainTarget.shape().length == 1) {
+                trainTarget = trainTarget.reshape(trainData.shape()[0], 1);
+                valTarget = valTarget.reshape(valTarget.shape()[0], 1);
+                testTarget = testTarget.reshape(testTarget.shape()[0], 1);
             }
-            arraysToShuffle = Arrays.asList(trainData, trainPreds);
+            arraysToShuffle = Arrays.asList(trainData, trainTarget);
         } else {
-            arraysToShuffle = Arrays.asList(trainData.reshape(shape[0], shape[2] * shape[3]), trainPreds);
+            arraysToShuffle = Arrays.asList(trainData.reshape(shape[0], shape[2] * shape[3]), trainTarget);
             reshape = true;
         }
 
@@ -139,14 +139,14 @@ public class NeuralNet {
             }
 
             // do below for each batch
-            int rows = trainPreds.rows();
+            int rows = trainTarget.rows();
             INDArray dataBatch;
-            INDArray predBatch;
+            INDArray targetBatch;
 
             for (int k = 0; k < rows - (rows % batchSize); k += batchSize) {
                 dataBatch = trainData.get(NDArrayIndex.interval(k, (k + batchSize)));
-                predBatch = trainPreds.get(NDArrayIndex.interval(k, (k + batchSize)));
-                outputLayer.setPreds(predBatch);
+                targetBatch = trainTarget.get(NDArrayIndex.interval(k, (k + batchSize)));
+                outputLayer.setPreds(targetBatch);
                 forwardPass(dataBatch);
                 backprop(dataBatch);
 
@@ -158,8 +158,8 @@ public class NeuralNet {
             // last batch - fix
             if (rows % batchSize != 0) {
                 dataBatch = trainData.get(NDArrayIndex.interval(batchSize - (rows % batchSize), batchSize));
-                predBatch = trainPreds.get(NDArrayIndex.interval(batchSize - (rows % batchSize), batchSize));
-                outputLayer.setPreds(predBatch);
+                targetBatch = trainTarget.get(NDArrayIndex.interval(batchSize - (rows % batchSize), batchSize));
+                outputLayer.setPreds(targetBatch);
                 forwardPass(dataBatch);
                 backprop(dataBatch);
 
@@ -171,9 +171,9 @@ public class NeuralNet {
             // print loss
             int numL = lossHistory.columns();
             this.loss = lossHistory.sumNumber().floatValue() / numL;
-            float acc = accuracy(trainData, trainPreds);
-            this.valLoss = loss(valData, valPreds);
-            float valAcc = accuracy(valData, valPreds);
+            float acc = accuracy(trainData, trainTarget);
+            this.valLoss = loss(valData, valTarget);
+            float valAcc = accuracy(valData, valTarget);
 
             System.out.println("loss: " + this.loss +
                             " ~ accuracy: " + acc +
@@ -216,11 +216,11 @@ public class NeuralNet {
         }
 
         // System.out.println("train metrics: ");
-        // metrics(trainData, trainPreds);
+        // metrics(trainData, trainTarget);
         // System.out.println("val metrics: ");
-        // metrics(testData, testPreds);
+        // metrics(testData, testTarget);
         // System.out.println("test metrics: ");
-        // metrics(valData, valPreds);
+        // metrics(valData, valTarget);
 
     }
 
@@ -231,10 +231,10 @@ public class NeuralNet {
         for (int i = 0; i < epochs; i++) {
             INDArray dater = train.get(NDArrayIndex.all(), NDArrayIndex.interval(0, cols
                     - numClasses));
-            INDArray pred = train.get(NDArrayIndex.all(), NDArrayIndex.interval(cols -
+            INDArray target = train.get(NDArrayIndex.all(), NDArrayIndex.interval(cols -
                     numClasses, cols));
             forwardPass(dater);
-            // backprop(dater, pred);
+            // backprop(dater, target);
 
             if (optimizer instanceof Adam) {
                 ((Adam) optimizer).updateCount();
@@ -248,7 +248,7 @@ public class NeuralNet {
         // System.out.println("train metrics: ");
         // metrics(train);
         // System.out.println("test metrics: ");
-        // metrics(testData, testPreds);
+        // metrics(testData, testTarget);
     }
 
     public void forwardPass(INDArray data) {
@@ -267,7 +267,7 @@ public class NeuralNet {
         }
     }
 
-    // public void forwardPass(INDArray data, INDArray pred) {
+    // public void forwardPass(INDArray data, INDArray target) {
     //     Layer dummy = new Layer();
     //     dummy.setActivations(data);
     //     layers.get(0).forwardProp(dummy);
@@ -282,7 +282,7 @@ public class NeuralNet {
     //         curr.forwardProp(prev);
 
     //         if (curr instanceof Output) {
-    //             ((Output) curr).setPreds(pred);
+    //             ((Output) curr).setTarget(target);
     //         }
     //     }
     // }
@@ -290,7 +290,7 @@ public class NeuralNet {
     public void backprop(INDArray data) {
         Output outLayer = (Output) layers.get(layers.size() - 1);
         Loss lossFunc = outLayer.getLoss();
-        // System.out.println("^^^^: " + outLayer.getPreds().data());
+        // System.out.println("^^^^: " + outLayer.getTarget().data());
         INDArray loss = Nd4j.create(new float[] {
                 lossFunc.execute(outLayer.getActivations(), outLayer.getPreds())});
         
@@ -351,7 +351,7 @@ public class NeuralNet {
                 ppoClip(ratio, epsilon).mul(ppoNormalize(advantage)));
 
         PPO lossFunc = (PPO) outputLayer.getLoss();
-        // System.out.println("^^^^: " + outLayer.getPreds().data());
+        // System.out.println("^^^^: " + outLayer.getTarget().data());
         INDArray loss = lossFunc.ppoExecute(surrogate);
         
         if (this.lossHistory == null) {
@@ -368,7 +368,7 @@ public class NeuralNet {
 
         INDArray gradientWrtOutput = surrogateGrad.mul(ratio);
         long[] shp = gradientWrtOutput.shape();
-        gradientWrtOutput = gradientWrtOutput.reshape(1, shp[0]);
+        // gradientWrtOutput = gradientWrtOutput.reshape(1, shp[0]);
         // INDArray gradientWrtOutput = lossFunc.ppoGradient(advantage, ratio);
         // recursively get gradients
         // getGradients(outLayer, gradientWrtOutput, data);
@@ -404,7 +404,7 @@ public class NeuralNet {
     //         this.lossHistory = Nd4j.hstack(this.lossHistory, loss);
     //     }
 
-    //     INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getPreds());
+    //     INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getTarget());
     //     // recursively get gradients
     //     // getGradients(outLayer, gradientWrtOutput, data);
     //     Layer prev = layers.get(layers.indexOf(outLayer) - 1);
