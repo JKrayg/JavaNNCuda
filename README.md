@@ -8,3 +8,4 @@
 * ### Normalization: Batch Normalization
 * ### Training Utilities: Early stopping, learning rate scheduling (step decay & exponential decay)
 * ### Evaluation Metrics: Binary accuracy, multiclass accuracy, mean absolute error
+* ### Demos: Binary Classification, Multi Classification, Regression, Gridworld
