@@ -46,6 +46,11 @@ public class Output extends Dense {
 
     // check
     public INDArray gradientBias(INDArray gradientWrtOutput) {
+        if (gradientWrtOutput.shape().length < 2) {
+            gradientWrtOutput = gradientWrtOutput.reshape(gradientWrtOutput.shape()[0], 1);
+        }
+
+        // System.out.println(Arrays.toString(gradientWrtOutput.shape()));
         INDArray sums = gradientWrtOutput.sum(0)
                 .reshape(gradientWrtOutput.columns(), 1);
                 

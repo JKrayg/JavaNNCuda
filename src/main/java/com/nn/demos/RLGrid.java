@@ -301,7 +301,7 @@ public class RLGrid {
             observation.putScalar(new int[]{0, nextPos[0], nextPos[1]}, 1);
         }
 
-        // System.out.println(initialState);
+        System.out.println(Arrays.toString(currPos) + " -> " + Arrays.toString(nextPos));
         
         posAgent = nextPos;
         prevPos = currPos;
@@ -347,7 +347,6 @@ public class RLGrid {
 
     public static void run(int numEpisodes, int ms) {
         maxSteps = ms;
-        // observation = initialState.dup();
         // episodes
         for (int i = 0; i < numEpisodes; i++) {
             System.out.println("EPISODE: " + i);
@@ -404,45 +403,11 @@ public class RLGrid {
             INDArray polProbs = polOut.getActivations();
             Softmax softmax = new Softmax();
             INDArray probDist = softmax.execute(polProbs);
-            
-            INDArray logProb = Nd4j.create(actions.shape()[0] - 1);
 
-            for (int h = 0; h < logProb.length(); h++) {
-                logProb.put(h, probDist.get(
-                        NDArrayIndex.point(h),
-                        NDArrayIndex.point(actions.getInt(h))));
-            }
-
-            logProb = Transforms.log(logProb);
-
-            INDArray rat = Transforms.exp(logProb.subi(oldPolicyProbs.get(NDArrayIndex.interval(0, step))))
-                .get(NDArrayIndex.interval(0, step));
-
-            float epsilon = 0.2f;
-
-            INDArray surrogate = Transforms.min(
-                rat.mul(normalize(adv)),
-                clip(rat, epsilon).mul(normalize(adv)));
-            
-            INDArray unclipped = rat.mul(adv);
-            INDArray clipped = clip(rat, epsilon).mul(adv);
-            INDArray mask = unclipped.lt(clipped);
-
-            INDArray surrogateGrad = clipped.dup();
-            INDArray gradLogPi = surrogateGrad.mul(rat);
-
-            System.out.println(surrogate);
-
-            INDArray actorLoss = surrogate.neg().mean();
-            // System.out.println("999: " + probDist);
-            // System.out.println("934599: " + Arrays.toString(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1).shape()));
             policyNetwork.getOutLayer().setPreds(probDist);
-            policyNetwork.ppoBackprop(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1), logProb, adv, rat);
+            policyNetwork.ppoBackprop(oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1), actions, oldPolicyProbs, adv, step);
 
 
-
-
-            // pass old states through value network ------
             valueNetwork.forwardPass(
                 oldStates.get(NDArrayIndex.interval(0, step)).reshape(step, -1));
 
@@ -453,6 +418,7 @@ public class RLGrid {
             
 
             INDArray trimmedVal = valPreds.get(NDArrayIndex.interval(0, step));
+            valueNetwork.getOutLayer().setPreds(valPreds);
 
             valueNetwork.getOutLayer().setActivations(
                 valueNetwork.getOutLayer().getActivations().get(NDArrayIndex.interval(0, step)));
@@ -476,11 +442,13 @@ public class RLGrid {
 
 
     public static void main(String[] args) {
+        System.out.println(Nd4j.getExecutioner().getClass().getName());
+
 
         INDArray grid = initializeEnvironment(5, 5, 1, -1);
 
         NeuralNet policy = new NeuralNet();
-        Dense d1 = new Dense(64, new ReLU(), (int)initialState.reshape(-1).length());
+        Dense d1 = new Dense(64, new ReLU(), (int)initialState.reshape(-1).shape()[0]);
         Dense d2 = new Dense(64, new ReLU());
         Output out = new Output(4, new Softmax(), new PPO());
 
@@ -490,6 +458,7 @@ public class RLGrid {
 
         for (Layer l: policy.getLayers()) {
                 l.initLayer(l.getPrev(), 1);
+                l.initForAdam();
         }
 
         policy.optimizer(new Adam(0.001));
@@ -497,7 +466,7 @@ public class RLGrid {
         policyNetwork = policy;
 
         NeuralNet value = new NeuralNet();
-        Dense dv1 = new Dense(64, new ReLU(), (int)initialState.reshape(-1).length());
+        Dense dv1 = new Dense(64, new ReLU(), (int)initialState.reshape(-1).shape()[0]);
         Dense dv2 = new Dense(64, new ReLU());
         Output outv = new Output(1, new Linear(), new MSE());
 
@@ -510,11 +479,15 @@ public class RLGrid {
                 l.initForAdam();
         }
 
+        for (Layer l: policy.getLayers()) {
+            System.out.println("veights: " + Arrays.toString(l.getWeights().shape()));
+        }
+
         value.optimizer(new Adam(0.001));
 
         valueNetwork = value;
 
-        run(2, 20);
+        run(5, 20);
         
     }
 }

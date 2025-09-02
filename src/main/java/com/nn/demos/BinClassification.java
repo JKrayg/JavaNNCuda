@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import org.nd4j.linalg.factory.Nd4j;
+
 import com.nn.Data;
 import com.nn.activation.ReLU;
 import com.nn.activation.Sigmoid;
@@ -21,6 +23,7 @@ import com.nn.training.optimizers.Adam;
 
 public class BinClassification {
     public static void main(String[] args) {
+        System.out.println(Nd4j.getExecutioner().getClass().getName());
         String filePath = "src\\resources\\datasets\\wdbc.data";
         ArrayList<String> labelsArrayList = new ArrayList<>();
         ArrayList<float[]> dataArrayList = new ArrayList<>();
@@ -60,20 +63,22 @@ public class BinClassification {
         data.split(0.20, 0.20);
 
         NeuralNet nn = new NeuralNet();
-        Dense dense1 = new Dense(16, new ReLU(), 30);
-        Dense dense2 = new Dense(8, new ReLU());
+        Dense dense1 = new Dense(32, new ReLU(), 30);
+        Dense dense2 = new Dense(64, new ReLU());
+        Dense dense3 = new Dense(64, new ReLU());
         Output out = new Output(1, new Sigmoid(), new BinCrossEntropy());
 
         nn.addLayer(dense1);
         nn.addLayer(dense2);
+        nn.addLayer(dense3);
         nn.addLayer(out);
 
 
         nn.optimizer(new Adam(0.001));
         nn.metrics(new BinaryMetrics());
-        nn.callbacks(new Callback[]{new ExponentialDecay(0.01)});
+        // nn.callbacks(new Callback[]{new ExponentialDecay(0.01)});
 
-        nn.miniBatchFit(data, 16, 20);
+        nn.miniBatchFit(data, 16, 1);
     }
 
 }

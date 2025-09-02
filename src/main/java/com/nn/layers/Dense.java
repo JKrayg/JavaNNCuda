@@ -283,6 +283,8 @@ public class Dense extends Layer {
             // fix
             INDArray next;
             if ( !(prev instanceof Flatten)) {
+                // System.out.println("grad: " + Arrays.toString(grad.shape()));
+                // System.out.println("weights: " + Arrays.toString(this.getWeights().shape()));
                 next = prev.getActFunc().gradient(
                     prev.getPreActivation(),
                     Nd4j.matmul(

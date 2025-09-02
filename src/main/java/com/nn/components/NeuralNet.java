@@ -10,6 +10,7 @@ import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.nd4j.linalg.ops.transforms.Transforms;
 
 import com.nn.Data;
+import com.nn.activation.Softmax;
 import com.nn.layers.*;
 import com.nn.training.loss.*;
 import com.nn.training.metrics.Metrics;
@@ -206,7 +207,6 @@ public class NeuralNet {
             //     }
 
             // }
-            // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
             // lr scheduler
             if (lrSch != null) {
@@ -267,30 +267,9 @@ public class NeuralNet {
         }
     }
 
-    // public void forwardPass(INDArray data, INDArray target) {
-    //     Layer dummy = new Layer();
-    //     dummy.setActivations(data);
-    //     layers.get(0).forwardProp(dummy);
-    //     for (int q = 1; q < layers.size(); q++) {
-    //         Layer curr = layers.get(q);
-    //         Layer prev = layers.get(q - 1);
-    //         // Layer prev = null;
-    //         // if (q > 0) {
-    //         // prev = layers.get(q - 1);
-    //         // }
-
-    //         curr.forwardProp(prev);
-
-    //         if (curr instanceof Output) {
-    //             ((Output) curr).setTarget(target);
-    //         }
-    //     }
-    // }
-
     public void backprop(INDArray data) {
         Output outLayer = (Output) layers.get(layers.size() - 1);
         Loss lossFunc = outLayer.getLoss();
-        // System.out.println("^^^^: " + outLayer.getTarget().data());
         INDArray loss = Nd4j.create(new float[] {
                 lossFunc.execute(outLayer.getActivations(), outLayer.getPreds())});
         
@@ -301,17 +280,9 @@ public class NeuralNet {
         }
 
         INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getPreds());
-        System.out.println("****** " + Arrays.toString(gradientWrtOutput.shape()));
-        // recursively get gradients
-        // getGradients(outLayer, gradientWrtOutput, data);
         Layer prev = layers.get(layers.indexOf(outLayer) - 1);
         outLayer.getGradients(prev, gradientWrtOutput, data);
 
-        // System.out.println("\n\n");
-        // for (Layer l : layers) {
-        // System.out.println(l.toString());
-        // System.out.println();
-        // }
 
         // update weights/biases
         for (Layer l : layers) {
@@ -335,6 +306,7 @@ public class NeuralNet {
         float mean = (advantages.sumNumber().floatValue() / numAdv);
         advantages.subi(mean).divi(maths.std(advantages) + e);
 
+
         return advantages;
     }
 
@@ -343,92 +315,51 @@ public class NeuralNet {
         return Transforms.min(clipped, 1 + e);
     }
 
-    public void ppoBackprop(INDArray data, INDArray logProb, INDArray advantage, INDArray ratio) {
-        // Output outLayer = (Output) layers.get(layers.size() - 1);
+    public void ppoBackprop(INDArray states, INDArray actions, INDArray oldLogProbs, INDArray advantage, int step) {
+        int batchSize = (int) actions.shape()[0];
+        int nActions = (int) outputLayer.getActivations().shape()[1];
         float epsilon = 0.2f;
-        INDArray surrogate = Transforms.min(
-                ratio.mul(ppoNormalize(advantage)),
-                ppoClip(ratio, epsilon).mul(ppoNormalize(advantage)));
 
-        PPO lossFunc = (PPO) outputLayer.getLoss();
-        // System.out.println("^^^^: " + outLayer.getTarget().data());
-        INDArray loss = lossFunc.ppoExecute(surrogate);
-        
-        if (this.lossHistory == null) {
-            this.lossHistory = loss;
-        } else {
-            this.lossHistory = Nd4j.hstack(this.lossHistory, loss);
+        // forwardPass(states.get(NDArrayIndex.interval(0, step)).reshape(step, -1));
+        INDArray polOut = getOutLayer().getActivations();
+        Softmax softmax = new Softmax();
+        INDArray probDist = softmax.execute(polOut);
+
+        INDArray logProb = Nd4j.create(batchSize);
+        for (int i = 0; i < batchSize - 1; i++) {
+            float prob = probDist.getFloat(i, actions.getInt(i));
+            prob = Math.max(prob, 1e-8f); // avoid log(0)
+            logProb.putScalar(i, (float) Math.log(prob));
         }
 
-        INDArray unclipped = ratio.mul(advantage);
-        INDArray clipped = ppoClip(ratio, epsilon).mul(advantage);
-        INDArray mask = unclipped.lt(clipped);
-        INDArray surrogateGrad = clipped.dup();
-        surrogateGrad.putWhereWithMask(mask, unclipped);
+        INDArray ratio = Transforms.exp(logProb.sub(oldLogProbs.get(NDArrayIndex.interval(0, batchSize)))).get(NDArrayIndex.interval(0, step));
+     
+        INDArray advNorm = ppoNormalize(advantage).detach();
 
-        INDArray gradientWrtOutput = surrogateGrad.mul(ratio);
-        long[] shp = gradientWrtOutput.shape();
-        // gradientWrtOutput = gradientWrtOutput.reshape(1, shp[0]);
-        // INDArray gradientWrtOutput = lossFunc.ppoGradient(advantage, ratio);
-        // recursively get gradients
-        // getGradients(outLayer, gradientWrtOutput, data);
+        INDArray surrogateUnclipped = ratio.mul(advNorm);
+        INDArray surrogateClipped = ppoClip(ratio, epsilon).mul(advNorm);
+        INDArray surrogate = Transforms.min(surrogateUnclipped, surrogateClipped);
+
+        INDArray gradOutput = Nd4j.zeros(batchSize, nActions);
+        for (int i = 0; i < batchSize - 1; i++) {
+            int a = actions.getInt(i);
+            gradOutput.putScalar(i, a, -surrogate.getFloat(i));
+        }
+
         Layer prev = layers.get(layers.indexOf(outputLayer) - 1);
-        outputLayer.getGradients(prev, gradientWrtOutput, data);
+        outputLayer.getGradients(prev, gradOutput.get(NDArrayIndex.interval(0, step)), states.get(NDArrayIndex.interval(0, step)).reshape(step, -1));
 
-        // System.out.println("\n\n");
-        // for (Layer l : layers) {
-        // System.out.println(l.toString());
-        // System.out.println();
-        // }
-
-        // update weights/biases
         for (Layer l : layers) {
             l.updateWeights(optimizer);
             l.updateBiases(optimizer);
 
-            // update beta/gamma if batch normalzation
             if (l.getNormalization() instanceof BatchNormalization) {
-                Normalization norm = l.getNormalization();
-                ((BatchNormalization) norm).updateShift(optimizer);
-                ((BatchNormalization) norm).updateScale(optimizer);
+                BatchNormalization bn = (BatchNormalization) l.getNormalization();
+                bn.updateShift(optimizer);
+                bn.updateScale(optimizer);
             }
         }
     }
-
-    // public void backprop(INDArray loss) {
-    //     Output outLayer = (Output) layers.get(layers.size() - 1);
-
-    //     if (this.lossHistory == null) {
-    //         this.lossHistory = loss;
-    //     } else {
-    //         this.lossHistory = Nd4j.hstack(this.lossHistory, loss);
-    //     }
-
-    //     INDArray gradientWrtOutput = lossFunc.gradient(outLayer, outLayer.getTarget());
-    //     // recursively get gradients
-    //     // getGradients(outLayer, gradientWrtOutput, data);
-    //     Layer prev = layers.get(layers.indexOf(outLayer) - 1);
-    //     outLayer.getGradients(prev, gradientWrtOutput, data);
-
-    //     // System.out.println("\n\n");
-    //     // for (Layer l : layers) {
-    //     // System.out.println(l.toString());
-    //     // System.out.println();
-    //     // }
-
-    //     // update weights/biases
-    //     for (Layer l : layers) {
-    //         l.updateWeights(optimizer);
-    //         l.updateBiases(optimizer);
-
-    //         // update beta/gamma if batch normalzation
-    //         if (l.getNormalization() instanceof BatchNormalization) {
-    //             Normalization norm = l.getNormalization();
-    //             ((BatchNormalization) norm).updateShift(optimizer);
-    //             ((BatchNormalization) norm).updateScale(optimizer);
-    //         }
-    //     }
-    // }
 
     public void metrics(INDArray d, INDArray l) {
         forwardPass(d);
